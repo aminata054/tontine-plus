@@ -1,0 +1,43 @@
+import 'dotenv/config';
+import './config/firebase';
+import express from 'express';
+import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
+import authRoutes from './routes/auth.route';
+import tontineRoutes from './routes/tontines.route';
+
+const app = express();
+
+const allowedOrigins = [
+    'http://localhost:8100',
+    'http://localhost:4200',
+    'http://localhost:8000',
+];
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        credentials: true,
+    })
+);
+app.use(express.json());
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/tontines', tontineRoutes);
+
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => {
+    console.log(`Serveur: http://localhost:${PORT}`);
+    console.log(`Swagger: http://localhost:${PORT}/api-docs`);
+});
