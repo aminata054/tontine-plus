@@ -1,0 +1,34 @@
+<ion-content [fullscreen]="true" class="ion-padding">
+
+  <app-page-header></app-page-header>
+
+  <div class="pin-login-container">
+
+    <div class="ion-text-center">
+      <h2 class="title">Ravi de te revoir !</h2>
+      <p class="subtitle">Saisissez votre code PIN unique</p>
+      <p class="phone-hint" *ngIf="phoneNumber">{{ phoneNumber }}</p>
+    </div>
+
+    <app-otp-input [length]="4" [(ngModel)]="pinCode" [disabled]="isLoading" (completed)="onPinCompleted($event)">
+    </app-otp-input>
+
+    <!-- Message d'erreur -->
+    <p class="error-message ion-text-center" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </p>
+
+    <app-custom-button color="primary" expand="block" [disabled]="pinCode.length !== 4 || isLoading"
+      [loading]="isLoading" (click)="verifyPin()">
+      {{ isLoading ? 'Vérification...' : 'Vérifier' }}
+    </app-custom-button>
+
+    <div class="forgot-section ion-text-center">
+      <span class="forgot-link" (click)="forgotPin()">
+        Code secret oublié ?
+      </span>
+    </div>
+
+  </div>
+
+</ion-content>

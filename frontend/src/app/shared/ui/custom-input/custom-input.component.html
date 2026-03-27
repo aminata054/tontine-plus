@@ -1,0 +1,15 @@
+<div class="custom-input-wrapper" [class.small]="size === 'small'">
+
+  <ion-label class="input-label" *ngIf="label">
+    {{ label }}
+  </ion-label>
+
+  <ion-input [type]="type" [placeholder]="placeholder" [value]="value" (ionInput)="onInput($event)" (ngModelChange)="ngModelChange?.($event)"
+    [disabled]="disabled" fill="outline" shape="round" class="custom-input">
+  </ion-input>
+
+  <!-- Message d'erreur -->
+  <div class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+</div>

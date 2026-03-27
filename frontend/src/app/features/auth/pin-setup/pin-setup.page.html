@@ -1,0 +1,31 @@
+<ion-content [fullscreen]="true" class="ion-padding">
+
+  <app-page-header></app-page-header>
+
+  <div *ngIf="status === 'input'" class="pin-setup-form">
+
+    <div class="ion-text-center">
+      <h2 class="title">Code PIN</h2>
+      <p class="subtitle">
+        Choisissez un code PIN à 4 chiffres pour sécuriser vos transactions
+      </p>
+    </div>
+
+    <app-otp-input [length]="4" [(ngModel)]="pinCode" (completed)="onPinCompleted($event)">
+    </app-otp-input>
+
+    <app-custom-button color="primary" expand="block" [disabled]="pinCode.length !== 4" (click)="createPin()">
+      Créer
+    </app-custom-button>
+
+  </div>
+
+  <app-state-screen *ngIf="status === 'success'" type="success" title="PIN créé"
+    subtitle="Votre code PIN a été configuré." buttonText="Continuer" (buttonClick)="goToNext()">
+  </app-state-screen>
+
+  <app-state-screen *ngIf="status === 'error'" type="error" title="Erreur"
+    subtitle="PIN trop simple. Évitez les suites et répétitions." buttonText="Réessayer" (buttonClick)="retry()">
+  </app-state-screen>
+
+</ion-content>

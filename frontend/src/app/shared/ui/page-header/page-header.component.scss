@@ -1,0 +1,18 @@
+.page-header {
+    display: flex;
+    align-items: center;
+    padding: 15px 16px;
+    background: white;
+}
+
+.header-title {
+    font-size: 20px;
+    font-family: var(--ion-font-poppins);
+    font-weight: 600;
+    margin: 0 auto;
+    color: var(--ion-color-text);
+}
+
+.header-spacer {
+    width: 40px;
+}

@@ -1,0 +1,46 @@
+<ion-content [fullscreen]="true" class="ion-padding">
+
+  <app-page-header></app-page-header>
+
+  <div *ngIf="status === 'input'" class="otp-form">
+
+    <div class="ion-text-center">
+      <h2 class="title">OTP</h2>
+      <p class="subtitle">
+        Entrez le code OTP envoyé vers <strong>{{ phoneNumber }}</strong>
+      </p>
+    </div>
+
+    <app-otp-input [length]="6" [(ngModel)]="otpCode" (completed)="onOtpCompleted($event)">
+    </app-otp-input>
+
+    <app-custom-button color="primary" expand="block" [disabled]="otpCode.length !== 6" (click)="verifyOtp()">
+      Vérifier
+    </app-custom-button>
+
+    <!-- Section Renvoyer -->
+    <div class="resend-section ion-text-center">
+      <p>
+        Pas reçu de code ?
+        <span class="resend-link" (click)="resendOtp()" [class.disabled]="timer > 0">
+          Renvoyer
+        </span>
+      </p>
+      <small *ngIf="timer > 0" class="timer">{{ timer }}s</small>
+    </div>
+
+  </div>
+
+  <!-- ==================== ÉCRAN DE SUCCÈS ==================== -->
+  <app-state-screen *ngIf="status === 'success'" type="success" title="Numéro Vérifié"
+    subtitle="Votre numéro a été vérifié avec succès !  Continuer votre inscription." buttonText="Continuer"
+    (buttonClick)="goToNextStep()">
+  </app-state-screen>
+
+  <!-- ==================== ÉCRAN D'ERREUR ==================== -->
+  <app-state-screen *ngIf="status === 'error'" type="error" title="Code incorrect"
+    subtitle="Le code OTP saisi est incorrect. Veuillez vérifier et réessayer." buttonText="Réessayer"
+    secondaryText="Retour" (buttonClick)="retryOtp()" (secondaryClick)="goBack()">
+  </app-state-screen>
+
+</ion-content>

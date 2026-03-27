@@ -1,0 +1,24 @@
+.back-button {
+    --padding-start: 0;
+    --padding-end: 0;
+    width: 40px;
+    height: 40px;
+    --border-radius: 10px;
+    --background: transparent;
+    --border-width: 1.5px;
+    --border-color: #E8ECF4;
+    --border-style: solid;
+    --color: var(--ion-color-text);
+
+    &:active {
+        --background: rgba(0, 0, 0, 0.08);
+    }
+
+    ion-button {
+        border: 1.5px solid var(--ion-color-text) !important;
+    }
+
+    ion-icon {
+        font-size: 24px;
+    }
+}

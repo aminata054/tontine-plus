@@ -1,0 +1,57 @@
+:host {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin: 12px 0;
+}
+
+ion-button {
+    --border-radius: var(--border-radius, 8px);
+    --padding-top: 0;
+    --padding-bottom: 0;
+    --height: var(--height, 56px);
+    height: var(--height);
+    font-weight: 600;
+    text-transform: none;
+    font-size: 15px;
+    font-weight: 600;
+    --width: 330px;
+    width: var(--width);
+    max-width: 90%;
+
+    @media (min-width: 500px) {
+        --width: 340px;
+    }
+
+    &[disabled] {
+        opacity: 0.6;
+        --color: var(--ion-color-hover);
+        cursor: not-allowed;
+    }
+
+    ion-spinner {
+        --color: currentColor;
+        width: 20px;
+        height: 20px;
+    }
+}
+
+ion-button.large {
+    --height: 58px;
+    font-size: 16.5px;
+}
+
+/* Bouton Outline */
+ion-button[fill="outline"] {
+    --background: transparent;
+    --border-width: 1.5px;
+    --border-radius: var(--ion-color-primary, 12px);
+    --color: var(--ion-color-primary);
+}
+
+/* Bouton Light / Transparent */
+ion-button[color="light"] {
+    --background: transparent;
+    --color: var(--ion-color-text);
+    --border-color: var(--ion-color-grey-font);
+}

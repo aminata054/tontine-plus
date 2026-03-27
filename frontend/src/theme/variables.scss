@@ -1,2 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;500;600&family=Urbanist:wght@400;500;600;700&display=swap');
 // For information on how to create your own theme, please refer to:
 // https://ionicframework.com/docs/theming/
+
+:root {
+    /* Primary */
+    --ion-color-primary: #023E8A;
+    --ion-color-primary-rgb: 2, 62, 138;
+    --ion-color-primary-contrast: #FFFFFF;
+    --ion-color-primary-contrast-rgb: 255, 255, 255;
+    --ion-color-primary-shade: #023e7a;
+    --ion-color-primary-tint: #1a4f9c;
+    --ion-color-hover: #496486;
+    /* Autres couleurs */
+    --ion-color-primary-light: #A2D2FF;
+    --ion-color-success: #18C07A;
+    --ion-color-success-rgb: 24, 192, 122;
+    --ion-color-danger: #FF383C;
+    --ion-color-danger-rgb: 255, 56, 60;
+
+    --ion-color-text: #000000;
+    --ion-color-grey-font: #898483;
+    --ion-color-font-light: #F5F5F5;
+
+    /* Background & Text global */
+    --ion-background-color: #FFFFFF;
+    --ion-background-color-rgb: 255, 255, 255;
+    --ion-text-color: #000000;
+    --ion-text-gray: #838BA1;
+    --ion-text-color-rgb: 0, 0, 0;
+
+    /* Police globale de l'application */
+    --ion-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+    --font-inter: 'Inter', sans-serif;
+    --font-poppins: 'Poppins', sans-serif;
+    --font-urbanist: 'Urbanist', sans-serif;
+
+    /* Police par défaut pour toute l'app */
+    --ion-font-family: var(--font-urbanist);
+}
+
+/* ==================== DARK MODE ==================== */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --ion-color-primary: #023E8A;
+        --ion-color-primary-rgb: 2, 62, 138;
+
+        --ion-background-color: #121212;
+        --ion-background-color-rgb: 18, 18, 18;
+
+        --ion-text-color: #F5F5F5;
+        --ion-text-color-rgb: 245, 245, 245;
+
+        --ion-color-text: #F5F5F5;
+        --ion-color-grey-font: #B0B0B0;
+        --ion-color-font-light: #E0E0E0;
+
+        --ion-color-primary-light: #4A9EFF;
+        --ion-color-hover: #6B8EB8;
+    }
+}

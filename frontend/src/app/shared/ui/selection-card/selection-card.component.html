@@ -1,0 +1,21 @@
+<ion-card class="selection-card" [class.selected]="selected" (click)="onSelect()">
+
+  <div class="card-content">
+    <div class="radio">
+      <ion-icon [name]="selected ? 'radio-button-on' : 'radio-button-off'" [color]="selected ? 'primary' : 'medium'">
+      </ion-icon>
+    </div>
+
+    <div class="card-body">
+      <div class="title-row">
+        <h3>{{ title }}</h3>
+        <span *ngIf="recommended" class="recommended">
+          <ion-icon name="crown" style="font-size: 14px; margin-right: 4px;"></ion-icon>
+          recommandé
+        </span>
+      </div>
+      <p class="description">{{ description }}</p>
+      <small class="note">{{ note }}</small>
+    </div>
+  </div>
+</ion-card>

@@ -1,0 +1,6 @@
+<div class="otp-container">
+  <input *ngFor="let digit of digits; let i = index; trackBy: trackByFn" #otpInput type="text" inputmode="numeric"
+    maxlength="1" class="otp-box" [class.filled]="digit" [ngModel]="digits[i]"
+    (ngModelChange)="onDigitChange($event, i)" (keydown)="onKeyDown($event, i)" (paste)="onPaste($event)"
+    [attr.autocomplete]="i === 0 ? 'one-time-code' : null">
+</div>

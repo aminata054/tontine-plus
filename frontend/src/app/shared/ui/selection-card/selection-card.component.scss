@@ -1,0 +1,118 @@
+:host {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin: 12px 0;
+}
+
+.selection-card {
+    width: 100%;
+    max-width: 330px;
+    border-radius: 16px;
+    margin: 0;
+    --background: #FFFFFF;
+    --border-width: 1.5px;
+    --border-color: #CBD5E1;
+    --box-shadow: none;
+    overflow: hidden;
+    border: var(--border-width) solid var(--border-color);
+}
+
+.selection-card.selected {
+    --background: #EFF6FF;
+    --border-color: var(--ion-color-primary);
+    --border-width: 2px;
+}
+
+.card-content {
+    display: flex;
+    padding: 20px 16px;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.radio {
+    margin-top: 3px;
+    font-size: 26px;
+}
+
+.card-body {
+    flex: 1;
+    padding-top: 2px;
+}
+
+.title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1E2937;
+    letter-spacing: -0.2px;
+}
+
+.recommended {
+    background: #DBEAFE;
+    color: var(--ion-color-primary);
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-weight: 600;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+}
+
+.description {
+    font-size: 15px;
+    line-height: 1.45;
+    color: #334155;
+    margin: 0 0 8px 0;
+}
+
+.note {
+    font-size: 9px;
+    color: #64748B;
+    font-style: italic;
+    font-weight: 500;
+}
+
+.selection-card {
+    transition: all 0.2s ease;
+
+    &:active {
+        opacity: 0.96;
+        transform: scale(0.985);
+    }
+}
+
+/* MODE DARK */
+@media (prefers-color-scheme: dark) {
+    .selection-card {
+        --background: #1F2937;
+        --border-color: #475569;
+    }
+
+    .selection-card.selected {
+        --background: var(--ion-color-primary);
+        --border-color: var(--ion-color-primary-light);
+    }
+
+    h3 {
+        color: #F1F5F9;
+    }
+
+    .description {
+        color: #CBD5E1;
+    }
+
+    .note {
+        color: #94A3B8;
+    }
+}

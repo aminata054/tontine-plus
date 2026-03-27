@@ -1,0 +1,24 @@
+.splash-content {
+    --background: linear-gradient(160deg, #dbeafe 0%, #eff6ff 50%, #ffffff 100%);
+}
+
+.splash-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+
+    ion-icon {
+        font-size: 100px;
+        color: #1e3a8a;
+    }
+
+    .app-name {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1e3a8a;
+        margin: 0;
+    }
+}

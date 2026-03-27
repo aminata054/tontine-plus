@@ -1,0 +1,18 @@
+<ion-content [fullscreen]="true" class="ion-padding">
+
+  <app-page-header></app-page-header>
+
+  <div class="welcome-section">
+    <h1 class="title">Bienvenue !</h1>
+    <p class="subtitle">Saisir votre numéro pour commencer</p>
+  </div>
+
+  <app-custom-input label="Numéro de téléphone" type="tel" placeholder="+221 77 123 45 67" [(value)]="phoneNumber"
+    (valueChange)="onPhoneChange()">
+  </app-custom-input>
+
+  <app-custom-button color="primary" expand="block" [disabled]="!isPhoneValid" (click)="goToOtp()">
+    Continuer
+  </app-custom-button>
+
+</ion-content>

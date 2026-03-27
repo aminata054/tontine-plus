@@ -1,0 +1,49 @@
+.otp-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 32px 0 40px 0;
+}
+
+.otp-box {
+    width: 48px;
+    height: 56px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    border: 2px solid #E2E8F0;
+    border-radius: 12px;
+    background: #FFFFFF;
+    color: #1E2937;
+    transition: all 0.2s ease;
+
+    &:focus {
+        border-color: #023E8A;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(2, 62, 138, 0.15);
+    }
+
+    &.filled {
+        border-color: #023E8A;
+        background: #EFF6FF;
+    }
+}
+
+/* Mode Dark */
+@media (prefers-color-scheme: dark) {
+    .otp-box {
+        background: #1F2937;
+        border-color: #475569;
+        color: #F1F5F9;
+
+        &:focus {
+            border-color: #60A5FA;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+        }
+
+        &.filled {
+            border-color: #60A5FA;
+            background: #172554;
+        }
+    }
+}

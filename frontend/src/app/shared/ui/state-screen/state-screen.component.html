@@ -1,0 +1,24 @@
+<div class="state-screen">
+
+  <!-- Illustration SVG -->
+  <div class="illustration">
+    <img [src]="'assets/icon/' + getIconFile()" [alt]="type" class="state-icon">
+  </div>
+
+  <!-- Titre -->
+  <h1 class="title">{{ title }}</h1>
+
+  <!-- Sous-titre -->
+  <p class="subtitle" [innerHTML]="subtitle"></p>
+
+  <!-- Bouton principal -->
+  <app-custom-button *ngIf="buttonText" color="primary" expand="block" (click)="onButtonClick()">
+    {{ buttonText }}
+  </app-custom-button>
+
+  <!-- Lien secondaire -->
+  <a *ngIf="secondaryText" class="secondary-link" (click)="onSecondaryClick()">
+    {{ secondaryText }}
+  </a>
+
+</div>

@@ -1,0 +1,62 @@
+<ion-content [fullscreen]="true" class="ion-padding">
+
+  <app-page-header></app-page-header>
+  <div class="ion-text-center">
+    <h2 class="title">Compléter votre profil</h2>
+  </div>
+
+  <div class="profile-container">
+
+    <!-- Photo de profil -->
+    <div class="avatar-section ion-text-center">
+      <div class="avatar-container" (click)="pickPhoto()">
+    
+        <img *ngIf="photoPreview" [src]="photoPreview" class="avatar-img" />
+    
+        <ion-icon *ngIf="!photoPreview" name="person-outline" class="avatar-icon"></ion-icon>
+    
+        <div class="edit-badge">
+          <ion-icon name="pencil" size="small"></ion-icon>
+        </div>
+    
+        <div class="avatar-uploading" *ngIf="isUploading">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+      </div>
+    
+      <p class="avatar-hint">
+        {{ isUploading ? 'Envoi en cours...' : photoPreview ? 'Appuyez pour changer' : 'Ajouter une photo (optionnel)' }}
+      </p>
+
+    </div>
+
+    <!-- Formulaire -->
+    <app-custom-input label="Prénom et Nom" placeholder="Entrez votre nom complet" [(value)]="fullName">
+    </app-custom-input>
+
+    <app-custom-input label="Email" type="email" placeholder="exemple@email.com" [(value)]="email">
+    </app-custom-input>
+
+    <app-custom-input label="Date de Naissance" type="date" placeholder="JJ/MM/AAAA" [(value)]="birthDate">
+    </app-custom-input>
+
+    <div class="error-box" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+    <!-- Mentions légales -->
+    <div class="terms">
+      <p>
+        En vous inscrivant, vous acceptez nos
+        <span class="link">Conditions d'utilisation</span> et notre
+        <span class="link">Politique de confidentialité</span>.
+      </p>
+    </div>
+
+    <!-- Bouton Terminer -->
+    <app-custom-button color="primary" expand="block" [disabled]="!isFormValid" (click)="completeProfile()">
+      Terminer
+    </app-custom-button>
+
+  </div>
+
+</ion-content>

@@ -1,20 +1,65 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
-  </div>
+  <app-state-screen type="success" title="Numéro Vérifié"
+    subtitle="Votre numéro a été vérifié avec succès ! Continuer votre inscription." buttonText="Continuer"
+    >
+  </app-state-screen>
+  <!-- <app-page-header></app-page-header>
+  
+<div class="ion-text-center">
+  <h2 class="title">Saisissez le code OTP</h2>
+  <p class="subtitle">
+    Entrez le code OTP envoyé vers <strong>+221 77 874 45 41</strong>
+  </p>
+</div>
+
+<app-otp-input [(ngModel)]="otpCode" (completed)="onOtpCompleted($event)">
+</app-otp-input>
+
+<app-custom-button color="primary" expand="block" [disabled]="otpCode.length !== 6" (click)="verifyOtp()">
+  Vérifier
+</app-custom-button>
+
+
+<div class="resend-section ion-text-center">
+  <p>
+    Pas reçu de code ?
+    <span class="resend-link" (click)="resendOtp()" [class.disabled]="timer > 0">
+      Renvoyer
+    </span>
+  </p>
+  <small *ngIf="timer > 0" class="timer">{{ timer }}s</small>
+</div>
+
+  <app-step-indicator [currentStep]="2" [totalSteps]="6"></app-step-indicator>
+
+  <app-selection-card title="Escrow collectif" description="Vos cotisations vont dans un wallet sécurisé..."
+    note="Sécurité maximale" [recommended]="true" [selected]="true">
+  </app-selection-card>
+  <app-selection-card title="test" description="Vos cotisations vont dans un wallet sécurisé..."
+    note="Sécurité maximale" [recommended]="true">
+  </app-selection-card>
+
+  <app-custom-button color="primary" expand="block">
+    Connexion
+  </app-custom-button>
+
+  <app-custom-button fill="outline" expand="block">
+    Créer un compte
+  </app-custom-button>
+
+   Bouton disabled -->
+  <!-- <app-custom-button color="primary" [disabled]="true">
+    Rejoindre une tontine
+  </app-custom-button>
+
+  <app-custom-input label="Prénom et Nom" placeholder="Entrez votre nom complet">
+  </app-custom-input>
+
+  <app-custom-input label="Email" type="email" placeholder="exemple@email.com">
+  </app-custom-input>
+
+  <app-custom-input label="Numéro de téléphone" type="tel" placeholder="+221 77 123 45 67">
+  </app-custom-input> --> 
+
 </ion-content>

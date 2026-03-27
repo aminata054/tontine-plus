@@ -1,0 +1,19 @@
+.dots-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #c7d2e0;
+    transition: all 0.3s ease;
+
+    &.active {
+        width: 24px;
+        border-radius: 4px;
+        background-color: #1e3a8a;
+    }
+}

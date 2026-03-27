@@ -1,0 +1,21 @@
+.step-indicator {
+    padding: 16px 20px;
+    background: white;
+}
+
+.steps {
+    display: flex;
+    gap: 8px;
+}
+
+.step {
+    flex: 1;
+    height: 6px;
+    background: #E5E7EB;
+    border-radius: 9999px;
+    transition: all 0.3s ease;
+}
+
+.step.active {
+    background: var(--ion-color-primary);
+}

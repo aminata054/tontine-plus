@@ -1,0 +1,9 @@
+<ion-button [expand]="expand" [color]="color" [fill]="fill" [disabled]="disabled" [style.--height]="height"
+  [style.--border-radius]="borderRadius" (click)="onClick()">
+
+  <!-- Loader quand loading = true -->
+  <ion-spinner *ngIf="loading" name="crescent" style="margin-right: 10px; width: 20px; height: 20px;">
+  </ion-spinner>
+
+  <ng-content></ng-content>
+</ion-button>

@@ -1,0 +1,65 @@
+:host {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin: 12px 0;
+}
+
+.custom-input-wrapper {
+    width: 100%;
+    max-width: 330px;
+}
+
+.small {
+    max-width: 280px;
+}
+
+.input-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ion-color-grey-font);
+    margin-bottom: 6px;
+    display: block;
+}
+
+.custom-input {
+    --background: #F7F8F9;
+    --color: var(--ion-color-text);
+    --placeholder-color: #A0A0A0;
+    --border-radius: 8px;
+    --border-color: #E8ECF4;
+    --padding-start: 16px;
+    --padding-end: 16px;
+    --padding-top: 14px;
+    --padding-bottom: 14px;
+    font-size: 15px;
+    height: 56px;
+
+    /* Focus */
+    &.input-has-focus {
+        --border-color: var(--ion-color-primary);
+        --box-shadow: 0 0 0 3px rgba(2, 62, 138, 0.15);
+    }
+}
+
+/* État erreur */
+.custom-input.ng-invalid.ng-touched {
+    --border-color: var(--ion-color-danger);
+}
+
+.error-message {
+    color: var(--ion-color-danger);
+    font-size: 13px;
+    margin-top: 4px;
+    margin-left: 4px;
+    font-weight: 500;
+}
+
+/* Mode Dark */
+@media (prefers-color-scheme: dark) {
+    .custom-input {
+        --background: #1F1F1F;
+        --border-color: #333333;
+        --placeholder-color: #777777;
+    }
+}

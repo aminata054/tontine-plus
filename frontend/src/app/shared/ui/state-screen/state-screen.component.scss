@@ -1,0 +1,61 @@
+.state-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 75vh;
+    text-align: center;
+    padding: 20px 20px 40px;
+}
+
+.illustration {
+    margin-bottom: 40px;
+
+    .state-icon {
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+    }
+}
+
+.title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #1E2937;
+    margin: 0 0 16px 0;
+    line-height: 1.2;
+}
+
+.subtitle {
+    font-size: 16px;
+    color: #64748B;
+    line-height: 1.55;
+    max-width: 300px;
+    margin: 0 auto 48px;
+}
+
+.secondary-link {
+    margin-top: 28px;
+    color: #64748B;
+    font-size: 15.5px;
+    cursor: pointer;
+}
+
+.secondary-link:active {
+    opacity: 0.7;
+}
+
+/* Mode Dark */
+@media (prefers-color-scheme: dark) {
+    .title {
+        color: #F1F5F9;
+    }
+
+    .subtitle {
+        color: #94A3B8;
+    }
+
+    .secondary-link {
+        color: #CBD5E1;
+    }
+}

@@ -32,8 +32,6 @@ export const sendOtp = async (req: Request, res: Response) => {
     }
 
     try {
-        // Firebase génère un sessionInfo (nonce signé) côté serveur
-        // L'OTP réel est envoyé par Firebase via l'Identity Toolkit
         const response = await fetch(
             `https://identitytoolkit.googleapis.com/v1/accounts:sendVerificationCode?key=${apiKey}`,
             {
@@ -52,7 +50,6 @@ export const sendOtp = async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: data.error.message });
         }
 
-        // sessionInfo doit être renvoyé par le client lors de la vérification
         return res.json({
             success: true,
             sessionInfo: data.sessionInfo,
@@ -82,7 +79,6 @@ export const verifyOtp = async (req: Request, res: Response) => {
     }
 
     try {
-        // Vérification OTP via Firebase Identity Toolkit
         const response = await fetch(
             `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPhoneNumber?key=${process.env.FIREBASE_API_KEY}`,
             {
@@ -104,18 +100,18 @@ export const verifyOtp = async (req: Request, res: Response) => {
         const uid = data.localId;
         const idToken = data.idToken;
 
-        // Vérifier si l'utilisateur existe déjà dans Firestore
         const userDoc = await db.collection('users').doc(uid).get();
         const isNewUser = !userDoc.exists;
 
         if (isNewUser) {
-            // Créer un document minimal — il sera complété par /complete-profile
+            // Créer un document minimal — photo et abonnement ajoutés à /complete-profile
             await db.collection('users').doc(uid).set({
                 uid,
                 phoneNumber,
                 isVerified: true,
                 profileComplete: false,
                 pinSet: false,
+                photoUrl: null,
                 reputationScore: 5.0,
                 punctualityRate: 100,
                 totalTontines: 0,
@@ -125,9 +121,9 @@ export const verifyOtp = async (req: Request, res: Response) => {
 
         return res.json({
             success: true,
-            idToken,           // JWT Firebase à stocker côté client
+            idToken,
             uid,
-            isNewUser,         // true → rediriger vers setup-pin, false → login-pin
+            isNewUser,
             profileComplete: isNewUser ? false : userDoc.data()?.profileComplete,
             pinSet: isNewUser ? false : userDoc.data()?.pinSet,
         });
@@ -146,7 +142,6 @@ export const setupPin = async (req: Request, res: Response) => {
     const uid = (req as any).user.uid;
     const { pin } = req.body;
 
-    // Validation du PIN
     if (!pin || !/^\d{4}$/.test(pin)) {
         return res.status(400).json({
             success: false,
@@ -154,7 +149,6 @@ export const setupPin = async (req: Request, res: Response) => {
         });
     }
 
-    // Refuser les suites (1234, 4321) et les répétitions (1111)
     const isSuite = ['0123', '1234', '2345', '3456', '4567', '5678', '6789',
         '9876', '8765', '7654', '6543', '5432', '4321', '3210'].includes(pin);
     const isRepeat = /^(\d)\1{3}$/.test(pin);
@@ -167,7 +161,6 @@ export const setupPin = async (req: Request, res: Response) => {
     }
 
     try {
-        // Hasher le PIN avec bcrypt (saltRounds = 10)
         const pinHash = await bcrypt.hash(pin, 10);
 
         await db.collection('users').doc(uid).update({
@@ -189,13 +182,16 @@ export const setupPin = async (req: Request, res: Response) => {
 // ÉTAPE 2B — Compléter le profil
 // POST /api/v1/auth/complete-profile
 // Header: Authorization: Bearer <idToken>
-// Body: { fullName, email?, birthDate }
+// Body: { fullName, email?, birthDate, photoUrl?, plan? }
+//
+// photoUrl  : URL Firebase Storage uploadée côté client avant cet appel (optionnel)
+// plan      : 'monthly' | 'annual' | 'premium' — défaut 'monthly' si absent
 // ─────────────────────────────────────────────
 export const completeProfile = async (req: Request, res: Response) => {
     const uid = (req as any).user.uid;
-    const { fullName, email, birthDate } = req.body;
+    const { fullName, email, birthDate, photoUrl, plan } = req.body;
 
-    // Validation
+    // ── Validation ────────────────────────────────────────────
     if (!fullName || fullName.trim().length < 2) {
         return res.status(400).json({
             success: false,
@@ -210,7 +206,6 @@ export const completeProfile = async (req: Request, res: Response) => {
         });
     }
 
-    // Vérifier majorité (18 ans minimum)
     const birth = new Date(birthDate);
     const age = Math.floor((Date.now() - birth.getTime()) / (365.25 * 24 * 3600 * 1000));
     if (age < 18) {
@@ -227,36 +222,102 @@ export const completeProfile = async (req: Request, res: Response) => {
         });
     }
 
+    // Valider l'URL de la photo si fournie
+    if (photoUrl && !/^https?:\/\/.+/.test(photoUrl)) {
+        return res.status(400).json({
+            success: false,
+            error: 'URL de photo invalide',
+        });
+    }
+
+    const validPlans = ['monthly', 'annual', 'premium'];
+    const selectedPlan: 'monthly' | 'annual' | 'premium' =
+        validPlans.includes(plan) ? plan : 'monthly';
+
     try {
-        // Générer un code de parrainage unique
         const referralCode = fullName.split(' ')[0].toUpperCase().slice(0, 4)
             + Math.floor(1000 + Math.random() * 9000);
 
-        const updateData: Record<string, any> = {
-            fullName: fullName.trim(),
-            birthDate: admin.firestore.Timestamp.fromDate(new Date(birthDate)),
-            referralCode,
-            profileComplete: true,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        // ── Dates d'abonnement ────────────────────────────────
+        const now = new Date();
+        const trialEnd = new Date(now);
+        trialEnd.setDate(trialEnd.getDate() + 14); // 14 jours d'essai gratuit
+
+        const periodEnd = new Date(now);
+        if (selectedPlan === 'annual') {
+            periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+        } else {
+            periodEnd.setMonth(periodEnd.getMonth() + 1);
+        }
+
+        // Montants en XOF selon le plan
+        const planAmounts: Record<string, number> = {
+            monthly: 2000,
+            annual: 20000,
+            premium: 5000,
         };
 
-        if (email) updateData.email = email.toLowerCase().trim();
+        const subscriptionRef = db.collection('subscriptions').doc();
 
-        await db.collection('users').doc(uid).update(updateData);
+        // ── Transaction : profil + abonnement ────────────────
+        await db.runTransaction(async (transaction) => {
 
-        // Mettre à jour Firebase Auth (displayName)
+            // 1. Mise à jour du profil utilisateur
+            const userRef = db.collection('users').doc(uid);
+            const userUpdate: Record<string, any> = {
+                fullName: fullName.trim(),
+                birthDate: admin.firestore.Timestamp.fromDate(new Date(birthDate)),
+                referralCode,
+                profileComplete: true,
+                photoUrl: photoUrl ?? null,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            };
+            if (email) userUpdate.email = email.toLowerCase().trim();
+            transaction.update(userRef, userUpdate);
+
+            // 2. Création de l'abonnement
+            transaction.set(subscriptionRef, {
+                id: subscriptionRef.id,
+                userId: uid,
+                plan: selectedPlan,
+                status: 'trialing',
+                amount: planAmounts[selectedPlan],
+                currency: 'XOF',
+                interval: selectedPlan === 'annual' ? 'year' : 'month',
+                currentPeriodStart: admin.firestore.Timestamp.fromDate(now),
+                currentPeriodEnd: admin.firestore.Timestamp.fromDate(periodEnd),
+                cancelAtPeriodEnd: false,
+                paymentMethod: 'manual',
+                transactionId: null,
+                receiptUrl: null,
+                subscribedAt: admin.firestore.FieldValue.serverTimestamp(),
+                canceledAt: null,
+                expiresAt: admin.firestore.Timestamp.fromDate(trialEnd),
+                previousPlans: [],
+            });
+        });
+
+        // Mettre à jour Firebase Auth
         await admin.auth().updateUser(uid, {
             displayName: fullName.trim(),
+            photoURL: photoUrl ?? undefined,
             ...(email ? { email: email.toLowerCase().trim() } : {}),
         });
 
-        // Retourner le profil complet
         const userDoc = await db.collection('users').doc(uid).get();
 
         return res.status(201).json({
             success: true,
             message: 'Profil créé avec succès',
-            data: { uid, ...userDoc.data() },
+            data: {
+                uid,
+                ...userDoc.data(),
+                subscription: {
+                    id: subscriptionRef.id,
+                    plan: selectedPlan,
+                    status: 'trialing',
+                },
+            },
         });
     } catch (err: any) {
         return res.status(500).json({ success: false, error: err.message });
@@ -279,11 +340,9 @@ export const loginWithPin = async (req: Request, res: Response) => {
     }
 
     try {
-        // 1. Retrouver l'utilisateur par numéro de téléphone dans Firebase Auth
         const firebaseUser = await admin.auth().getUserByPhoneNumber(phoneNumber);
         const uid = firebaseUser.uid;
 
-        // 2. Récupérer le hash du PIN depuis Firestore
         const userDoc = await db.collection('users').doc(uid).get();
 
         if (!userDoc.exists) {
@@ -299,7 +358,6 @@ export const loginWithPin = async (req: Request, res: Response) => {
             });
         }
 
-        // 3. Comparer le PIN saisi avec le hash bcrypt
         const pinMatch = await bcrypt.compare(pin, userData.pinHash);
 
         if (!pinMatch) {
@@ -309,21 +367,20 @@ export const loginWithPin = async (req: Request, res: Response) => {
             });
         }
 
-        // 4. Générer un Custom Token Firebase → le client l'échange contre un idToken
         const customToken = await admin.auth().createCustomToken(uid);
 
-        // Mettre à jour lastLoginAt
         await db.collection('users').doc(uid).update({
             lastLoginAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
         return res.json({
             success: true,
-            customToken,  // Le client Angular fait signInWithCustomToken(customToken)
+            customToken,
             uid,
             profile: {
                 fullName: userData.fullName,
                 phoneNumber: userData.phoneNumber,
+                photoUrl: userData.photoUrl ?? null,
                 reputationScore: userData.reputationScore,
                 profileComplete: userData.profileComplete,
             },
@@ -357,7 +414,25 @@ export const getProfile = async (req: Request, res: Response) => {
         // Ne jamais retourner le pinHash au client
         const { pinHash, ...safeData } = userDoc.data() as any;
 
-        return res.json({ success: true, data: safeData });
+        // Récupérer l'abonnement actif
+        const subscriptionSnap = await db
+            .collection('subscriptions')
+            .where('userId', '==', uid)
+            .where('status', 'in', ['active', 'trialing'])
+            .orderBy('subscribedAt', 'desc')
+            .limit(1)
+            .get();
+
+        let subscription = null;
+
+        if (subscriptionSnap.docs.length > 0) {
+            const doc = subscriptionSnap.docs[0];
+            subscription = {
+                id: doc?.id,
+                ...doc?.data()
+            };
+        }
+        return res.json({ success: true, data: { ...safeData, subscription } });
     } catch (err: any) {
         return res.status(500).json({ success: false, error: err.message });
     }

@@ -1,0 +1,109 @@
+.onboarding-content {
+    --background: #ffffff;
+    --overflow: hidden;
+}
+
+.onboarding-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.slide-images {
+    flex: 0 0 58%;
+    overflow: hidden;
+    border-radius: 0 0 32px 32px;
+    background: linear-gradient(160deg, #dbeafe 0%, #eff6ff 60%, #ffffff 100%);
+
+    swiper-container {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    swiper-slide {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .image-wrapper {
+        padding: 32px;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        img {
+            max-width: 85%;
+            max-height: 85%;
+            object-fit: contain;
+        }
+    }
+}
+
+.slide-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 40px 0;
+    text-align: center;
+}
+
+.slide-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2563eb;
+    margin: 0 0 12px;
+}
+
+.slide-description {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #111827;
+    margin: 0;
+}
+
+.bottom-bar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 48px;
+    position: relative;
+    z-index: 10;
+}
+
+.btn-skip {
+    background: transparent;
+    border: none;
+    font-size: 15px;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 12px 4px;
+    min-width: 60px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-next {
+    background: #1e3a8a;
+    color: #ffffff;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 110px;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.2s;
+
+    &:active {
+        opacity: 0.85;
+    }
+}
