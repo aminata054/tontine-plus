@@ -11,7 +11,7 @@
       </p>
     </div>
 
-    <app-otp-input [length]="6" [(ngModel)]="otpCode" (completed)="onOtpCompleted($event)">
+    <app-otp-input [length]="6" [(ngModel)]="otpCode" (completed)="onOtpCompleted($event)" [mask]="false">
     </app-otp-input>
 
     <app-custom-button color="primary" expand="block" [disabled]="otpCode.length !== 6" (click)="verifyOtp()">

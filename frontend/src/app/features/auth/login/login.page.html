@@ -10,7 +10,7 @@
       <p class="phone-hint" *ngIf="phoneNumber">{{ phoneNumber }}</p>
     </div>
 
-    <app-otp-input [length]="4" [(ngModel)]="pinCode" [disabled]="isLoading" (completed)="onPinCompleted($event)">
+    <app-otp-input [length]="4" [(ngModel)]="pinCode" [disabled]="isLoading" (completed)="onPinCompleted($event)" [mask]="true">
     </app-otp-input>
 
     <!-- Message d'erreur -->

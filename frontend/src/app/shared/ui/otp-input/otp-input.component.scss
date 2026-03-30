@@ -5,6 +5,12 @@
     margin: 32px 0 40px 0;
 }
 
+.otp-box-wrapper {
+    position: relative;
+    width: 58px;
+    height: 62px;
+}
+
 .otp-box {
     width: 48px;
     height: 56px;
@@ -16,6 +22,7 @@
     background: #FFFFFF;
     color: #1E2937;
     transition: all 0.2s ease;
+    caret-color: var(--ion-color-primary);
 
     &:focus {
         border-color: #023E8A;
