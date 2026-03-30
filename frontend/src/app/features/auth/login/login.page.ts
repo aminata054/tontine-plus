@@ -66,7 +66,7 @@ export class LoginPage implements OnInit {
       next: (res) => {
         this.isLoading = false;
         if (res.success) {
-          this.router.navigate(['/home'], { replaceUrl: true });
+          this.router.navigate(['/dashboard'], { replaceUrl: true });
         }
       },
       error: (err) => {

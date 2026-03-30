@@ -1,5 +1,6 @@
 import { addIcons } from 'ionicons';
 import {
+    chatboxOutline,
     chevronBack,
     chevronForward,
     pencil,
@@ -8,6 +9,10 @@ import {
     qrCode,
     radioButtonOff,
     radioButtonOn,
+    notificationsOutline, chevronForwardOutline, addOutline,
+    arrowForwardOutline, shareSocialOutline, checkmarkCircle,
+    addCircleOutline, diamondOutline,
+    peopleCircleOutline
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -19,6 +24,11 @@ export function registerIcons() {
         radioButtonOn,
         radioButtonOff,
         personOutline,
-        pencil
+        pencil,
+        chatboxOutline,
+        notificationsOutline, chevronForwardOutline, addOutline,
+        arrowForwardOutline, shareSocialOutline, checkmarkCircle,
+        addCircleOutline, diamondOutline, peopleCircleOutline
+
     });
 }
