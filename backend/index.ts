@@ -6,6 +6,7 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
 import authRoutes from './routes/auth.route';
 import tontineRoutes from './routes/tontines.route';
+import notificationRoutes from './routes/notification.route';
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tontines', tontineRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
