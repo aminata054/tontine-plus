@@ -20,6 +20,8 @@ export class OtpInputComponent implements ControlValueAccessor {
 
   @Input() length: number = 6;
   @Output() completed = new EventEmitter<string>();
+  @Input() mask: boolean = false;
+  @Input() disabled: boolean = false;
 
   @ViewChildren('otpInput') inputs!: QueryList<ElementRef<HTMLInputElement>>;
 
