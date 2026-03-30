@@ -108,7 +108,7 @@ export class ProfileCompletionPage {
     }).subscribe({
       next: (res) => {
         if (res.success) {
-          this.router.navigate(['/home']);
+          this.router.navigate(['/dashboard']);
         }
          error: (err: any) => {
 

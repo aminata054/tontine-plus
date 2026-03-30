@@ -12,7 +12,16 @@ import {
     notificationsOutline, chevronForwardOutline, addOutline,
     arrowForwardOutline, shareSocialOutline, checkmarkCircle,
     addCircleOutline, diamondOutline,
-    peopleCircleOutline
+    peopleCircleOutline,
+    ellipsisVerticalOutline,
+    checkmarkDoneOutline,
+    trashOutline,
+    cashOutline,
+    peopleOutline,
+    megaphoneOutline,
+    timeOutline,
+    checkmarkCircleOutline,
+    alertCircleOutline
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -28,7 +37,10 @@ export function registerIcons() {
         chatboxOutline,
         notificationsOutline, chevronForwardOutline, addOutline,
         arrowForwardOutline, shareSocialOutline, checkmarkCircle,
-        addCircleOutline, diamondOutline, peopleCircleOutline
+        addCircleOutline, diamondOutline, peopleCircleOutline,
+         checkmarkDoneOutline, trashOutline,
+        ellipsisVerticalOutline, cashOutline, peopleOutline,
+        alertCircleOutline, checkmarkCircleOutline, megaphoneOutline, timeOutline,
 
     });
 }

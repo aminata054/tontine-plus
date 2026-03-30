@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, from, of } from 'rxjs';
 import { tap, switchMap, map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { StorageService } from './storage.service';
+import type { PushNotificationService } from './push-notification.service';
 import {
   SendOtpResponse,
   VerifyOtpResponse,
@@ -18,8 +19,6 @@ import {
 export class AuthService {
 
   private readonly API = environment.apiUrl + '/auth';
-
-  // URL de l'Identity Toolkit pour échanger un customToken contre un idToken
   private readonly FIREBASE_SIGN_IN_URL =
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${environment.firebase.apiKey}`;
 
@@ -28,39 +27,33 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
-    private storage: StorageService
+    private storage: StorageService,
+    private injector: Injector,
   ) {
     this.loadUserFromStorage();
   }
 
-  // ─────────────────────────────────────────
-  // Init
-  // ─────────────────────────────────────────
+  private async getPushService(): Promise<PushNotificationService> {
+    const { PushNotificationService } = await import('./push-notification.service');
+    return this.injector.get<PushNotificationService>(PushNotificationService);
+  }
+
   private async loadUserFromStorage(): Promise<void> {
     const user = await this.storage.getUser();
     if (user) this.currentUserSubject.next(user);
   }
 
-  // ─────────────────────────────────────────
-  // ÉTAPE 1A — Envoyer l'OTP
-  // ─────────────────────────────────────────
   sendOtp(phoneNumber: string): Observable<SendOtpResponse> {
     const cleanPhone = phoneNumber.replace(/[\s\-]/g, '');
-
     return this.http.post<SendOtpResponse>(`${this.API}/send-otp`, {
       phoneNumber: cleanPhone
     }).pipe(
       tap(async (res) => {
-        if (res.success) {
-          await this.storage.setPhoneNumber(cleanPhone);
-        }
+        if (res.success) await this.storage.setPhoneNumber(cleanPhone);
       })
     );
   }
 
-  // ─────────────────────────────────────────
-  // ÉTAPE 1B — Vérifier l'OTP
-  // ─────────────────────────────────────────
   verifyOtp(sessionInfo: string, code: string, phoneNumber: string): Observable<VerifyOtpResponse> {
     return this.http.post<VerifyOtpResponse>(`${this.API}/verify-otp`, {
       sessionInfo, code, phoneNumber
@@ -79,17 +72,10 @@ export class AuthService {
     );
   }
 
-  // ─────────────────────────────────────────
-  // ÉTAPE 2A — Créer le PIN
-  // ─────────────────────────────────────────
   setupPin(pin: string): Observable<SetupPinResponse> {
-    // L'interceptor injecte automatiquement le Bearer token
     return this.http.post<SetupPinResponse>(`${this.API}/setup-pin`, { pin });
   }
 
-  // ─────────────────────────────────────────
-  // ÉTAPE 2B — Compléter le profil
-  // ─────────────────────────────────────────
   completeProfile(data: {
     fullName: string;
     birthDate: string;
@@ -102,25 +88,18 @@ export class AuthService {
         if (res.success) {
           await this.storage.setUser(res.data);
           this.currentUserSubject.next(res.data);
+          this.getPushService()
+            .then(svc => svc.initialize())
+            .catch(err => console.error('[Push] Erreur init:', err));
         }
       })
     );
   }
 
-  // ─────────────────────────────────────────
-  // ÉTAPE 3 — Login par PIN
-  //
-  // Flux :
-  //  1. POST /login-pin → reçoit { customToken }
-  //  2. Échange customToken idToken via Identity Toolkit
-  //  3. Stocke l'idToken (utilisé par l'interceptor pour les prochaines requêtes)
-  // ─────────────────────────────────────────
   loginWithPin(phoneNumber: string, pin: string): Observable<LoginPinResponse> {
     const cleanPhone = phoneNumber.replace(/[\s\-]/g, '');
-
     return this.http.post<LoginPinResponse>(`${this.API}/login-pin`, {
-      phoneNumber: cleanPhone,
-      pin
+      phoneNumber: cleanPhone, pin
     }).pipe(
       switchMap(async (res) => {
         if (res.success && res.customToken) {
@@ -128,16 +107,15 @@ export class AuthService {
           await this.storage.setToken(firebaseRes.idToken);
           await this.storage.setUser(res.profile);
           this.currentUserSubject.next(res.profile);
+          this.getPushService()
+            .then(svc => svc.initialize())
+            .catch(err => console.error('[Push] Erreur init:', err));
         }
         return res;
       })
     );
   }
 
-  // ─────────────────────────────────────────
-  // Échange customToken idToken
-  // Appel direct à l'Identity Toolkit (hors interceptor)
-  // ─────────────────────────────────────────
   private exchangeCustomToken(customToken: string): Promise<FirebaseSignInResponse> {
     return this.http.post<FirebaseSignInResponse>(
       this.FIREBASE_SIGN_IN_URL,
@@ -145,17 +123,14 @@ export class AuthService {
     ).toPromise() as Promise<FirebaseSignInResponse>;
   }
 
-  // ─────────────────────────────────────────
-  // Déconnexion
-  // ─────────────────────────────────────────
   async logout(): Promise<void> {
     await this.storage.clear();
     this.currentUserSubject.next(null);
+    this.getPushService()
+      .then(svc => svc.unregister())
+      .catch(err => console.error('[Push] Erreur unregister:', err));
   }
 
-  // ─────────────────────────────────────────
-  // Helpers
-  // ─────────────────────────────────────────
   get currentUser(): UserProfile | null {
     return this.currentUserSubject.value;
   }
