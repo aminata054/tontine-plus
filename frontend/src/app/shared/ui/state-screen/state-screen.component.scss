@@ -6,6 +6,29 @@
     min-height: 75vh;
     text-align: center;
     padding: 20px 20px 40px;
+
+    .divider-or {
+            text-align: center;
+            margin: 20px 0;
+            color: #999;
+            position: relative;
+    
+            &::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background: #ddd;
+            }
+    
+            span {
+                background: white;
+                padding: 0 16px;
+                position: relative;
+            }
+        }
 }
 
 .illustration {

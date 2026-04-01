@@ -21,7 +21,20 @@ import {
     megaphoneOutline,
     timeOutline,
     checkmarkCircleOutline,
-    alertCircleOutline
+    alertCircleOutline,
+    helpCircleOutline,
+    searchOutline,
+    walletOutline,
+    calendarOutline,
+    chevronBackOutline, closeOutline,
+    imageOutline, pencilOutline,
+    shareOutline, qrCodeOutline, copyOutline, downloadOutline, refreshOutline, shieldCheckmarkOutline,
+    listOutline, shuffleOutline,
+    logoWhatsapp,
+    logoTwitter,
+    logoSnapchat,
+    logoGoogle,
+    lockClosed,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -41,6 +54,16 @@ export function registerIcons() {
          checkmarkDoneOutline, trashOutline,
         ellipsisVerticalOutline, cashOutline, peopleOutline,
         alertCircleOutline, checkmarkCircleOutline, megaphoneOutline, timeOutline,
+        helpCircleOutline,
+        searchOutline,
+        walletOutline,
+        calendarOutline,
+        chevronBackOutline, closeOutline,
+        imageOutline, pencilOutline, 
+        shareOutline, qrCodeOutline, copyOutline, downloadOutline,
+        refreshOutline,
+        shieldCheckmarkOutline,
+        listOutline, shuffleOutline, logoWhatsapp, logoTwitter, logoSnapchat
 
     });
 }

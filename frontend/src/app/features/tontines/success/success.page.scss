@@ -1,0 +1,31 @@
+:host {
+    --primary: var(--ion-color-primary, #1A3A8F);
+    --text-dark: #0D1B2A;
+    --text-mid: #4A5568;
+}
+
+.success-content {
+    --background: var(--ion-background-color);
+}
+
+// ─── Loader centré ──────────────────────────────────────────
+
+.sc-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+
+    &__spinner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+    }
+
+    &__loading-text {
+        font-size: 14px;
+        color: var(--text-mid);
+        margin: 0;
+    }
+}

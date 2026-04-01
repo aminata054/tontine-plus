@@ -38,6 +38,17 @@
 
     /* Police par défaut pour toute l'app */
     --ion-font-family: var(--font-urbanist);
+
+}
+
+// ── Panel modal (bottom sheet) ──────────────────────────────
+.panel-modal {
+    --border-radius: 24px 24px 0 0;
+    --box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.12);
+
+    &::part(content) {
+        border-radius: 24px 24px 0 0;
+    }
 }
 
 /* ==================== DARK MODE ==================== */

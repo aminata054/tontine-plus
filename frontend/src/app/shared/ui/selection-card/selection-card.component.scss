@@ -16,6 +16,22 @@
     --box-shadow: none;
     overflow: hidden;
     border: var(--border-width) solid var(--border-color);
+
+    &.locked {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .premium-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: #FFFFFF;
+        color: white;
+        font-size: 20px;
+        padding: 2px 8px;
+        border-radius: 12px;
+    }
 }
 
 .selection-card.selected {

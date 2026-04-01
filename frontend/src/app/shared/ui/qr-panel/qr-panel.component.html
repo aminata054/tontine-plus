@@ -1,0 +1,24 @@
+<div class="qr-panel">
+  <div class="qr-panel__handle"></div>
+  <button class="qr-panel__close" (click)="close()">
+    <ion-icon name="close-outline"></ion-icon>
+  </button>
+
+  <div class="qr-panel__qr-wrap">
+    <img [src]="qrUrl" class="qr-panel__img" alt="QR Code" />
+  </div>
+
+  <p class="qr-panel__hint">
+    Les membres peuvent scanner ce QR Code pour rejoindre la tontine.
+  </p>
+
+  <div class="qr-panel__actions">
+    <app-custom-button fill="solid" expand="block" (clicked)="download()">
+      Télécharger le QR Code
+    </app-custom-button>
+    <app-custom-button fill="outline" expand="block" (clicked)="close()">
+      Annuler
+    </app-custom-button>
+  </div>
+
+</div>

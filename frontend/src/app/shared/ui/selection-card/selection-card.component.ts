@@ -10,15 +10,26 @@ import { IonCard, IonIcon } from '@ionic/angular/standalone';
   imports: [CommonModule, IonCard, IonIcon],
 })
 export class SelectionCardComponent {
+
   @Input() title: string = '';
   @Input() description: string = '';
   @Input() note: string = '';
   @Input() recommended: boolean = false;
   @Input() selected: boolean = false;
+  @Input() locked: boolean = false;
+  @Input() premium: boolean = false;
 
-  @Output() selectedChange = new EventEmitter<boolean>();
+  @Output() cardClick = new EventEmitter<void>();           
+  @Output() selectedChange = new EventEmitter<boolean>();   
+  @Output() premiumClick = new EventEmitter<void>();
 
-  onSelect() {
+  onCardClick() {
+    if (this.locked) {
+      this.premiumClick.emit();     
+      return;
+    }
+    this.cardClick.emit();
+
     this.selectedChange.emit(true);
   }
 }

@@ -16,6 +16,22 @@
     {{ buttonText }}
   </app-custom-button>
 
+  <!-- Bouton secondaire optionnel -->
+  <app-custom-button *ngIf="showSecondaryButton" [fill]="secondaryButtonFill" expand="block"
+    (click)="onSecondaryButtonClick()">
+    {{ secondaryButtonText }}
+  </app-custom-button>
+  
+  <!-- Divider "Ou" -->
+  <div class="divider-or" *ngIf="showDivider">
+    <span>{{ dividerText }}</span>
+  </div>
+  
+  <!-- Lien texte secondaire (déjà existant) -->
+  <a *ngIf="secondaryText" class="secondary-link" (click)="onSecondaryClick()">
+    {{ secondaryText }}
+  </a>
+
   <!-- Lien secondaire -->
   <a *ngIf="secondaryText" class="secondary-link" (click)="onSecondaryClick()">
     {{ secondaryText }}

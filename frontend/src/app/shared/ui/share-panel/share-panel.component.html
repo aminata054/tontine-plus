@@ -1,0 +1,42 @@
+<div class="sp-panel">
+  <div class="sp-panel__handle"></div>
+  <p class="sp-panel__title">Partager le lien de la tontine</p>
+  <div class="sp-panel__link-row">
+    <span class="sp-panel__link-url">{{ inviteLink }}</span>
+    <button class="sp-panel__copy-btn" (click)="copyLink()">Copier</button>
+  </div>
+
+  <div class="sp-panel__apps">
+
+    <button class="sp-panel__app sp-panel__app--whatsapp" (click)="shareVia('whatsapp')">
+      <ion-icon name="logo-whatsapp"></ion-icon>
+      <span>WhatsApp</span>
+    </button>
+
+    <button class="sp-panel__app sp-panel__app--telegram" (click)="shareVia('telegram')">
+      <ion-icon name="logo-telegram"></ion-icon>
+      <span>Telegram</span>
+    </button>
+
+    <button class="sp-panel__app sp-panel__app--twitter" (click)="shareVia('twitter')">
+      <ion-icon name="logo-twitter"></ion-icon>
+      <span>Twitter</span>
+    </button>
+
+    <button class="sp-panel__app sp-panel__app--gmail" (click)="shareVia('gmail')">
+      <ion-icon src="/assets/icon/gmail.svg"></ion-icon>
+      <span>Gmail</span>
+    </button>
+
+    <button class="sp-panel__app sp-panel__app--snapchat" (click)="shareVia('snapchat')">
+      <ion-icon name="logo-snapchat"></ion-icon>
+      <span>Snapchat</span>
+    </button>
+
+  </div>
+
+  <app-custom-button fill="outline" expand="block" (clicked)="close()">
+    Annuler
+  </app-custom-button>
+
+</div>

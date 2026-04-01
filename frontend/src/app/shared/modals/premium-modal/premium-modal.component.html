@@ -1,0 +1,87 @@
+<ion-header class="page-header">
+  <ion-title class="header-title">Fonctionnalité Premium</ion-title>
+  <div class="header-spacer"></div>
+  <ion-buttons slot="end">
+    <ion-button (click)="dismiss()">
+      <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+    </ion-button>
+  </ion-buttons>
+</ion-header>
+
+<ion-content class="premium-modal-content" fullscreen="true" scrollY="true">
+
+  <!-- Hero Image -->
+  <div class="hero-image">
+    <img src="/assets/images/premium.jpg" alt="Premium" />
+    <div class="overlay"></div>
+    <div class="hero-text">
+      <h1>Débloquez le Premium</h1>
+      <p class="subtitle">Accédez à toutes les fonctionnalités exclusives<br>et tontines illimitées</p>
+    </div>
+  </div>
+
+  <div class="content-body">
+
+    <div class="benefits">
+      <p class="intro">Débloquez tout le potentiel de l’application, des tontines illimitées ainsi que des
+        fonctionnalités exclusives.</p>
+      <ul>
+        <li><ion-icon name="checkmark-circle"></ion-icon> Accès illimité aux tontines</li>
+        <li><ion-icon name="checkmark-circle"></ion-icon> Aucune publicité</li>
+        <li><ion-icon name="checkmark-circle"></ion-icon> Meilleure qualité et fonctionnalités exclusives</li>
+      </ul>
+    </div>
+
+    <!-- Options d'abonnement -->
+    <div class="pricing-options">
+
+      <!-- Annuel -->
+      <div class="price-card" [class.selected]="selectedPlan === 'annual'" (click)="selectPlan('annual')">
+        <div class="badge">50% off</div>
+        <div class="plan-header">
+          <ion-radio slot="start" [value]="'annual'"></ion-radio>
+          <div>
+            <p class="period">Annuel</p>
+            <p class="price">20 000 FCFA <span>/an</span></p>
+          </div>
+        </div>
+        <p class="description">Inclut toutes les fonctionnalités avancées</p>
+      </div>
+
+      <!-- Mensuel -->
+      <div class="price-card" [class.selected]="selectedPlan === 'monthly'" (click)="selectPlan('monthly')">
+        <div class="plan-header">
+          <ion-radio slot="start" [value]="'monthly'"></ion-radio>
+          <div>
+            <p class="period">Mensuel</p>
+            <p class="price">500 FCFA <span>/mois</span></p>
+          </div>
+        </div>
+        <p class="description">Inclut toutes les fonctionnalités avancées</p>
+      </div>
+
+      <!-- Premium (à vie ou annuel haut de gamme) -->
+      <div class="price-card" [class.selected]="selectedPlan === 'premium'" (click)="selectPlan('premium')">
+        <div class="plan-header">
+          <ion-radio slot="start" [value]="'premium'"></ion-radio>
+          <div>
+            <p class="period">Premium</p>
+            <p class="price">50 000 FCFA <span>/an</span></p>
+          </div>
+        </div>
+        <p class="description">Inclut toutes les fonctionnalités avancées</p>
+      </div>
+
+    </div>
+
+    <app-custom-button expand="block" fill="solid" color="primary" (clicked)="subscribe()">
+      S'abonner maintenant
+    </app-custom-button>
+
+    <p class="terms">
+      En souscrivant, vous acceptez nos <a href="#">Conditions d'utilisation</a> et <a href="#">Politique de
+        confidentialité</a>.<br>
+    </p>
+
+  </div>
+</ion-content>

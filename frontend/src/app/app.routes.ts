@@ -49,35 +49,42 @@ export const routes: Routes = [
       },
       {
         path: 'tontines',
-        loadComponent: () => import('./features/tontines/tontine/tontine.page').then(m => m.TontinePage),
+        loadComponent: () => import('./features/tontines/layout/layout.page').then(m => m.LayoutPage),
         children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/tontines/tontine/tontine.page').then(m => m.TontinePage),
+          },
           {
             path: 'create',
             loadComponent: () => import('./features/tontines/create/create.page').then(m => m.CreatePage),
           },
           {
+            path: ':id/success',
+            loadComponent: () => import('./features/tontines/success/success.page').then(m => m.SuccessPage)
+          },
+
+          {
             path: 'join',
-            loadComponent: () => import('./features/tontines/join/join.page').then(m => m.JoinPage)
+            loadComponent: () => import('./features/tontines/join/join.page').then(m => m.JoinPage),
           },
           {
-            path: 'overview',
-            loadComponent: () => import('./features/tontines/overview/overview.page').then(m => m.OverviewPage)
+            path: ':id/overview',
+            loadComponent: () => import('./features/tontines/overview/overview.page').then(m => m.OverviewPage),
           },
           {
-            path: 'flow',
-            loadComponent: () => import('./features/tontines/flow/flow.page').then(m => m.FlowPage)
+            path: ':id/flow',
+            loadComponent: () => import('./features/tontines/flow/flow.page').then(m => m.FlowPage),
           },
           {
-            path: 'history',
-            loadComponent: () => import('./features/tontines/history/history.page').then(m => m.HistoryPage)
+            path: ':id/history',
+            loadComponent: () => import('./features/tontines/history/history.page').then(m => m.HistoryPage),
           },
           {
-            path: 'settings',
-            loadComponent: () => import('./features/tontines/settings/settings.page').then(m => m.SettingsPage)
-          },
-
-        ],
-
+            path: ':id/settings',
+            loadComponent: () => import('./features/tontines/settings/settings.page').then(m => m.SettingsPage),
+          }
+        ]
       },
       {
         path: 'messages',
@@ -91,8 +98,12 @@ export const routes: Routes = [
       },
       {
         path: 'profile',
-        loadComponent: () => import('./features/profile/profile/profile.page').then(m => m.ProfilePage),
+        loadComponent: () => import('./features/profile/layout/layout.page').then(m => m.LayoutPage),
         children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/profile/profile/profile.page').then(m => m.ProfilePage),
+          },
           {
             path: 'help-center',
             loadComponent: () => import('./features/profile/help-center/help-center.page').then(m => m.HelpCenterPage)
@@ -115,7 +126,7 @@ export const routes: Routes = [
           },
         ]
       },
-      
+
       {
         path: '',
         redirectTo: 'dashboard',
@@ -123,18 +134,17 @@ export const routes: Routes = [
       }
     ]
   },
-  
+
   {
     path: 'subscription-list',
-    loadComponent: () => import('./features/subscription/subscription-list/subscription-list.page').then( m => m.SubscriptionListPage)
+    loadComponent: () => import('./features/subscription/subscription-list/subscription-list.page').then(m => m.SubscriptionListPage)
   },
   {
     path: 'premium',
-    loadComponent: () => import('./features/subscription/premium/premium.page').then( m => m.PremiumPage)
+    loadComponent: () => import('./features/subscription/premium/premium.page').then(m => m.PremiumPage)
   },
   {
     path: 'notification-page',
-    loadComponent: () => import('./features/notifications/notification-page/notification-page.page').then( m => m.NotificationPagePage)
+    loadComponent: () => import('./features/notifications/notification-page/notification-page.page').then(m => m.NotificationPagePage)
   },
-  
 ];

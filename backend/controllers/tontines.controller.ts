@@ -13,10 +13,7 @@ const generateInviteCode = (): string => {
     ).join('');
 };
 
-const getNextPaymentDate = (
-    frequency: string,
-    paymentDay?: number
-): Date => {
+const getNextPaymentDate = (frequency: string, paymentDay?: number): Date => {
     const now = new Date();
     switch (frequency) {
         case 'daily':
@@ -35,46 +32,32 @@ const getNextPaymentDate = (
 // ─────────────────────────────────────────────────────────────
 // POST /api/v1/tontines — CRÉER UNE TONTINE
 //
-// Changements vs v1 :
-//   - `emoji` supprimé → `iconUrl` (URL Firebase Storage, optionnel)
-//   - `rules` et `stats` intégrés dans le document principal
-//   - `totalTurns` calculé automatiquement
-//   - données créateur injectées dans la sous-collection members/
+// Changement clé : on écrit `tontineId` dans users/{uid}.tontineIds[]
+// via arrayUnion — plus besoin de collectionGroup sur members/
 // ─────────────────────────────────────────────────────────────
 export const createTontine = async (req: Request, res: Response) => {
     const uid = (req as any).user.uid;
 
     const {
-        // Écran 1 — Type
-        type,                    // 'rotative' | 'crescendo'
-
-        // Écran 2 — Infos de base
+        type,
         name,
         description,
-        iconUrl,                 // URL Firebase Storage (remplace emoji) — optionnel
-        visibility,              // 'private' | 'semi_public' | 'public'
-
-        // Écran 3 — Paramètres financiers
+        iconUrl,
+        visibility,
         amount,
-        frequency,               // 'daily' | 'weekly' | 'biweekly' | 'monthly'
+        frequency,
         paymentDay,
         totalMembers,
-
-        // Écran 4 — Ordre de rotation
-        rotationMethod,          // 'random' | 'seniority' | 'consensual' | 'manual'
-
-        // Écran 5 — Règles et pénalités
+        rotationMethod,
         gracePeriodDays,
-        penaltyType,             // 'percentage' | 'fixed'
+        penaltyType,
         penaltyValue,
         autoExclusionDays,
-        earlyExitAllowed,        // boolean
-        earlyExitPenaltyType,    // 'percentage' | 'fixed'
+        earlyExitAllowed,
+        earlyExitPenaltyType,
         earlyExitPenaltyValue,
-        modificationThreshold,   // 50 | 75 | 100
-
-        // Écran 6 — Sécurité
-        securityModel,           // 'escrow' | 'direct' | 'blocked_account' | 'solidarity'
+        modificationThreshold,
+        securityModel,
         guaranteeAmount,
     } = req.body;
 
@@ -83,28 +66,20 @@ export const createTontine = async (req: Request, res: Response) => {
 
     if (!['rotative', 'crescendo'].includes(type))
         errors.push('type invalide (rotative | crescendo)');
-
     if (!name || name.trim().length < 3)
         errors.push('nom requis (min 3 caractères)');
-
     if (!amount || isNaN(amount) || amount < 1000)
         errors.push('montant minimum : 1 000 FCFA');
-
     if (!['daily', 'weekly', 'biweekly', 'monthly'].includes(frequency))
         errors.push('fréquence invalide');
-
     if (!totalMembers || totalMembers < 2 || totalMembers > 50)
         errors.push('nombre de membres : entre 2 et 50');
-
     if (!['random', 'seniority', 'consensual', 'manual'].includes(rotationMethod))
         errors.push('ordre de rotation invalide');
-
     if (!['escrow', 'direct', 'blocked_account', 'solidarity'].includes(securityModel))
         errors.push('modèle de sécurité invalide');
-
     if (securityModel === 'solidarity' && (!guaranteeAmount || guaranteeAmount < 0))
         errors.push('montant de caution requis pour le modèle solidarité');
-
     if (iconUrl && !/^https?:\/\/.+/.test(iconUrl))
         errors.push('iconUrl invalide');
 
@@ -115,7 +90,6 @@ export const createTontine = async (req: Request, res: Response) => {
     let tontineId: string | null = null;
 
     try {
-        // Récupérer les infos du créateur pour les dénormaliser dans members/
         const creatorDoc = await db.collection('users').doc(uid).get();
         const creatorData = creatorDoc.data() ?? {};
 
@@ -130,21 +104,19 @@ export const createTontine = async (req: Request, res: Response) => {
         if (!existing.empty) inviteCode = generateInviteCode() + '1';
 
         const nextPaymentDate = getNextPaymentDate(frequency, paymentDay);
-        const totalTurns = Number(totalMembers); // 1 tour par membre
+        const totalTurns = Number(totalMembers);
 
         await db.runTransaction(async (transaction) => {
 
-            // 1. Document principal — règles et stats embarqués
+            // 1. Document principal de la tontine
             transaction.set(tontineRef, {
                 id: tontineId,
                 name: name.trim(),
                 description: description?.trim() ?? null,
-                iconUrl: iconUrl ?? null,          // ← photo, plus d'emoji
+                iconUrl: iconUrl ?? null,
                 type,
                 visibility: visibility ?? 'private',
                 status: 'pending',
-
-                // Financier
                 amount: Number(amount),
                 currency: 'XOF',
                 frequency,
@@ -152,21 +124,13 @@ export const createTontine = async (req: Request, res: Response) => {
                 totalMembers: Number(totalMembers),
                 currentMembers: 1,
                 potPerTurn: Number(amount) * Number(totalMembers),
-
-                // Rotation
                 rotationMethod,
                 currentTurn: 0,
                 totalTurns,
-
-                // Sécurité
                 securityModel,
                 guaranteeAmount: securityModel === 'solidarity' ? Number(guaranteeAmount) : null,
-
-                // Invitation
                 inviteCode,
                 inviteLink: `https://tontineplus.app/join/${inviteCode}`,
-
-                // ── Règles (embarquées) ─────────────────────
                 rules: {
                     gracePeriodDays: Number(gracePeriodDays ?? 0),
                     penaltyType: penaltyType ?? 'percentage',
@@ -178,16 +142,12 @@ export const createTontine = async (req: Request, res: Response) => {
                     modificationThreshold: modificationThreshold ? Number(modificationThreshold) : 75,
                     locked: modificationThreshold === 100,
                 },
-
-                // ── Statistiques initiales ──────────────────
                 stats: {
                     totalCollected: 0,
                     totalDistributed: 0,
                     onTimePaymentRate: 100,
                     averagePaymentDelay: 0,
                 },
-
-                // Méta
                 createdBy: uid,
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 startedAt: null,
@@ -195,7 +155,7 @@ export const createTontine = async (req: Request, res: Response) => {
                 nextPaymentDate: admin.firestore.Timestamp.fromDate(nextPaymentDate),
             });
 
-            // 2. Sous-collection members/ — créateur avec stats dénormalisées
+            // 2. Sous-collection members/ — données du créateur
             const memberRef = tontineRef.collection('members').doc(uid);
             transaction.set(memberRef, {
                 id: uid,
@@ -220,6 +180,13 @@ export const createTontine = async (req: Request, res: Response) => {
                     missedPayments: 0,
                     voteParticipation: 0,
                 },
+            });
+
+            // 3. ✅ NOUVEAU — on enregistre l'ID dans users/{uid}.tontineIds[]
+            //    arrayUnion évite les doublons et crée le champ s'il n'existe pas
+            const userRef = db.collection('users').doc(uid);
+            transaction.update(userRef, {
+                tontineIds: admin.firestore.FieldValue.arrayUnion(tontineId),
             });
         });
 
@@ -250,37 +217,44 @@ export const createTontine = async (req: Request, res: Response) => {
 
 // ─────────────────────────────────────────────────────────────
 // GET /api/v1/tontines — MES TONTINES
+//
+// Changement clé : on lit users/{uid}.tontineIds[] directement
+// Zéro collectionGroup, zéro index composite requis
 // ─────────────────────────────────────────────────────────────
 export const getMyTontines = async (req: Request, res: Response) => {
     const uid = (req as any).user.uid;
     const { status } = req.query;
 
     try {
-        const membershipsSnap = await db
-            .collectionGroup('members')
-            .where(admin.firestore.FieldPath.documentId(), '==', uid)
-            .get();
+        // 1. Lire la liste des IDs depuis le profil utilisateur
+        const userDoc = await db.collection('users').doc(uid).get();
 
-        if (membershipsSnap.empty) {
+        if (!userDoc.exists) {
+            return res.status(404).json({ success: false, error: 'Utilisateur introuvable' });
+        }
+
+        const tontineIds: string[] = userDoc.data()?.tontineIds ?? [];
+
+        if (tontineIds.length === 0) {
             return res.json({ success: true, data: [], count: 0 });
         }
 
-        const tontineIds = membershipsSnap.docs.map(
-            (d) => d.ref.parent.parent!.id
-        );
-
+        // 2. Récupérer les tontines en chunks de 30 (limite Firestore `in`)
         const chunks: string[][] = [];
         for (let i = 0; i < tontineIds.length; i += 30) {
             chunks.push(tontineIds.slice(i, i + 30));
         }
 
         const tontines: any[] = [];
+
         for (const chunk of chunks) {
             let query = db
                 .collection('tontines')
                 .where(admin.firestore.FieldPath.documentId(), 'in', chunk);
 
-            if (status) query = query.where('status', '==', status) as any;
+            if (status) {
+                query = query.where('status', '==', status) as any;
+            }
 
             const snap = await query.get();
             snap.docs.forEach((doc) => {
@@ -288,7 +262,15 @@ export const getMyTontines = async (req: Request, res: Response) => {
             });
         }
 
+        // 3. Trier par date de création décroissante (la plus récente en premier)
+        tontines.sort((a, b) => {
+            const dateA = a.createdAt?.toMillis?.() ?? 0;
+            const dateB = b.createdAt?.toMillis?.() ?? 0;
+            return dateB - dateA;
+        });
+
         return res.json({ success: true, data: tontines, count: tontines.length });
+
     } catch (err: any) {
         return res.status(500).json({ success: false, error: err.message });
     }
@@ -321,7 +303,7 @@ export const getTontineById = async (
         if (!memberDoc.exists) {
             return res.status(403).json({
                 success: false,
-                error: 'Accès refusé — vous n\'êtes pas membre de cette tontine',
+                error: "Accès refusé — vous n'êtes pas membre de cette tontine",
             });
         }
 
@@ -329,7 +311,7 @@ export const getTontineById = async (
             success: true,
             data: {
                 id: tontineDoc.id,
-                ...tontineDoc.data(),   // rules et stats sont désormais embarqués
+                ...tontineDoc.data(),
                 myRole: memberDoc.data()?.role,
                 myTurnNumber: memberDoc.data()?.turnNumber,
                 myStats: memberDoc.data()?.stats,
@@ -352,7 +334,6 @@ export const updateTontine = async (
 
     if (!id) return res.status(400).json({ success: false, error: 'ID requis' });
 
-    // iconUrl remplace emoji dans les champs modifiables
     const ALLOWED_FIELDS = [
         'name', 'description', 'iconUrl', 'visibility',
         'amount', 'frequency', 'paymentDay', 'totalMembers',
@@ -414,6 +395,8 @@ export const updateTontine = async (
 
 // ─────────────────────────────────────────────────────────────
 // DELETE /api/v1/tontines/:id — SUPPRIMER UNE TONTINE
+//
+// Changement clé : on retire aussi l'ID de users/{uid}.tontineIds[]
 // ─────────────────────────────────────────────────────────────
 export const deleteTontine = async (
     req: Request<{ id: string }>,
@@ -447,16 +430,34 @@ export const deleteTontine = async (
             });
         }
 
+        // 1. Récupérer tous les membres pour nettoyer leurs tontineIds[]
+        const membersSnap = await db
+            .collection('tontines').doc(id)
+            .collection('members')
+            .get();
+
+        const memberUids = membersSnap.docs.map((d) => d.id);
+
         const batch = db.batch();
 
+        // 2. Supprimer les sous-collections
         const subcollections = ['members', 'chat'];
         for (const sub of subcollections) {
             const snap = await db.collection('tontines').doc(id).collection(sub).get();
             snap.docs.forEach((doc) => batch.delete(doc.ref));
         }
 
-        // rules est désormais embarqué dans le document — plus de sous-collection rules/
+        // 3. Supprimer le document tontine
         batch.delete(db.collection('tontines').doc(id));
+
+        // 4. ✅ NOUVEAU — retirer l'ID de tontineIds[] pour chaque membre
+        for (const memberUid of memberUids) {
+            const userRef = db.collection('users').doc(memberUid);
+            batch.update(userRef, {
+                tontineIds: admin.firestore.FieldValue.arrayRemove(id),
+            });
+        }
+
         await batch.commit();
 
         return res.json({ success: true, message: 'Tontine supprimée avec succès' });
@@ -488,7 +489,8 @@ export const getTontineInvite = async (
 
         const memberDoc = await db
             .collection('tontines').doc(id)
-            .collection('members').doc(uid).get();
+            .collection('members').doc(uid)
+            .get();
 
         if (!memberDoc.exists) {
             return res.status(403).json({ success: false, error: 'Accès refusé' });

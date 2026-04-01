@@ -19,6 +19,15 @@ export class StateScreenComponent {
   @Input() buttonText: string = '';
   @Input() secondaryText: string = '';
 
+  @Input() showSecondaryButton = false;
+  @Input() secondaryButtonText = '';
+  @Input() secondaryButtonFill: 'solid' | 'outline' = 'outline';
+
+  @Input() showDivider = false;          
+  @Input() dividerText = 'Ou';
+
+  @Output() secondaryButtonClick = new EventEmitter<void>();
+
   @Output() buttonClick = new EventEmitter<void>();
   @Output() secondaryClick = new EventEmitter<void>();
 
@@ -39,5 +48,9 @@ export class StateScreenComponent {
 
   onSecondaryClick() {
     this.secondaryClick.emit();
+  }
+
+  onSecondaryButtonClick() {
+    this.secondaryButtonClick.emit();
   }
 }

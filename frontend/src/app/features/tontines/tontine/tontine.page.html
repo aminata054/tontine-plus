@@ -1,13 +1,147 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>tontine</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content [fullscreen]="true" class="overview-content">
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">tontine</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- ═══════════════════════════════════════
+       HEADER
+  ═══════════════════════════════════════ -->
+  <div class="ov-header">
+    <div class="ov-header__avatar" (click)="goToProfile()">
+      <img *ngIf="user?.photoUrl" [src]="user?.photoUrl" class="ov-header__avatar-img" alt="avatar" />
+      <div *ngIf="!user?.photoUrl" class="ov-header__avatar-placeholder">
+        {{ getInitials() }}
+      </div>
+    </div>
+
+    <h1 class="ov-header__title">Tontine</h1>
+
+    <button class="ov-header__help" (click)="openHelp()">
+      <ion-icon name="help-circle-outline"></ion-icon>
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       SEARCHBAR
+  ═══════════════════════════════════════ -->
+  
+  <div class="ov-search">
+    <app-custom-input placeholder="Rechercher..." [value]="searchQuery" (input)="onSearch($event)" fill="outline"
+      >    
+    </app-custom-input>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       ACTIONS RAPIDES
+  ═══════════════════════════════════════ -->
+  <div class="ov-actions">
+    <h2 class="ov-section-title">Actions rapides</h2>
+
+    <app-custom-button color="primary" expand="block"
+      (click)="createTontine()"> Créer une tontine
+    </app-custom-button>
+
+    <div class="ov-divider"><span>Ou</span></div>
+
+    <app-custom-button color="secondary" expand="block" fill="outline"
+      (click)="joinTontine()"> Rejoindre une tontine
+    </app-custom-button>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       MES TONTINES
+  ═══════════════════════════════════════ -->
+  <div class="ov-tontines">
+    <h2 class="ov-section-title">Mes tontines</h2>
+
+    <!-- SKELETON -->
+    <ng-container *ngIf="isLoading">
+      <div class="ov-card ov-card--skeleton" *ngFor="let s of skeletons">
+        <div class="ov-card__left">
+          <ion-skeleton-text animated style="width:48px;height:48px;border-radius:12px;"></ion-skeleton-text>
+        </div>
+        <div class="ov-card__body">
+          <ion-skeleton-text animated
+            style="width:60%;height:14px;border-radius:6px;margin-bottom:8px;"></ion-skeleton-text>
+          <ion-skeleton-text animated
+            style="width:40%;height:12px;border-radius:6px;margin-bottom:8px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width:100%;height:4px;border-radius:4px;"></ion-skeleton-text>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ERREUR -->
+    <div *ngIf="hasError && !isLoading" class="ov-state">
+      <ion-icon name="alert-circle-outline" class="ov-state__icon ov-state__icon--error"></ion-icon>
+      <p class="ov-state__title">Une erreur est survenue</p>
+      <p class="ov-state__sub">Vérifiez votre connexion et réessayez.</p>
+      <button class="ov-btn ov-btn--outline ov-btn--sm" (click)="loadTontines()">Réessayer</button>
+    </div>
+
+    <!-- ÉTAT VIDE -->
+    <div *ngIf="isEmpty" class="ov-state">
+      <div class="ov-state__illus">
+        <ion-icon name="wallet-outline"></ion-icon>
+      </div>
+      <p class="ov-state__title">Aucune tontine</p>
+      <p class="ov-state__sub">Vous n'avez aucune tontine en cours.<br>Commencez par en créer ou en rejoindre une.</p>
+    </div>
+
+    <!-- LISTE -->
+    <ng-container *ngIf="!isLoading && !hasError && hasTontines">
+      <div class="ov-card" *ngFor="let t of filteredTontines" (click)="openTontine(t)">
+
+        <!-- Icône / Photo -->
+        <div class="ov-card__icon">
+          <img *ngIf="t.iconUrl" [src]="t.iconUrl" [alt]="t.name" (error)="onImageError(t)" />
+          <ion-icon *ngIf="!t.iconUrl" name="people-circle-outline"></ion-icon>
+        </div>
+
+        <!-- Contenu -->
+        <div class="ov-card__body">
+          <div class="ov-card__row ov-card__row--top">
+            <span class="ov-card__name">{{ t.name }}</span>
+            <span class="ov-badge ov-badge--{{ statusColor(t.status) }}">
+              {{ statusLabel(t.status) }}
+            </span>
+          </div>
+
+          <div class="ov-card__row ov-card__row--meta">
+            <span class="ov-card__meta-label">Gain :</span>
+            <span class="ov-card__gain">{{ t.potPerTurn | number }} FCFA</span>
+            <span class="ov-card__sep">·</span>
+            <span class="ov-card__meta-label">Cotisation :</span>
+            <span class="ov-card__cotis">{{ t.amount | number }} FCFA</span>
+          </div>
+
+          <div class="ov-card__row ov-card__row--date">
+            <ion-icon name="calendar-outline" class="ov-card__date-icon"></ion-icon>
+            <span class="ov-card__date-label">
+              Prochaine distribution :
+              <ng-container *ngIf="t.status !== 'completed'">{{ nextDate(t) }}</ng-container>
+              <ng-container *ngIf="t.status === 'completed'">Terminée</ng-container>
+            </span>
+          </div>
+
+          <div class="ov-progress">
+            <div class="ov-progress__bar" [style.width.%]="progress(t)"></div>
+          </div>
+
+          <div class="ov-card__row ov-card__row--members">
+            <ion-icon name="person-outline" class="ov-card__date-icon"></ion-icon>
+            <span class="ov-card__members">{{ t.currentMembers }}/{{ t.totalMembers }} membres</span>
+          </div>
+        </div>
+
+        <ion-icon name="chevron-forward-outline" class="ov-card__chevron"></ion-icon>
+      </div>
+
+      <div *ngIf="filteredTontines.length === 0 && searchQuery" class="ov-state ov-state--inline">
+        <p class="ov-state__sub">Aucune tontine ne correspond à "<strong>{{ searchQuery }}</strong>"</p>
+      </div>
+    </ng-container>
+  </div>
+
 </ion-content>
+

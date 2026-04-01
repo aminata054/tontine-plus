@@ -1,0 +1,417 @@
+:host {
+    --text-mid: #4A5568;
+    --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.08);
+
+    // Statut
+    --badge-success-bg: #E8F5E9;
+    --badge-warning-bg: #FFF8E1;
+    --badge-warning-color: #F57F17;
+    --badge-medium-bg: #ECEFF1;
+    --badge-medium-color: #546E7A;
+    --badge-danger-bg: #FFEBEE;
+}
+
+// ─── Content ───────────────────────────────────────────────
+
+.overview-content {
+    --background: var(--ion-background-color);
+    --padding-bottom: 80px;
+}
+
+// ─── Header ────────────────────────────────────────────────
+
+.ov-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 56px 20px 16px;
+    background: var(--ion-background-color, #fff);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+
+    &__title {
+        font-size: 20px;
+        font-family: var(--ion-font-poppins, 'Poppins', sans-serif);
+        font-weight: 700;
+        color: var(--ion-color-text, var(--ion-text-color));
+        margin: 0;
+    }
+
+    &__avatar {
+        width: 42px;
+        height: 42px;
+        cursor: pointer;
+    }
+
+    &__avatar-img {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--ion-color-primary);
+    }
+
+    &__avatar-placeholder {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: var(--ion-color-primary);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        font-family: var(--ion-font-poppins, 'Poppins', sans-serif);
+        border: 2px solid var(--ion-color-primary-light, #5288C5);
+    }
+
+    &__help {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: transparent;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+
+        ion-icon {
+            font-size: 22px;
+            color: var(--text-mid);
+        }
+    }
+}
+
+// ─── Searchbar ─────────────────────────────────────────────
+
+.ov-search {
+    padding: 12px 16px 4px;
+    background: var(--ion-background-color, #fff);
+}
+
+// ─── Section title ──────────────────────────────────────────
+
+.ov-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    font-family: var(--ion-font-poppins, 'Poppins', sans-serif);
+    color: var(--ion-text-color);
+    margin: 0 0 14px;
+}
+
+// ─── Actions rapides ───────────────────────────────────────
+
+.ov-actions {
+    padding: 20px 20px 0;
+    background: var(--ion-background-color, #fff);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    padding-bottom: 20px;
+}
+
+.ov-btn {
+    display: block;
+    width: 100%;
+    padding: 15px 24px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: var(--ion-font-poppins, 'Poppins', sans-serif);
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+    border: none;
+    text-align: center;
+
+    &:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+
+    &--primary {
+        background: var(--ion-color-primary, #1565C0);
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(21, 101, 192, 0.3);
+    }
+
+    &--outline {
+        background: transparent;
+        color: var(--ion-color-primary, #1565C0);
+        border: 1.5px solid var(--ion-color-primary, #1565C0);
+    }
+
+    &--sm {
+        padding: 10px 20px;
+        font-size: 13px;
+        width: auto;
+        display: inline-block;
+        margin-top: 12px;
+    }
+}
+
+.ov-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 14px 0;
+    color: var(--ion-text-gray);
+    font-size: 13px;
+
+    &::before,
+    &::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(0, 0, 0, 0.08);
+    }
+}
+
+// ─── Tontines section ──────────────────────────────────────
+
+.ov-tontines {
+    padding: 20px 20px 0;
+}
+
+// ─── Card ──────────────────────────────────────────────────
+
+.ov-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--ion-background-color);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-soft);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:active {
+        transform: scale(0.98);
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    &--skeleton {
+        cursor: default;
+
+        &:active {
+            transform: none;
+        }
+    }
+
+    // Icône / image
+    &__icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        background: #EEF2FF;
+        flex-shrink: 0;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        ion-icon {
+            font-size: 28px;
+            color: var(--ion-color-primary, #1565C0);
+        }
+    }
+
+    // Body
+    &__body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: wrap;
+
+        &--top {
+            justify-content: space-between;
+            margin-bottom: 4px;
+            flex-wrap: nowrap;
+        }
+
+        &--meta {
+            margin-bottom: 5px;
+        }
+
+        &--date {
+            margin-bottom: 6px;
+        }
+
+        &--members {
+            margin-top: 6px;
+        }
+    }
+
+    &__name {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--ion-text-color);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 160px;
+    }
+
+    &__gain {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--ion-color-primary, #1565C0);
+    }
+
+    &__cotis {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-mid);
+    }
+
+    &__meta-label {
+        font-size: 11px;
+        color: var(--ion-text-gray);
+    }
+
+    &__sep {
+        font-size: 11px;
+        color: var(--ion-text-gray);
+    }
+
+    &__date-icon {
+        font-size: 12px;
+        color: var(--ion-text-gray);
+        flex-shrink: 0;
+    }
+
+    &__date-label {
+        font-size: 11px;
+        color: var(--text-mid);
+    }
+
+    &__members {
+        font-size: 11px;
+        color: var(--ion-text-gray);
+    }
+
+    &__chevron {
+        font-size: 16px;
+        color: var(--ion-text-gray);
+        flex-shrink: 0;
+    }
+
+    // skeleton left placeholder
+    &__left {
+        flex-shrink: 0;
+    }
+}
+
+// ─── Barre de progression ──────────────────────────────────
+
+.ov-progress {
+    height: 4px;
+    border-radius: 99px;
+    background: #E8EAF6;
+    overflow: hidden;
+
+    &__bar {
+        height: 100%;
+        border-radius: 99px;
+        background: var(--ion-color-primary, #1565C0);
+        transition: width 0.4s ease;
+    }
+}
+
+// ─── Badges de statut ──────────────────────────────────────
+
+.ov-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+
+    &--success {
+        background: var(--badge-success-bg);
+        color: var(--ion-color-success);
+    }
+
+    &--warning {
+        background: var(--badge-warning-bg);
+        color: var(--badge-warning-color);
+    }
+
+    &--medium {
+        background: var(--badge-medium-bg);
+        color: var(--badge-medium-color);
+    }
+
+    &--danger {
+        background: var(--badge-danger-bg);
+        color: var(--ion-color-danger);
+    }
+}
+
+// ─── État vide / erreur ────────────────────────────────────
+
+.ov-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    text-align: center;
+
+    &--inline {
+        padding: 24px;
+    }
+
+    &__illus {
+        width: 80px;
+        height: 80px;
+        border-radius: 24px;
+        background: #EEF2FF;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+
+        ion-icon {
+            font-size: 40px;
+            color: var(--ion-color-primary, #1565C0);
+            opacity: 0.6;
+        }
+    }
+
+    &__icon {
+        font-size: 52px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+
+        &--error {
+            color: #E53935;
+        }
+    }
+
+    &__title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ion-text-color);
+        margin: 0 0 8px;
+    }
+
+    &__sub {
+        font-size: 13px;
+        color: var(--ion-text-gray);
+        line-height: 1.6;
+        margin: 0;
+    }
+}

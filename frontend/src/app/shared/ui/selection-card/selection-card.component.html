@@ -1,4 +1,5 @@
-<ion-card class="selection-card" [class.selected]="selected" (click)="onSelect()">
+<ion-card class="selection-card" [class.selected]="selected" [class.locked]="locked" [class.premium]="premium"
+  (click)="onCardClick()">
 
   <div class="card-content">
     <div class="radio">
@@ -15,7 +16,13 @@
         </span>
       </div>
       <p class="description">{{ description }}</p>
-      <small class="note">{{ note }}</small>
+      <small *ngIf="note" class="note">{{ note }}</small>
     </div>
+  </div>
+
+  <!-- Badge Premium / Locked -->
+  <div *ngIf="premium || locked" class="premium-badge">
+    <ion-icon src="assets/icon/premium.svg" *ngIf="locked"></ion-icon>
+    <span *ngIf="premium && !locked">Premium</span>
   </div>
 </ion-card>

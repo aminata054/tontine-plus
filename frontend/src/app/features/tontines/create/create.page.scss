@@ -1,0 +1,740 @@
+:host {
+    --primary: var(--ion-color-primary, #1A3A8F);
+    --primary-light: var(--ion-color-primary-light, #2952C8);
+    --text-dark: #0D1B2A;
+    --text-mid: #4A5568;
+    --text-light: #9AA5B4;
+    --border: #E2E8F0;
+    --bg: #F7F9FC;
+    --card-bg: #FFFFFF;
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+    --shadow-md: 0 4px 20px rgba(26, 58, 143, 0.14);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --tab-bar-height: 68px;
+}
+
+// ─── Content ───────────────────────────────────────────────
+
+.create-content {
+    --background: var(--bg);
+    --padding-bottom: 0;
+}
+
+// ─── Wrapper ────────────────────────────────────────────────
+
+.cr-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    padding-bottom: 0;
+}
+
+// ─── Step container ─────────────────────────────────────────
+
+.cr-step {
+    flex: 1;
+    padding: 24px 20px 0;
+    overflow-y: auto;
+
+    &__title {
+        font-size: 20px;
+        font-weight: 700;
+        font-family: var(--ion-font-poppins, 'Poppins', sans-serif);
+        color: var(--text-dark);
+        margin: 0 0 20px;
+    }
+
+    &__sub {
+        font-size: 13px;
+        color: var(--text-mid);
+        margin: -12px 0 16px;
+
+        &--accent {
+            color: #E53935;
+            font-style: italic;
+        }
+    }
+}
+
+// ─── Fields ─────────────────────────────────────────────────
+// (les inputs eux-mêmes sont gérés par app-custom-input)
+
+.cr-field {
+    margin-bottom: 16px;
+    position: relative;
+
+    &__label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-mid);
+        margin: 0 0 8px;
+    }
+
+    &__hint {
+        display: block;
+        font-size: 12px;
+        color: var(--text-mid);
+        margin-top: 6px;
+    }
+}
+
+// ─── Select / Dropdown ──────────────────────────────────────
+
+.cr-select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-dark);
+
+    &__placeholder {
+        color: var(--text-light);
+    }
+
+    &__arrow {
+        font-size: 16px;
+        color: var(--text-light);
+        transition: transform 0.2s;
+        flex-shrink: 0;
+
+        &--open {
+            transform: rotate(90deg);
+        }
+    }
+}
+
+.cr-dropdown {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-top: 4px;
+
+    &__item {
+        padding: 13px 16px;
+        font-size: 14px;
+        color: var(--text-dark);
+        cursor: pointer;
+        border-bottom: 1px solid var(--border);
+        transition: background 0.15s;
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        &:active {
+            background: var(--bg);
+        }
+    }
+}
+
+// ─── Icon picker ────────────────────────────────────────────
+
+.cr-icon-picker {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    border: 2px dashed var(--border);
+    background: var(--bg);
+    margin: 0 auto 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+
+    &__img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 18px;
+    }
+
+    &__placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        ion-icon {
+            font-size: 32px;
+            color: var(--text-light);
+        }
+    }
+
+    &__edit {
+        position: absolute;
+        bottom: -8px;
+        right: -8px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+
+        ion-icon {
+            font-size: 14px;
+            color: #fff;
+        }
+    }
+}
+
+// ─── Quick amounts ──────────────────────────────────────────
+
+.cr-quick-amounts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.cr-quick-btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--card-bg);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-mid);
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &--active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #fff;
+    }
+}
+
+// ─── Day grid ───────────────────────────────────────────────
+
+.cr-day-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.cr-day-btn {
+    width: calc((100% - 48px) / 4);
+    padding: 10px 0;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--card-bg);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-mid);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+
+    &--active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #fff;
+    }
+}
+
+// ─── Lists (rotation / security) ────────────────────────────
+// Seul le layout de la liste — les cartes sont gérées par app-selection-card
+
+.cr-rotation-list,
+.cr-security-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+// Champ extra dans la carte sécurité solidarity
+.cr-security-extra {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+// ─── Rules section ──────────────────────────────────────────
+
+.cr-rules-section {
+    margin-bottom: 22px;
+}
+
+.cr-rules-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0 0 10px;
+}
+
+.cr-rules-hint {
+    font-size: 11px;
+    color: var(--text-light);
+    margin: 6px 0 0;
+}
+
+.cr-chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cr-chip {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--card-bg);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-mid);
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &--active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #fff;
+    }
+}
+
+.cr-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-mid);
+    cursor: pointer;
+    margin-bottom: 8px;
+}
+
+.cr-radio {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    transition: all 0.2s;
+
+    &--on {
+        border-color: var(--primary);
+        background: var(--primary);
+        box-shadow: inset 0 0 0 3px #fff;
+    }
+}
+
+.cr-penalty-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.cr-fixed-penalty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    &__unit {
+        font-size: 12px;
+        color: var(--text-mid);
+        white-space: nowrap;
+    }
+}
+
+// ─── Récapitulatif ──────────────────────────────────────────
+
+.cr-recap-hero {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 14px;
+    box-shadow: var(--shadow);
+
+    &__icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        background: #EEF2FF;
+        flex-shrink: 0;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        ion-icon {
+            font-size: 28px;
+            color: var(--primary);
+        }
+    }
+
+    &__name {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0 0 4px;
+    }
+
+    &__meta {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        color: var(--text-mid);
+
+        ion-icon {
+            font-size: 13px;
+        }
+    }
+}
+
+.cr-dot {
+    opacity: 0.4;
+}
+
+.cr-recap-grid {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+
+.cr-recap-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 16px;
+
+    &__label {
+        font-size: 12px;
+        color: var(--text-light);
+    }
+
+    &__value {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-dark);
+
+        &--bold {
+            font-weight: 700;
+        }
+
+        &--primary {
+            color: var(--primary);
+            font-weight: 700;
+        }
+    }
+}
+
+.cr-recap-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+}
+
+.cr-confirm-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.cr-confirm-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--text-mid);
+    line-height: 1.5;
+    cursor: pointer;
+
+    strong.cr-link {
+        color: var(--primary);
+    }
+}
+
+.cr-checkbox {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-top: 1px;
+
+    &--on {
+        border-color: var(--primary);
+        background: var(--primary);
+
+        ion-icon {
+            font-size: 14px;
+            color: #fff;
+        }
+    }
+}
+
+// ─── Footer bouton ──────────────────────────────────────────
+// padding-bottom = hauteur tab bar + safe area pour ne pas être masqué
+
+.cr-footer {
+    padding: 16px 20px;
+    // 68px (tab bar) + 16px (espace interne) + safe-area
+    padding-bottom: calc(var(--tab-bar-height) + 16px + env(safe-area-inset-bottom));
+    background: #fff;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    position: sticky;
+    bottom: 0;
+}
+
+.cr-btn--half {
+    flex: 1;
+}
+
+// ─── Résultat ───────────────────────────────────────────────
+
+.cr-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    padding: 40px 32px;
+
+    &__success,
+    &__error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        width: 100%;
+    }
+
+    &__icon {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 24px;
+
+        ion-icon {
+            font-size: 52px;
+        }
+
+        &--success {
+            background: #E8F5E9;
+
+            ion-icon {
+                color: #2E7D32;
+            }
+        }
+
+        &--error {
+            background: #FFEBEE;
+
+            ion-icon {
+                color: #C62828;
+            }
+        }
+    }
+
+    &__title {
+        font-size: 22px;
+        font-weight: 700;
+        font-family: var(--ion-font-poppins, 'Poppins', sans-serif);
+        color: var(--text-dark);
+        margin: 0 0 10px;
+    }
+
+    &__sub {
+        font-size: 13px;
+        color: var(--text-mid);
+        line-height: 1.6;
+        margin: 0 0 28px;
+    }
+
+    &__back-link {
+        background: none;
+        border: none;
+        color: var(--primary);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 8px;
+        padding: 8px;
+    }
+}
+
+.cr-divider-or {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    color: var(--text-light);
+    font-size: 13px;
+    margin: 4px 0 12px;
+
+    &::before,
+    &::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+    }
+}
+
+// ─── Overlay / Panels ────────────────────────────────────────
+
+.cr-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.cr-panel {
+    background: #fff;
+    border-radius: 24px 24px 0 0;
+    padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
+    width: 100%;
+    max-width: 480px;
+    animation: slideUp 0.25s ease;
+
+    &__close {
+        display: block;
+        margin: 0 auto 16px;
+        background: none;
+        border: none;
+        cursor: pointer;
+
+        ion-icon {
+            font-size: 24px;
+            color: var(--text-mid);
+        }
+    }
+
+    &__title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0 0 16px;
+        text-align: center;
+    }
+
+    &__hint {
+        font-size: 12px;
+        color: var(--text-mid);
+        text-align: center;
+        margin: 0 0 20px;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+// QR
+.cr-qr-img {
+    display: block;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 20px;
+    border-radius: 12px;
+}
+
+// Partage lien
+.cr-share-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+
+    &__url {
+        flex: 1;
+        font-size: 12px;
+        color: var(--text-mid);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__copy {
+        background: none;
+        border: none;
+        color: var(--primary);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+}
+
+.cr-share-apps {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.cr-share-app {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--card-bg);
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s;
+
+    &:active {
+        transform: scale(0.92);
+    }
+}

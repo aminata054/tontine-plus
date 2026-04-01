@@ -25,6 +25,5 @@ export class CustomButtonComponent {
     if (this.disabled || this.loading) return;
 
     this.clicked.emit();
-    console.log('Custom Button clicked!');
   }
 }

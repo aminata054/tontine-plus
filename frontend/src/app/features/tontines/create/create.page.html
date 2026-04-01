@@ -1,13 +1,381 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>create</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content [fullscreen]="true" class="create-content">
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">create</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <!-- ══════════════════════════════════════════════════
+       ÉTAPES 1–7 : wrapper principal
+  ══════════════════════════════════════════════════ -->
+  <div class="cr-wrapper" *ngIf="currentStep <= 7">
+
+    <!-- Header-->
+    <app-page-header title="Tontine"></app-page-header>
+
+    <!-- Stepper-->
+    <app-step-indicator [currentStep]="currentStep" [totalSteps]="TOTAL_STEPS"></app-step-indicator>
+
+    <!-- ─────────────────────────────────────────────────
+         ÉTAPE 1 — Type de tontine
+    ───────────────────────────────────────────────── -->
+    <div class="cr-step" *ngIf="currentStep === 1">
+      <h2 class="cr-step__title">Type de tontine</h2>
+
+      <div class="cr-type-list">
+        <app-selection-card *ngFor="let t of typeOptions" [title]="t.label" [description]="t.description"
+          [premium]="t.premium" [selected]="selectedType === t.value" (cardClick)="selectType(t.value)" (premiumClick)="openPremiumModal(t.label, t.description)">
+        </app-selection-card>
+
+        <!-- Carte Épargne objectif (Premium) -->
+        <app-selection-card title="Épargne objectif"
+          description="Chaque membre verse un montant déterminé, et l'un des cotisants, à tour de rôle, reçoit l'ensemble des cotisations de cette fois."
+          [premium]="true" [locked]="true"
+          (premiumClick)="openPremiumModal('Épargne objectif', 'Chaque membre verse un montant déterminé, et l\'un des cotisants, à tour de rôle, reçoit l\'ensemble des cotisations de cette fois.')">
+        </app-selection-card>
+        
+        <!-- Carte Solidarité (Premium) -->
+        <app-selection-card title="Solidarité"
+          description="Chaque membre verse un montant déterminé, et l'un des cotisants, à tour de rôle, reçoit l'ensemble des cotisations de cette fois."
+          [premium]="true" [locked]="true"
+          (premiumClick)="openPremiumModal('Solidarité', 'Chaque membre verse un montant déterminé, et l\'un des cotisants, à tour de rôle, reçoit l\'ensemble des cotisations de cette fois.')">
+        </app-selection-card>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────
+         ÉTAPE 2 — Informations de base
+    ───────────────────────────────────────────────── -->
+    <div class="cr-step" *ngIf="currentStep === 2">
+      <h2 class="cr-step__title">Informations de base</h2>
+
+      <!-- Photo -->
+      <div class="cr-icon-picker" (click)="onIconPick()">
+        <img *ngIf="iconPreviewUrl" [src]="iconPreviewUrl" class="cr-icon-picker__img" />
+        <div *ngIf="!iconPreviewUrl" class="cr-icon-picker__placeholder">
+          <ion-icon name="image-outline"></ion-icon>
+        </div>
+        <div class="cr-icon-picker__edit">
+          <ion-icon name="pencil-outline"></ion-icon>
+        </div>
+      </div>
+
+      <!-- Nom  -->
+      <app-custom-input [value]="step2Form.get('name')?.value"
+        (valueChange)="step2Form.get('name')!.setValue($event); step2Form.get('name')!.markAsTouched()"
+        placeholder="Nom de la tontine" type="text"
+        [errorMessage]="step2Form.get('name')?.invalid && step2Form.get('name')?.touched ? 'Minimum 3 caractères' : ''">
+      </app-custom-input>
+
+      <!-- Description -->
+      <app-custom-input [value]="step2Form.get('description')?.value"
+        (valueChange)="step2Form.get('description')!.setValue($event)" placeholder="Description" type="textarea">
+      </app-custom-input>
+
+      <!-- Visibilité -->
+      <div class="cr-field">
+        <div class="cr-select" (click)="showVisibilityDropdown = !showVisibilityDropdown">
+          <span [class.cr-select__placeholder]="!selectedVisibility">
+            {{ getVisibilityLabel() }}
+          </span>
+          <ion-icon name="chevron-forward-outline" class="cr-select__arrow"
+            [class.cr-select__arrow--open]="showVisibilityDropdown">
+          </ion-icon>
+        </div>
+        <div class="cr-dropdown" *ngIf="showVisibilityDropdown">
+          <div class="cr-dropdown__item" *ngFor="let v of visibilityOptions" (click)="selectVisibility(v.value)">
+            {{ v.label }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────
+         ÉTAPE 3 — Paramètres financiers
+    ───────────────────────────────────────────────── -->
+    <div class="cr-step" *ngIf="currentStep === 3">
+      <h2 class="cr-step__title">Paramètres financiers</h2>
+
+      <!-- Montant -->
+      <app-custom-input [value]="step3Form.get('amount')?.value"
+        (valueChange)="step3Form.get('amount')!.setValue(+$event)" placeholder="Montant de la cotisation" type="number">
+      </app-custom-input>
+
+      <!-- Montants rapides -->
+      <div class="cr-quick-amounts">
+        <button class="cr-quick-btn" *ngFor="let a of quickAmounts"
+          [class.cr-quick-btn--active]="step3Form.value.amount === a" (click)="selectQuickAmount(a)">
+          {{ formatAmount(a) }} FCFA
+        </button>
+      </div>
+
+      <!-- Fréquence -->
+      <div class="cr-field">
+        <div class="cr-select" (click)="showFrequencyDropdown = !showFrequencyDropdown">
+          <span [class.cr-select__placeholder]="!selectedFrequency">
+            {{ getFrequencyLabel() }}
+          </span>
+          <ion-icon name="chevron-forward-outline" class="cr-select__arrow"
+            [class.cr-select__arrow--open]="showFrequencyDropdown">
+          </ion-icon>
+        </div>
+        <div class="cr-dropdown" *ngIf="showFrequencyDropdown">
+          <div class="cr-dropdown__item" *ngFor="let f of frequencies" (click)="selectFrequency(f.value)">
+            {{ f.label }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Jour de cotisation (weekly) -->
+      <div class="cr-field" *ngIf="showDayPicker">
+        <p class="cr-field__label">Choisir le jour de cotisation</p>
+        <div class="cr-day-grid">
+          <button class="cr-day-btn" *ngFor="let d of weekDays"
+            [class.cr-day-btn--active]="selectedPaymentDay === d.value" (click)="selectPaymentDay(d.value)">
+            {{ d.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Nombre de membres -->
+      <app-custom-input [value]="step3Form.get('totalMembers')?.value"
+        (valueChange)="step3Form.get('totalMembers')!.setValue(+$event)" placeholder="Nombre de membres" type="number">
+      </app-custom-input>
+
+      <span class="cr-field__hint" *ngIf="potPerTurn > 0">
+        Pot par tour : <strong>{{ formatAmount(potPerTurn) }} FCFA</strong>
+      </span>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────
+         ÉTAPE 4 — Ordre de rotation
+    ───────────────────────────────────────────────── -->
+    <div class="cr-step" *ngIf="currentStep === 4">
+      <h2 class="cr-step__title">Ordre de rotation</h2>
+
+      <div class="cr-rotation-list">
+        <app-selection-card *ngFor="let r of rotationOptions" [title]="r.label" [description]="r.description"
+          [note]="r.badge" [premium]="r.premium" [locked]="r.premium" (premiumClick)="openPremiumModal(r.label, r.description)"
+          [selected]="selectedRotation === r.value && !r.premium" (cardClick)="!r.premium && selectRotation(r.value)">
+        </app-selection-card>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────
+         ÉTAPE 5 — Règles et pénalités
+    ───────────────────────────────────────────────── -->
+    <div class="cr-step cr-step--rules" *ngIf="currentStep === 5">
+      <h2 class="cr-step__title">Règles et pénalités</h2>
+
+      <!-- Délai de grâce -->
+      <div class="cr-rules-section">
+        <p class="cr-rules-label">Délai de grâce après la date limite</p>
+        <div class="cr-chip-grid">
+          <button class="cr-chip" *ngFor="let g of gracePeriodOptions"
+            [class.cr-chip--active]="selectedGracePeriod === g" (click)="selectGrace(g)">
+            {{ g === 0 ? '0 jour' : g + ' jours' }}
+          </button>
+        </div>
+        <p class="cr-rules-hint">ⓘ Période sans pénalité après la date limite</p>
+      </div>
+
+      <!-- Pénalité par retard -->
+      <div class="cr-rules-section">
+        <p class="cr-rules-label">Pénalité par jour de retard</p>
+
+        <div class="cr-penalty-row">
+          <label class="cr-radio-label" (click)="selectedPenaltyType = 'percentage'">
+            <div class="cr-radio cr-radio--sm" [class.cr-radio--on]="selectedPenaltyType === 'percentage'"></div>
+            Pourcentage
+          </label>
+        </div>
+        <div class="cr-chip-grid" *ngIf="selectedPenaltyType === 'percentage'">
+          <button class="cr-chip" *ngFor="let p of penaltyPercentOptions"
+            [class.cr-chip--active]="selectedPenaltyValue === p" (click)="selectPenaltyPercent(p)">
+            {{ p }}%
+          </button>
+        </div>
+
+        <div class="cr-penalty-row" style="margin-top:10px;">
+          <label class="cr-radio-label" (click)="selectedPenaltyType = 'fixed'">
+            <div class="cr-radio cr-radio--sm" [class.cr-radio--on]="selectedPenaltyType === 'fixed'"></div>
+            Montant fixe
+          </label>
+        </div>
+        <div class="cr-fixed-penalty" *ngIf="selectedPenaltyType === 'fixed'">
+          <app-custom-input placeholder="Montant" type="number" size="small" [value]="selectedPenaltyValueStr"
+            (valueChange)="selectedPenaltyValueStr = $event">
+          </app-custom-input>
+          <span class="cr-fixed-penalty__unit">FCFA/jour</span>
+        </div>
+      </div>
+
+      <!-- Exclusion automatique -->
+      <div class="cr-rules-section">
+        <p class="cr-rules-label">Exclusion automatique</p>
+        <div class="cr-chip-grid">
+          <button class="cr-chip" *ngFor="let e of autoExclusionOptions"
+            [class.cr-chip--active]="selectedAutoExclusion === e" (click)="selectAutoExclusion(e)">
+            {{ autoExclusionLabel(e) }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Sortie anticipée -->
+      <div class="cr-rules-section">
+        <p class="cr-rules-label">Sortie anticipée autorisée</p>
+        <label class="cr-radio-label" (click)="earlyExitAllowed = true">
+          <div class="cr-radio cr-radio--sm" [class.cr-radio--on]="earlyExitAllowed === true"></div>
+          Oui, avec pénalité
+        </label>
+        <label class="cr-radio-label" (click)="earlyExitAllowed = false">
+          <div class="cr-radio cr-radio--sm" [class.cr-radio--on]="earlyExitAllowed === false"></div>
+          Non, verrouillage total
+        </label>
+      </div>
+
+      <!-- Modifications -->
+      <div class="cr-rules-section">
+        <p class="cr-rules-label">Modifications</p>
+        <label class="cr-radio-label" (click)="modificationThreshold = 75">
+          <div class="cr-radio cr-radio--sm" [class.cr-radio--on]="modificationThreshold === 75"></div>
+          Les règles peuvent être modifiées avec 75% d'approbation
+        </label>
+        <label class="cr-radio-label" (click)="modificationThreshold = 100">
+          <div class="cr-radio cr-radio--sm" [class.cr-radio--on]="modificationThreshold === 100"></div>
+          Les règles sont définitives et immuables
+        </label>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────
+         ÉTAPE 6 — Sécurité
+    ───────────────────────────────────────────────── -->
+    <div class="cr-step" *ngIf="currentStep === 6">
+      <h2 class="cr-step__title">Sécurité</h2>
+      <p class="cr-step__sub">Ce choix protège votre argent <span class="cr-step__sub--accent">contre toute
+          fraude.</span></p>
+
+      <div class="cr-security-list">
+        <app-selection-card *ngFor="let s of securityOptions" [title]="s.label" [description]="s.description"
+          [note]="s.note" [recommended]="s.recommended" [premium]="s.premium" [locked]="s.premium"
+          [selected]="selectedSecurity === s.value && !s.premium" (cardClick)="!s.premium && selectSecurity(s.value)" (premiumClick)="openPremiumModal(s.label, s.description)">
+
+          <div *ngIf="s.value === 'solidarity' && selectedSecurity === 'solidarity'" (click)="$event.stopPropagation()"
+            class="cr-security-extra">
+            <app-custom-input placeholder="Montant de la caution (FCFA)" type="number" size="small"
+              [value]="guaranteeAmountStr" (valueChange)="guaranteeAmountStr = $event">
+            </app-custom-input>
+          </div>
+        </app-selection-card>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────
+         ÉTAPE 7 — Récapitulatif
+    ───────────────────────────────────────────────── -->
+    <div class="cr-step cr-step--recap" *ngIf="currentStep === 7">
+      <!-- Bouton Modifier en haut à droite -->
+      <div class="cr-recap-header">
+        <h2 class="cr-step__title">Récapitulatif</h2>
+        <app-custom-button fill="outline" size="small" (clicked)="goToModify()">
+          Modifier
+        </app-custom-button>
+      </div>
+
+      <!-- En-tête tontine -->
+      <div class="cr-recap-hero">
+        <div class="cr-recap-hero__icon">
+          <img *ngIf="iconPreviewUrl" [src]="iconPreviewUrl" />
+          <ion-icon *ngIf="!iconPreviewUrl" name="people-outline"></ion-icon>
+        </div>
+        <div class="cr-recap-hero__info">
+          <h3 class="cr-recap-hero__name">{{ step2Form.value.name }}</h3>
+          <div class="cr-recap-hero__meta">
+            <ion-icon name="shuffle-outline"></ion-icon>
+            <span>{{ selectedType === 'rotative' ? 'Rotative classique' : 'Crescendo' }}</span>
+            <span class="cr-dot">·</span>
+            <ion-icon name="people-outline"></ion-icon>
+            <span>{{ step3Form.value.totalMembers }} membres</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grille infos -->
+      <div class="cr-recap-grid">
+        <div class="cr-recap-row">
+          <span class="cr-recap-row__label">Ordre de rotation</span>
+          <span class="cr-recap-row__value">{{ rotationLabel }}</span>
+        </div>
+        <div class="cr-recap-row">
+          <span class="cr-recap-row__label">Visibilité</span>
+          <span class="cr-recap-row__value">{{ visibilityLabel }}</span>
+        </div>
+        <div class="cr-recap-divider"></div>
+        <div class="cr-recap-row">
+          <span class="cr-recap-row__label">Cotisation</span>
+          <span class="cr-recap-row__value cr-recap-row__value--bold">{{ formatAmount(step3Form.value.amount) }}
+            FCFA</span>
+        </div>
+        <div class="cr-recap-row">
+          <span class="cr-recap-row__label">Fréquence</span>
+          <span class="cr-recap-row__value">{{ frequencyLabel }}</span>
+        </div>
+        <div class="cr-recap-row">
+          <span class="cr-recap-row__label">Pot par tour</span>
+          <span class="cr-recap-row__value cr-recap-row__value--primary">{{ formatAmount(potPerTurn) }} FCFA</span>
+        </div>
+        <div class="cr-recap-row">
+          <span class="cr-recap-row__label">Durée du cycle</span>
+          <span class="cr-recap-row__value">{{ cycleDuration }}</span>
+        </div>
+        <div class="cr-recap-divider"></div>
+        <div class="cr-recap-row">
+          <span class="cr-recap-row__label">Délai de grâce</span>
+          <span class="cr-recap-row__value">{{ selectedGracePeriod }} jours</span>
+        </div>
+        <div class="cr-recap-row">
+          <span class="cr-recap-row__label">Pénalité</span>
+          <span class="cr-recap-row__value">{{ penaltyLabel }}</span>
+        </div>
+        <div class="cr-recap-row">
+          <span class="cr-recap-row__label">Exclusion après</span>
+          <span class="cr-recap-row__value">{{ autoExclusionLabel(selectedAutoExclusion) }} de retard</span>
+        </div>
+        <div class="cr-recap-row">
+          <span class="cr-recap-row__label">Sortie anticipée</span>
+          <span class="cr-recap-row__value">{{ earlyExitLabel }}</span>
+        </div>
+        <div class="cr-recap-divider"></div>
+        <div class="cr-recap-row">
+          <span class="cr-recap-row__label">Sécurité</span>
+          <span class="cr-recap-row__value">{{ securityLabel }}</span>
+        </div>
+        <div class="cr-recap-row">
+          <span class="cr-recap-row__label">Modifications</span>
+          <span class="cr-recap-row__value">{{ modificationThreshold }}% d'approbation</span>
+        </div>
+      </div>
+
+      <!-- Confirmations -->
+      <div class="cr-confirm-list">
+        <label class="cr-confirm-item" (click)="confirmedRules = !confirmedRules">
+          <div class="cr-checkbox" [class.cr-checkbox--on]="confirmedRules">
+            <ion-icon name="checkmark-circle" *ngIf="confirmedRules"></ion-icon>
+          </div>
+          <span>Je confirme avoir lu et compris <strong class="cr-link">toutes les règles</strong> de cette
+            tontine</span>
+        </label>
+        <label class="cr-confirm-item" (click)="confirmedPayment = !confirmedPayment">
+          <div class="cr-checkbox" [class.cr-checkbox--on]="confirmedPayment">
+            <ion-icon name="checkmark-circle" *ngIf="confirmedPayment"></ion-icon>
+          </div>
+          <span>Je m'engage à respecter <strong class="cr-link">mes obligations</strong> de paiement</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- ── Footer ──────────────────────────────────────────── -->
+    <div class="cr-footer">
+      <app-custom-button [fill]="'solid'" [expand]="'block'" [disabled]="!canProceed()" [loading]="isSubmitting"
+        (clicked)="nextStep()">
+        {{ currentStep === 7 ? 'Terminer' : 'Continuer' }}
+      </app-custom-button>
+    </div>
+  </div>
 </ion-content>
