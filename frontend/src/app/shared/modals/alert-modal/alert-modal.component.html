@@ -1,0 +1,43 @@
+<ion-content class="alert-modal-content">
+
+  <div class="alert-container">
+
+    <!-- Bouton fermer -->
+    <button class="close-btn" (click)="dismiss()">
+      <ion-icon name="close-outline"></ion-icon>
+    </button>
+
+    <!-- Icône centrale -->
+    <div class="icon-wrapper" [ngClass]="type">
+      <ion-icon [name]="iconName"></ion-icon>
+    </div>
+
+    <!-- Titre -->
+    <h2 class="alert-title">{{ title }}</h2>
+
+    <!-- Message -->
+    <p class="alert-message" *ngIf="message">{{ message }}</p>
+
+    <!-- Contenu supplémentaire (pour le lancement de tontine) -->
+    <div class="extra-content" *ngIf="extraData">
+      <div class="info-row" *ngFor="let item of extraData">
+        <span class="info-label">{{ item.label }}</span>
+        <span class="info-value">{{ item.value }}</span>
+      </div>
+    </div>
+
+    <!-- Boutons -->
+    <div class="alert-buttons">
+      <button class="alert-btn alert-btn--cancel" (click)="dismiss()">
+        {{ cancelText }}
+      </button>
+
+      <button class="alert-btn alert-btn--confirm" [class.danger]="confirmColor === 'danger'"
+        [class.success]="confirmColor === 'success'" [class.primary]="confirmColor === 'primary'" (click)="onConfirm()">
+        {{ confirmText }}
+      </button>
+    </div>
+
+  </div>
+
+</ion-content>

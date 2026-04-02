@@ -1,0 +1,141 @@
+.invitation-content {
+    --background: var(--ion-background-color);
+
+    // ─── Actions principales (Partager + QR) ─────────────────────
+    .invitation-actions {
+        padding: 20px 16px 16px;
+
+        app-custom-button {
+            margin-bottom: 12px;
+            --border-radius: 14px;
+            height: 54px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+    }
+
+    .invitation-divider {
+        display: flex;
+        align-items: center;
+        margin: 18px 0 16px;
+        color: #64748B;
+        font-size: 14px;
+        font-weight: 500;
+
+        &::before,
+        &::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #E2E8F0;
+        }
+
+        span {
+            padding: 0 16px;
+        }
+    }
+
+    // ─── Titre Liste d'invitation ───────────────────────────────
+    .invitation-list {
+        padding: 0 16px;
+
+        &__title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1E2937;
+            margin: 8px 0 16px 4px;
+            font-family: var(--font-urbanist, 'Urbanist', sans-serif);
+        }
+    }
+
+    // ─── Chaque ligne d'invitation ──────────────────────────────
+    .invitation-item {
+        display: flex;
+        align-items: center;
+        background: #FFFFFF;
+        border-radius: 16px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+
+        &__avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-right: 14px;
+            flex-shrink: 0;
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+        }
+
+        &__avatar-placeholder {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #E0F2FE;
+            color: var(--ion-color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        &__info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        &__name {
+            font-size: 15.5px;
+            font-weight: 600;
+            color: #1E2937;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    // ─── Boutons Accepter / Refuser ─────────────────────────────
+    .invitation-item__actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .invitation-btn {
+        padding: 9px 18px;
+        border: none;
+        border-radius: 9999px;
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:active {
+            transform: scale(0.95);
+        }
+
+        &--accept {
+            background: rgba(#34C759, 49%);
+            color: var(--ion-color-text);
+        }
+
+        &--refuse {
+            background: rgba(#FF383C, 49%); 
+            color: var(--ion-color-text);
+                }
+    }
+
+    // ─── État vide ───────────────────────────────────────────────
+    .invitation-empty {
+        text-align: center;
+        padding: 60px 20px;
+        color: #64748B;
+        font-size: 15px;
+    }
+}

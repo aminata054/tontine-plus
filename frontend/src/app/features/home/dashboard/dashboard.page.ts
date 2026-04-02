@@ -2,19 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
-import { addIcons } from 'ionicons';
 
 import { AuthService } from 'src/app/core/services/auth.service';
 import { UserProfile } from 'src/app/core/models/auth.model';
 import { StateScreenComponent } from "src/app/shared/ui/state-screen/state-screen.component";
-
-export interface Tontine {
-  id: string;
-  name: string;
-  amount: number;
-  frequency: string;
-  imageUrl: string;
-}
+import { Tontine } from 'src/app/core/models/tontine.model';
+import { finalize, Subject, takeUntil } from 'rxjs';
+import { TontineService } from 'src/app/core/services/tontine.service';
 
 export interface Transaction {
   id: string;
@@ -39,30 +33,10 @@ export class DashboardPage implements OnInit {
   activeDot: number = 0;
 
   showSuccessState: boolean = false;
-  
-  tontines: Tontine[] = [
-    {
-      id: '1',
-      name: 'Sac d\'oignon 50KG',
-      amount: 500,
-      frequency: 'jour',
-      imageUrl: 'assets/images/tontine-oignon.jpg',
-    },
-    {
-      id: '2',
-      name: 'Réfrigérateur',
-      amount: 15000,
-      frequency: 'mois',
-      imageUrl: 'assets/images/tontine-frigo.jpg',
-    },
-    {
-      id: '3',
-      name: 'Nourriture',
-      amount: 5000,
-      frequency: 'semaine',
-      imageUrl: 'assets/images/tontine-nourriture.jpg',
-    },
-  ];
+  tontines: Tontine[] = [];
+  isLoading = true;
+  hasError = false;
+
 
   transactions: Transaction[] = [
     {
@@ -79,14 +53,30 @@ export class DashboardPage implements OnInit {
     },
   ];
 
-  constructor(private auth: AuthService, private router: Router) { }
+  private destroy$ = new Subject<void>();
+
+  constructor(private auth: AuthService, private router: Router, private tontineService: TontineService,) { }
 
   ngOnInit(): void {
     this.user = this.auth.currentUser;
+    this.auth.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(u => {
+        this.user = u;
+        // Afficher l'écran de bienvenue uniquement si c'est un nouveau compte
+        // this.showSuccessState = !!(u && !u.hasSeenWelcome);
+      });
+
+    this.loadTontines();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   onImageError(tontine: Tontine) {
-    tontine.imageUrl = '';   
+    tontine.iconUrl = '';
   }
   getInitials(): string {
     if (!this.user?.fullName) return '?';
@@ -98,14 +88,36 @@ export class DashboardPage implements OnInit {
       .toUpperCase();
   }
 
-  
+  // ── Chargement ──────────────────────────────────────────────────────────────
+
+  loadTontines(): void {
+    this.hasError = false;
+    this.isLoading = true;
+
+    // On récupère seulement les 3 premières pour le dashboard
+    this.tontineService.getMyTontines()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => { this.isLoading = false; })
+      )
+      .subscribe({
+        next: (res) => {
+          this.tontines = (res.data ?? []).slice(0, 3);
+        },
+        error: () => { this.hasError = true; },
+      });
+  }
+
+
 
   goToProfile() { this.router.navigate(['/profile']); }
   openNotifications() { this.router.navigate(['/notification-page']); }
   goToPremium() { this.router.navigate(['/premium']); }
   seeAllTontines() { this.router.navigate(['/tontines']); }
-  openTontine(t: Tontine) { this.router.navigate(['/tontine', t.id]); }
-  createTontine() { this.router.navigate(['/tontines/create']); }
+  openTontine(t: Tontine): void {
+    this.router.navigate(['/tontines', t.id, 'overview']);
+  }
+    createTontine() { this.router.navigate(['/tontines/create']); }
   joinTontine() { this.router.navigate(['/tontines/join']); }
   inviteFriend() { this.router.navigate(['/invite']); }
 }

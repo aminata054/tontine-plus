@@ -11,29 +11,32 @@ import {
 } from '@ionic/angular/standalone';
 
 import { TontineService } from 'src/app/core/services/tontine.service';
-import { CreateTontinePayload } from 'src/app/core/models/tontine.model';
+import {
+  CreateTontinePayload,
+  EarlyExitMode,
+  EarlyExitPenalty,
+  Frequency,
+  RotationMethod,
+  SecurityModel,
+  TontineType,
+  TontineVisibility,
+} from 'src/app/core/models/tontine.model';
 import { PageHeaderComponent } from 'src/app/shared/ui/page-header/page-header.component';
 import { StepIndicatorComponent } from 'src/app/shared/ui/step-indicator/step-indicator.component';
 import { SelectionCardComponent } from 'src/app/shared/ui/selection-card/selection-card.component';
 import { CustomButtonComponent } from 'src/app/shared/ui/custom-button/custom-button.component';
 import { CustomInputComponent } from 'src/app/shared/ui/custom-input/custom-input.component';
-
 import { PremiumModalComponent } from 'src/app/shared/modals/premium-modal/premium-modal.component';
 
 // ─── Types locaux ──────────────────────────────────────────────────────────────
 
-type TontineType = 'rotative' | 'crescendo';
-type Frequency = 'daily' | 'weekly' | 'biweekly' | 'monthly';
-type Visibility = 'private' | 'semi_public' | 'public';
-type RotationMethod = 'random' | 'seniority' | 'consensual' | 'manual';
-type SecurityModel = 'escrow' | 'direct' | 'blocked_account' | 'solidarity';
-type PenaltyType = 'percentage' | 'fixed';
 type StepStatus = 'pending' | 'success' | 'error';
 
 interface TypeOption {
   value: TontineType;
   label: string;
   description: string;
+  example: string;
   premium: boolean;
 }
 
@@ -42,6 +45,7 @@ interface RotationOption {
   label: string;
   description: string;
   badge: string;
+  info?: string;
   premium: boolean;
 }
 
@@ -49,10 +53,13 @@ interface SecurityOption {
   value: SecurityModel;
   label: string;
   description: string;
+  features: string[];
   note: string;
   recommended: boolean;
   premium: boolean;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Component({
   selector: 'app-create',
@@ -70,39 +77,56 @@ interface SecurityOption {
     SelectionCardComponent,
     CustomButtonComponent,
     CustomInputComponent,
-],
+  ],
 })
 export class CreatePage implements OnInit {
 
-  // ── Étape courante (1–7) + état final ──────────────────────
+  // ── Navigation ──────────────────────────────────────────────────────────────
   currentStep = 1;
   readonly TOTAL_STEPS = 7;
   stepStatus: StepStatus = 'pending';
+  isSubmitting = false;
 
-  // ── Données du formulaire ───────────────────────────────────
+  // ── Étape 1 — Type ──────────────────────────────────────────────────────────
   selectedType: TontineType = 'rotative';
-  selectedFrequency: Frequency | null = null;
-  selectedVisibility: Visibility = 'private';
-  selectedPaymentDay: number | null = null;
-  selectedRotation: RotationMethod = 'random';
-  selectedSecurity: SecurityModel = 'escrow';
-  selectedPenaltyType: PenaltyType = 'percentage';
-  selectedPenaltyValue = 0;
-  selectedGracePeriod = 0;
-  selectedAutoExclusion: number | null = 14;
-  earlyExitAllowed = false;
-  earlyExitPenaltyType: PenaltyType = 'percentage';
-  earlyExitPenaltyValue = 0;
-  modificationThreshold: 50 | 75 | 100 = 75;
-  guaranteeAmount = 0;
 
-  // Helpers string pour app-custom-input ([(value)] ne gère que string)
+  // ── Étape 2 — Infos de base ─────────────────────────────────────────────────
+  selectedVisibility: TontineVisibility = 'private';
+  iconPreviewUrl: string | null = null;
+  iconUrl: string | null = null;
+  showVisibilityDropdown = false;
+
+  // ── Étape 3 — Finance ───────────────────────────────────────────────────────
+  selectedFrequency: Frequency | null = null;
+  selectedPaymentDay: number | null = null;
+  showFrequencyDropdown = false;
+
+  // ── Étape 4 — Rotation ──────────────────────────────────────────────────────
+  selectedRotation: RotationMethod = 'random';
+
+  // ── Étape 5 — Règles ────────────────────────────────────────────────────────
+  selectedGracePeriod: 0 | 2 | 3 | 5 | 7 = 0;
+  selectedPenaltyType: 'percentage' | 'fixed' = 'percentage';
+  selectedPenaltyValue = 0;
+  selectedAutoExclusion: 7 | 14 | 30 | null = 14;
+
+  // Sortie anticipée — 3 modes
+  selectedEarlyExit: EarlyExitMode = 'locked';
+  selectedEarlyExitPenalty: EarlyExitPenalty = 'guarantee';
+
+  modificationThreshold: 75 | 100 = 75;
+
+  // Helper string pour custom-input (fixed penalty)
   get selectedPenaltyValueStr(): string {
     return this.selectedPenaltyValue > 0 ? String(this.selectedPenaltyValue) : '';
   }
   set selectedPenaltyValueStr(v: string) {
     this.selectedPenaltyValue = Number(v) || 0;
   }
+
+  // ── Étape 6 — Sécurité ──────────────────────────────────────────────────────
+  selectedSecurity: SecurityModel = 'escrow';
+  guaranteeAmount = 0;
 
   get guaranteeAmountStr(): string {
     return this.guaranteeAmount > 0 ? String(this.guaranteeAmount) : '';
@@ -111,42 +135,56 @@ export class CreatePage implements OnInit {
     this.guaranteeAmount = Number(v) || 0;
   }
 
-  // Checkboxes récapitulatif
+  // ── Étape 7 — Récapitulatif ─────────────────────────────────────────────────
   confirmedRules = false;
   confirmedPayment = false;
 
-  // Résultat création
+  // ── Résultat ────────────────────────────────────────────────────────────────
   createdTontineId: string | null = null;
   createdInviteCode: string | null = null;
   createdInviteLink: string | null = null;
-  createdQrUrl: string | null = null;
-  isSubmitting = false;
-  showQrPanel = false;
-  showSharePanel = false;
 
-  // Preview image
-  iconPreviewUrl: string | null = null;
-  // URL stockée séparément (pas dans le form pour ne pas bloquer la validation)
-  iconUrl: string | null = null;
-
-  // ── Forms ───────────────────────────────────────────────────
+  // ── Forms ───────────────────────────────────────────────────────────────────
   step2Form!: FormGroup;
   step3Form!: FormGroup;
 
-  // ── Options statiques ───────────────────────────────────────
+  // ── Options statiques ───────────────────────────────────────────────────────
+
   typeOptions: TypeOption[] = [
     {
       value: 'rotative',
       label: 'Rotative classique',
-      description: "Chaque membre verse un montant déterminé, et l'un des cotisants, à tour de rôle, reçoit l'ensemble des cotisations de cette fois.",
+      description: 'Chacun reçoit le pot à tour de rôle',
+      example: '12 personnes × 10 000 FCFA = 120 000 FCFA/tour',
       premium: false,
     },
     {
       value: 'crescendo',
       label: 'Crescendo',
-      description: "Chaque membre verse un montant déterminé, et l'un des cotisants, à tour de rôle, reçoit l'ensemble des cotisations de cette fois.",
+      description: 'Les montants augmentent progressivement',
+      example: '1er tour : 50k, 2e tour : 60k...',
       premium: false,
     },
+    {
+      value: 'solidarity',
+      label: 'Solidarité',
+      description: 'Pot commun pour projets collectifs',
+      example: '',
+      premium: true,
+    },
+    {
+      value: 'savings_goal',
+      label: 'Épargne objectif',
+      description: 'Économiser ensemble pour un objectif',
+      example: '',
+      premium: true,
+    },
+  ];
+
+  visibilityOptions: { value: TontineVisibility; label: string; description: string }[] = [
+    { value: 'private', label: 'Privée', description: 'Sur invitation uniquement' },
+    { value: 'semi_public', label: 'Semi-publique', description: 'Lien partageable' },
+    { value: 'public', label: 'Publique', description: 'Annuaire (bientôt disponible)' },
   ];
 
   quickAmounts = [5_000, 10_000, 15_000, 25_000, 50_000];
@@ -179,86 +217,98 @@ export class CreatePage implements OnInit {
     {
       value: 'seniority',
       label: 'Ancienneté',
-      description: "Pot donné selon l'ordre d'arrivée dans le groupe",
+      description: "Ordre d'arrivée dans la tontine",
       badge: '100 % Transparent',
+      info: 'Le créateur en premier, puis selon les inscriptions',
       premium: false,
     },
     {
       value: 'consensual',
       label: 'Consensuel',
-      description: 'Tirage au sort équitable à la validation de tous les membres',
+      description: "L'ordre sera décidé par vote",
       badge: '100 % Transparent',
+      info: "Nécessite 75% d'approbation",
       premium: true,
     },
     {
       value: 'manual',
-      label: 'Prédefini par moi',
-      description: 'Tirage au sort équitable à la validation de tous les membres',
+      label: 'Prédéfini par moi',
+      description: "Je définis l'ordre manuellement",
       badge: '100 % Transparent',
       premium: true,
     },
   ];
 
-  gracePeriodOptions = [0, 3, 2, 5, 7, 10];
-  autoExclusionOptions: (number | null)[] = [7, 14, 30, null];
-  penaltyPercentOptions = [0, 2, 5, 10];
+  // Délai de grâce — valeurs exactes acceptées par le backend
+  gracePeriodOptions: (0 | 2 | 3 | 5 | 7)[] = [0, 2, 3, 5, 7];
+  penaltyPercentOptions: (0 | 2 | 5 | 10)[] = [0, 2, 5, 10];
+  // Exclusion auto — valeurs exactes acceptées par le backend
+  autoExclusionOptions: (7 | 14 | 30 | null)[] = [7, 14, 30, null];
+
+  // Sortie anticipée — 3 modes
+  earlyExitOptions: { value: EarlyExitMode; label: string }[] = [
+    { value: 'penalty', label: 'Oui, avec pénalité' },
+    { value: 'vote', label: 'Oui, après vote majoritaire' },
+    { value: 'locked', label: 'Non (verrouillage total)' },
+  ];
+
+  // Pénalité de sortie
+  earlyExitPenaltyOptions: { value: EarlyExitPenalty; label: string }[] = [
+    { value: 'guarantee', label: 'Perte de la caution' },
+    { value: 'paid_contributions', label: 'Perte des cotisations déjà payées' },
+  ];
 
   securityOptions: SecurityOption[] = [
     {
       value: 'escrow',
       label: 'Escrow collectif',
-      description: 'Vos cotisations vont dans un wallet sécurisé et la distribution se fait automatiquement',
-      note: '*Sécurité maximale',
+      description: 'Vos cotisations vont dans un wallet sécurisé partagé',
+      features: [
+        'Distribution automatique impossible à bloquer',
+        "Aucun humain ne peut toucher l'argent avant la date",
+      ],
+      note: 'Sécurité maximale',
       recommended: true,
       premium: false,
     },
     {
       value: 'direct',
-      label: 'Virement direct',
-      description: "Chaque membre paie directement le bénéficiaire du tour et l'application ne touche jamais l'argent",
-      note: '*Nécessite la confiance entre membres',
+      label: 'Virement direct tour par tour',
+      description: 'Chaque membre paie directement le bénéficiaire du tour',
+      features: [
+        "L'application ne touche jamais l'argent",
+        'Notifications et rappels automatiques',
+      ],
+      note: 'Nécessite la confiance entre membres',
       recommended: false,
       premium: false,
     },
     {
-      value: 'blocked_account',
-      label: 'Compte bloqué',
-      description: "Les fonds sont bloqués sur un compte dédié jusqu'à la distribution",
-      note: '*Sécurité intermédiaire',
-      recommended: false,
-      premium: true,
-    },
-    {
-      value: 'solidarity',
-      label: 'Solidarité',
-      description: 'Chaque membre verse une caution remboursable en fin de cycle',
-      note: '*Caution requise',
+      value: 'solidarity_guarantee',
+      label: 'Garantie solidaire + pénalités',
+      description: 'Chaque membre bloque une caution remboursable en fin de cycle',
+      features: [
+        'Pénalités automatiques en cas de retard',
+        'Caution récupérée en fin de cycle',
+      ],
+      note: 'Caution requise',
       recommended: false,
       premium: true,
     },
   ];
 
-  visibilityOptions: { value: Visibility; label: string }[] = [
-    { value: 'private', label: 'Privée - Sur invitation' },
-    { value: 'semi_public', label: 'Semi-publique' },
-    { value: 'public', label: 'Publique' },
-  ];
+  // ── Constructeur ────────────────────────────────────────────────────────────
 
-  showFrequencyDropdown = false;
-  showVisibilityDropdown = false;
-
-  // ── Constructeur ────────────────────────────────────────────
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private tontineService: TontineService,
     private toastCtrl: ToastController,
     private modalCtrl: ModalController,
-    ) { }
+  ) { }
 
   ngOnInit(): void {
     this.step2Form = this.fb.group({
-      
       name: ['', [Validators.required, Validators.minLength(3)]],
       description: [''],
     });
@@ -269,7 +319,7 @@ export class CreatePage implements OnInit {
     });
   }
 
-  // ── Navigation ──────────────────────────────────────────────
+  // ── Navigation ──────────────────────────────────────────────────────────────
 
   get progress(): number {
     return (this.currentStep / this.TOTAL_STEPS) * 100;
@@ -302,33 +352,49 @@ export class CreatePage implements OnInit {
         return (
           this.step3Form.valid &&
           !!this.selectedFrequency &&
-          (
-            this.selectedFrequency !== 'weekly' ||
-            this.selectedPaymentDay !== null
-          )
+          (this.selectedFrequency !== 'weekly' || this.selectedPaymentDay !== null)
         );
       case 4: return !!this.selectedRotation;
-      case 5: return true;
-      case 6: return !!this.selectedSecurity;
+      case 5:
+        // Si sortie avec pénalité, le type de pénalité doit être choisi
+        if (this.selectedEarlyExit === 'penalty' && !this.selectedEarlyExitPenalty) return false;
+        // Si pénalité fixe, le montant doit être > 0
+        if (this.selectedPenaltyType === 'fixed' && this.selectedPenaltyValue <= 0) return false;
+        return true;
+      case 6:
+        // Caution obligatoire pour solidarity_guarantee
+        if (this.selectedSecurity === 'solidarity_guarantee' && this.guaranteeAmount <= 0) return false;
+        return !!this.selectedSecurity;
       case 7: return this.confirmedRules && this.confirmedPayment;
       default: return true;
     }
   }
 
-  // ── Étape 1 — Type ──────────────────────────────────────────
+  // ── Étape 1 — Type ──────────────────────────────────────────────────────────
 
   selectType(type: TontineType): void {
     this.selectedType = type;
   }
 
-  // ── Étape 2 — Infos de base ─────────────────────────────────
+  // ── Étape 2 — Infos de base ─────────────────────────────────────────────────
 
   onIconPick(): void {
+    // Remplacer par un vrai sélecteur d'image
     this.iconPreviewUrl = 'https://picsum.photos/seed/tontine/200';
     this.iconUrl = this.iconPreviewUrl;
   }
 
-  // ── Étape 3 — Financier ─────────────────────────────────────
+  selectVisibility(v: TontineVisibility): void {
+    this.selectedVisibility = v;
+    this.showVisibilityDropdown = false;
+  }
+
+  getVisibilityLabel(): string {
+    return this.visibilityOptions.find(v => v.value === this.selectedVisibility)?.label
+      ?? 'Choisir une visibilité';
+  }
+
+  // ── Étape 3 — Finance ───────────────────────────────────────────────────────
 
   selectQuickAmount(amount: number): void {
     this.step3Form.patchValue({ amount });
@@ -354,44 +420,79 @@ export class CreatePage implements OnInit {
     return a * m;
   }
 
-  // ── Étape 4 — Rotation ──────────────────────────────────────
+  getFrequencyLabel(): string {
+    if (!this.selectedFrequency) return 'Choisir une fréquence';
+    return this.frequencies.find(f => f.value === this.selectedFrequency)?.label
+      ?? 'Choisir une fréquence';
+  }
+
+  // ── Étape 4 — Rotation ──────────────────────────────────────────────────────
 
   selectRotation(r: RotationMethod): void {
     this.selectedRotation = r;
   }
 
-  // ── Étape 5 — Règles ────────────────────────────────────────
+  // ── Étape 5 — Règles ────────────────────────────────────────────────────────
 
-  selectGrace(v: number): void { this.selectedGracePeriod = v; }
-  selectAutoExclusion(v: number | null): void { this.selectedAutoExclusion = v; }
-  selectPenaltyPercent(v: number): void { this.selectedPenaltyValue = v; }
-
-  autoExclusionLabel(v: number | null): string {
-    return v === null ? 'Jamais' : `${v} jours`;
+  selectGrace(v: 0 | 2 | 3 | 5 | 7): void {
+    this.selectedGracePeriod = v;
   }
 
-  // ── Étape 6 — Sécurité ──────────────────────────────────────
+  selectPenaltyPercent(v: 0 | 2 | 5 | 10): void {
+    this.selectedPenaltyValue = v;
+  }
+
+  selectAutoExclusion(v: 7 | 14 | 30 | null): void {
+    this.selectedAutoExclusion = v;
+  }
+
+  selectEarlyExit(mode: EarlyExitMode): void {
+    this.selectedEarlyExit = mode;
+    // Réinitialise le type de pénalité si on change de mode
+    if (mode !== 'penalty') this.selectedEarlyExitPenalty = 'guarantee';
+  }
+
+  selectEarlyExitPenalty(type: EarlyExitPenalty): void {
+    this.selectedEarlyExitPenalty = type;
+  }
+
+  autoExclusionLabel(v: number | null): string {
+    return v === null ? 'Jamais (vote requis)' : `${v} jours`;
+  }
+
+  // ── Étape 6 — Sécurité ──────────────────────────────────────────────────────
 
   selectSecurity(s: SecurityModel): void {
     this.selectedSecurity = s;
+    if (s !== 'solidarity_guarantee') this.guaranteeAmount = 0;
   }
 
-  // ── Étape 7 — Labels récapitulatif ──────────────────────────
+  // ── Labels récapitulatif ────────────────────────────────────────────────────
 
   get visibilityLabel(): string {
-    return this.visibilityOptions.find(v => v.value === this.selectedVisibility)?.label ?? '—';
+    return this.tontineService.visibilityLabel(this.selectedVisibility);
   }
 
   get frequencyLabel(): string {
-    return this.frequencies.find(f => f.value === this.selectedFrequency)?.label ?? '—';
+    return this.selectedFrequency
+      ? this.tontineService.frequencyLabel(this.selectedFrequency)
+      : '—';
   }
 
   get rotationLabel(): string {
-    return this.rotationOptions.find(r => r.value === this.selectedRotation)?.label ?? '—';
+    return this.tontineService.rotationLabel(this.selectedRotation);
   }
 
   get securityLabel(): string {
-    return this.securityOptions.find(s => s.value === this.selectedSecurity)?.label ?? '—';
+    return this.tontineService.securityLabel(this.selectedSecurity);
+  }
+
+  get typeLabel(): string {
+    return this.tontineService.typeLabel(this.selectedType);
+  }
+
+  get earlyExitLabel(): string {
+    return this.tontineService.earlyExitLabel(this.selectedEarlyExit);
   }
 
   get cycleDuration(): string {
@@ -409,70 +510,62 @@ export class CreatePage implements OnInit {
   get penaltyLabel(): string {
     if (this.selectedPenaltyValue === 0) return 'Aucune';
     return this.selectedPenaltyType === 'percentage'
-      ? `${this.selectedPenaltyValue}% par retard`
-      : `${this.selectedPenaltyValue} FCFA/jour`;
+      ? `${this.selectedPenaltyValue}% par jour`
+      : `${this.formatAmount(this.selectedPenaltyValue)} FCFA/jour`;
   }
 
-  get earlyExitLabel(): string {
-    return this.earlyExitAllowed ? 'Autorisée avec vote' : 'Non autorisée';
-  }
-
-  // ── Helpers dropdowns ───────────────────────────────────────
-
-  getVisibilityLabel(): string {
-    if (!this.selectedVisibility) return 'Choisir une visibilité';
-    return this.visibilityOptions.find(v => v.value === this.selectedVisibility)?.label
-      ?? 'Choisir une visibilité';
-  }
-
-  getFrequencyLabel(): string {
-    if (!this.selectedFrequency) return 'Choisir une fréquence';
-    return this.frequencies.find(f => f.value === this.selectedFrequency)?.label
-      ?? 'Choisir une fréquence';
-  }
-
-  selectVisibility(v: Visibility): void {
-    this.selectedVisibility = v;
-    this.showVisibilityDropdown = false;
-  }
-
-  goToModify(): void {
-    this.currentStep = 1;
-  }
-
-  // ── Soumission ──────────────────────────────────────────────
+  // ── Soumission ──────────────────────────────────────────────────────────────
 
   submit(): void {
     if (!this.canProceed() || this.isSubmitting) return;
     this.isSubmitting = true;
 
     const payload: CreateTontinePayload = {
+      // Identité
       type: this.selectedType,
       name: this.step2Form.value.name.trim(),
       description: this.step2Form.value.description || undefined,
       iconUrl: this.iconUrl || undefined,
       visibility: this.selectedVisibility,
+
+      // Finance
       amount: Number(this.step3Form.value.amount),
       frequency: this.selectedFrequency!,
       paymentDay: this.selectedPaymentDay ?? undefined,
       totalMembers: Number(this.step3Form.value.totalMembers),
+
+      // Rotation
       rotationMethod: this.selectedRotation,
+
+      // Règles — retards
       gracePeriodDays: this.selectedGracePeriod,
       penaltyType: this.selectedPenaltyType,
       penaltyValue: this.selectedPenaltyValue,
-      autoExclusionDays: this.selectedAutoExclusion ?? undefined,
-      earlyExitAllowed: this.earlyExitAllowed,
-      earlyExitPenaltyType: this.earlyExitAllowed ? this.earlyExitPenaltyType : undefined,
-      earlyExitPenaltyValue: this.earlyExitAllowed ? this.earlyExitPenaltyValue : undefined,
+      autoExclusionDays: this.selectedAutoExclusion,
+
+      // Règles — sortie anticipée
+      earlyExitAllowed: this.selectedEarlyExit,
+      earlyExitPenaltyType: this.selectedEarlyExit === 'penalty'
+        ? this.selectedEarlyExitPenalty
+        : undefined,
+
+      // Gouvernance
       modificationThreshold: this.modificationThreshold,
+
+      // Sécurité
       securityModel: this.selectedSecurity,
-      guaranteeAmount: this.selectedSecurity === 'solidarity' ? this.guaranteeAmount : undefined,
+      guaranteeAmount: this.selectedSecurity === 'solidarity_guarantee'
+        ? this.guaranteeAmount
+        : undefined,
     };
 
     this.tontineService.createTontine(payload).subscribe({
-      next: (res: any) => {
+      next: (res) => {
         this.isSubmitting = false;
         if (res.success) {
+          this.createdTontineId = res.data.tontineId;
+          this.createdInviteCode = res.data.inviteCode;
+          this.createdInviteLink = res.data.inviteLink;
           this.router.navigate(['/tontines', res.data.tontineId, 'success']);
         } else {
           this.stepStatus = 'error';
@@ -487,12 +580,7 @@ export class CreatePage implements OnInit {
     });
   }
 
-  // ── Actions post-création ───────────────────────────────────
-
-  shareLink(): void { this.showSharePanel = true; }
-  showQr(): void { this.showQrPanel = true; }
-  closeQr(): void { this.showQrPanel = false; }
-  closeShare(): void { this.showSharePanel = false; }
+  // ── Actions post-création ───────────────────────────────────────────────────
 
   copyLink(): void {
     if (this.createdInviteLink) {
@@ -508,22 +596,16 @@ export class CreatePage implements OnInit {
       twitter: `https://twitter.com/intent/tweet?url=${link}`,
       gmail: `mailto:?body=${link}`,
       telegram: `https://t.me/share/url?url=${link}`,
-      snapchat: `https://www.snapchat.com/share?url=${link}`,
     };
     if (urls[platform]) window.open(urls[platform], '_blank');
   }
 
-  downloadQr(): void {
-    if (this.createdQrUrl) {
-      const a = document.createElement('a');
-      a.href = this.createdQrUrl;
-      a.download = `qr-${this.createdInviteCode}.png`;
-      a.click();
-    }
-  }
-
   goToList(): void {
     this.router.navigate(['/tabs/tontine']);
+  }
+
+  goToModify(): void {
+    this.currentStep = 1;
   }
 
   retry(): void {
@@ -534,16 +616,16 @@ export class CreatePage implements OnInit {
     this.confirmedPayment = false;
   }
 
-  // ── Modale Premium ───────────────────────────────────────────
-  
-  async openPremiumModal(title: string = '', description: string = '') {
+  // ── Modale Premium ──────────────────────────────────────────────────────────
+
+  async openPremiumModal(title = '', description = ''): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: PremiumModalComponent,
       componentProps: {
         title: title || 'Fonctionnalité Premium',
         description: description || 'Cette fonctionnalité est disponible uniquement avec un abonnement Premium.',
       },
-      breakpoints: [0.6, 0.9],      
+      breakpoints: [0.6, 0.9],
       initialBreakpoint: 0.6,
       backdropDismiss: true,
     });
@@ -552,12 +634,11 @@ export class CreatePage implements OnInit {
 
     const { data } = await modal.onWillDismiss();
     if (data?.action === 'subscribe') {
-      console.log('Utilisateur veut s\'abonner');
-      // Tu peux rediriger vers la page d'abonnement ici
+      // Rediriger vers la page d'abonnement
     }
   }
 
-  // ── Utilitaires ─────────────────────────────────────────────
+  // ── Utilitaires ─────────────────────────────────────────────────────────────
 
   formatAmount(v: number): string {
     return new Intl.NumberFormat('fr-FR').format(v);

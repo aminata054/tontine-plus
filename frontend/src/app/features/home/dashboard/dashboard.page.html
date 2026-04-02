@@ -3,7 +3,7 @@
   <!-- ═══════════════════════════════════════════
        HEADER
   ═══════════════════════════════════════════ -->
-  
+
   <div class="home-header">
     <div class="header-left">
       <div class="avatar-wrapper" (click)="goToProfile()">
@@ -25,117 +25,114 @@
   </div>
 
   <div *ngIf="showSuccessState" class="success-state-container">
-  
-   <app-state-screen
-    [type]="'success'"
-    [subtitle]="'Votre compte a été créé avec succès ! Vous pouvez dès à présent créer ou rejoindre une tontine'"
-    [buttonText]="'Créer ma première tontine'"
-    (buttonClick)="createTontine()"
-    [secondaryText]="'Rejoindre une tontine'"
-    (secondaryClick)="joinTontine()"
-    ></app-state-screen>
+
+    <app-state-screen [type]="'success'"
+      [subtitle]="'Votre compte a été créé avec succès ! Vous pouvez dès à présent créer ou rejoindre une tontine'"
+      [buttonText]="'Créer ma première tontine'" (buttonClick)="createTontine()"
+      [secondaryText]="'Rejoindre une tontine'" (secondaryClick)="joinTontine()"></app-state-screen>
   </div>
 
 
   <div *ngIf="!showSuccessState">
- 
-  <div class="premium-banner" *ngIf="!isPremium">
-    <div class="banner-content">
-      <ion-icon name="diamond-outline" class="banner-icon"></ion-icon>
-      <div class="banner-text">
-        <p class="banner-title">Rejoignez notre communauté premium</p>
-        <p class="banner-sub">Débloquez toutes les fonctionnalités de notre application</p>
+
+    <div class="premium-banner" *ngIf="!isPremium">
+      <div class="banner-content">
+        <ion-icon name="diamond-outline" class="banner-icon"></ion-icon>
+        <div class="banner-text">
+          <p class="banner-title">Rejoignez notre communauté premium</p>
+          <p class="banner-sub">Débloquez toutes les fonctionnalités de notre application</p>
+        </div>
       </div>
-    </div>
-    <button class="banner-btn" (click)="goToPremium()">S'abonner</button>
-  </div>
-
-  <div class="section">
-    <div class="section-header">
-      <h2 class="section-title">Mes tontines</h2>
-      <span class="section-link" (click)="seeAllTontines()">
-        Voir tout <ion-icon name="chevron-forward-outline"></ion-icon>
-      </span>
+      <button class="banner-btn" (click)="goToPremium()">S'abonner</button>
     </div>
 
-    <div class="tontines-scroll">
-      <div class="tontine-card" *ngFor="let t of tontines" (click)="openTontine(t)">
-        <div class="tontine-img-wrapper">
-          <img *ngIf="t.imageUrl" [src]="t.imageUrl" [alt]="t.name" class="tontine-img" (error)="onImageError(t)" />
-        
-          <div *ngIf="!t.imageUrl" class="fallback-icon">
-            <ion-icon name="people-circle-outline"></ion-icon>
-            <p>Tontine</p>
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Mes tontines</h2>
+        <span class="section-link" (click)="seeAllTontines()">
+          Voir tout <ion-icon name="chevron-forward-outline"></ion-icon>
+        </span>
+      </div>
+
+      <div class="tontines-scroll">
+        <div class="tontine-card" *ngFor="let t of tontines" (click)="openTontine(t)">
+          <div class="tontine-img-wrapper">
+            <img *ngIf="t.iconUrl" [src]="t.iconUrl" [alt]="t.name" class="tontine-img" (error)="onImageError(t)" />
+
+            <div *ngIf="!t.iconUrl" class="fallback-icon">
+              <ion-icon name="people-circle-outline"></ion-icon>
+              <p>Tontine</p>
+            </div>
+          </div>
+          <div class="tontine-info">
+            <p class="tontine-name">{{ t.name }}</p>
+            <p class="tontine-amount">{{ t.amount | number }} FCFA<span class="tontine-freq">/{{ t.frequency }}</span>
+            </p>
           </div>
         </div>
-        <div class="tontine-info">
-          <p class="tontine-name">{{ t.name }}</p>
-          <p class="tontine-amount">{{ t.amount | number }} FCFA<span class="tontine-freq">/{{ t.frequency }}</span></p>
+
+        <!-- Card Créer -->
+        <div class="tontine-card tontine-create" (click)="createTontine()">
+          <div class="tontine-create-inner">
+            <ion-icon name="add-circle-outline"></ion-icon>
+            <p>Créer</p>
+          </div>
         </div>
       </div>
 
-      <!-- Card Créer -->
-      <div class="tontine-card tontine-create" (click)="createTontine()">
-        <div class="tontine-create-inner">
-          <ion-icon name="add-circle-outline"></ion-icon>
-          <p>Créer</p>
-        </div>
-      </div>
+
     </div>
 
-   
-  </div>
-
-  <!-- ═══════════════════════════════════════════
+    <!-- ═══════════════════════════════════════════
        ACTIONS RAPIDES
   ═══════════════════════════════════════════ -->
-  <div class="section">
-    <h2 class="section-title">Actions rapides</h2>
-    <div class="actions-row">
-      <div class="action-btn" (click)="createTontine()">
-        <div class="action-icon action-icon--primary">
-          <ion-icon name="add-outline"></ion-icon>
+    <div class="section">
+      <h2 class="section-title">Actions rapides</h2>
+      <div class="actions-row">
+        <div class="action-btn" (click)="createTontine()">
+          <div class="action-icon action-icon--primary">
+            <ion-icon name="add-outline"></ion-icon>
+          </div>
+          <span>Créer une<br>tontine</span>
         </div>
-        <span>Créer une<br>tontine</span>
-      </div>
-      <div class="action-btn" (click)="joinTontine()">
-        <div class="action-icon action-icon--secondary">
-          <ion-icon name="arrow-forward-outline"></ion-icon>
+        <div class="action-btn" (click)="joinTontine()">
+          <div class="action-icon action-icon--secondary">
+            <ion-icon name="arrow-forward-outline"></ion-icon>
+          </div>
+          <span>Rejoindre<br>une tontine</span>
         </div>
-        <span>Rejoindre<br>une tontine</span>
-      </div>
-      <div class="action-btn" (click)="inviteFriend()">
-        <div class="action-icon action-icon--accent">
-          <ion-icon name="share-social-outline"></ion-icon>
+        <div class="action-btn" (click)="inviteFriend()">
+          <div class="action-icon action-icon--accent">
+            <ion-icon name="share-social-outline"></ion-icon>
+          </div>
+          <span>Inviter un<br>ami</span>
         </div>
-        <span>Inviter un<br>ami</span>
       </div>
     </div>
-  </div>
 
-  <!-- ═══════════════════════════════════════════
+    <!-- ═══════════════════════════════════════════
        HISTORIQUE
   ═══════════════════════════════════════════ -->
-  <div class="section section--last">
-    <h2 class="section-title">Historiques</h2>
+    <div class="section section--last">
+      <h2 class="section-title">Historiques</h2>
 
-    <div class="history-list">
-      <div class="history-item" *ngFor="let tx of transactions">
-        <div class="history-avatar">
-          <img *ngIf="tx.photoUrl" [src]="tx.photoUrl" />
-          <ion-icon *ngIf="!tx.photoUrl" name="person-outline"></ion-icon>
+      <div class="history-list">
+        <div class="history-item" *ngFor="let tx of transactions">
+          <div class="history-avatar">
+            <img *ngIf="tx.photoUrl" [src]="tx.photoUrl" />
+            <ion-icon *ngIf="!tx.photoUrl" name="person-outline"></ion-icon>
+          </div>
+          <div class="history-info">
+            <p class="history-label">
+              <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
+              Transaction réussie
+            </p>
+            <p class="history-desc">{{ tx.description }}</p>
+          </div>
+          <p class="history-amount">{{ tx.amount | number }} FCFA</p>
         </div>
-        <div class="history-info">
-          <p class="history-label">
-            <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
-            Transaction réussie
-          </p>
-          <p class="history-desc">{{ tx.description }}</p>
-        </div>
-        <p class="history-amount">{{ tx.amount | number }} FCFA</p>
       </div>
     </div>
-  </div>
   </div>
 
 </ion-content>

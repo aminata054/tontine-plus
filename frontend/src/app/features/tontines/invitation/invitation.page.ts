@@ -1,42 +1,57 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { IonContent, IonHeader, IonTitle, IonToolbar, IonSpinner, ModalController } from '@ionic/angular/standalone';
+import { PageHeaderComponent } from "src/app/shared/ui/page-header/page-header.component";
 import { ActivatedRoute, Router } from '@angular/router';
-import { IonContent, IonSpinner, ModalController } from '@ionic/angular/standalone';
-
 import { TontineService } from 'src/app/core/services/tontine.service';
-import { StateScreenComponent } from 'src/app/shared/ui/state-screen/state-screen.component';
 import { QrPanelComponent } from 'src/app/shared/ui/qr-panel/qr-panel.component';
 import { SharePanelComponent } from 'src/app/shared/ui/share-panel/share-panel.component';
-import { PageHeaderComponent } from "src/app/shared/ui/page-header/page-header.component";
+import { CustomButtonComponent } from "src/app/shared/ui/custom-button/custom-button.component";
+
+export interface Invitations {
+  id: string;
+  name: string;
+  photoUrl?: string;
+  date: Date;
+}
 
 @Component({
-  selector: 'app-success',
-  templateUrl: './success.page.html',
-  styleUrls: ['./success.page.scss'],
+  selector: 'app-invitation',
+  templateUrl: './invitation.page.html',
+  styleUrls: ['./invitation.page.scss'],
   standalone: true,
-  imports: [
-    CommonModule,
-    IonContent,
-    IonSpinner,
-    StateScreenComponent,
-    PageHeaderComponent
-  ],
+  imports: [IonSpinner, IonContent, CommonModule, FormsModule, PageHeaderComponent, CustomButtonComponent]
 })
-export class SuccessPage implements OnInit {
+export class InvitationPage implements OnInit {
 
   status: 'loading' | 'success' | 'error' = 'loading';
   inviteLink: string | null = null;
   inviteCode: string | null = null;
   qrUrl: string | null = null;
 
-  constructor(
-    private route: ActivatedRoute,
+  invitations: Invitations[] = [
+    {
+      id: '1',
+      name: 'Jean Dupont',
+      photoUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
+      date: new Date(),
+    },
+    {
+      id: '2',
+      name: 'Marie Curie',
+      photoUrl: 'https://randomuser.me/api/portraits/women/1.jpg',
+      date: new Date(),
+    },
+  ];
+
+  constructor(private route: ActivatedRoute,
     private router: Router,
     private tontineService: TontineService,
     private modalCtrl: ModalController,
   ) { }
 
-  ngOnInit(): void {
+  ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) { this.status = 'error'; return; }
 
@@ -84,7 +99,14 @@ export class SuccessPage implements OnInit {
     await modal.present();
   }
 
-  goToList(): void {
-    this.router.navigate(['/tontines']);
+  openMemberProfile(memberId: string): void {
+    const tontineId = this.route.snapshot.paramMap.get('id');
+    if (tontineId) {
+      this.router.navigate(['/tontines', tontineId, memberId, 'member-profile']);
+    }
   }
+
 }
+
+
+

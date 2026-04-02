@@ -14,9 +14,7 @@
         {{ getInitials() }}
       </div>
     </div>
-
     <h1 class="ov-header__title">Tontine</h1>
-
     <button class="ov-header__help" (click)="openHelp()">
       <ion-icon name="help-circle-outline"></ion-icon>
     </button>
@@ -25,10 +23,9 @@
   <!-- ═══════════════════════════════════════
        SEARCHBAR
   ═══════════════════════════════════════ -->
-  
   <div class="ov-search">
-    <app-custom-input placeholder="Rechercher..." [value]="searchQuery" (input)="onSearch($event)" fill="outline"
-      >    
+    <app-custom-input placeholder="Rechercher une tontine..." [value]="searchQuery" (valueChange)="onSearch($event)"
+      fill="outline">
     </app-custom-input>
   </div>
 
@@ -37,15 +34,12 @@
   ═══════════════════════════════════════ -->
   <div class="ov-actions">
     <h2 class="ov-section-title">Actions rapides</h2>
-
-    <app-custom-button color="primary" expand="block"
-      (click)="createTontine()"> Créer une tontine
+    <app-custom-button color="primary" expand="block" (clicked)="createTontine()">
+      Créer une tontine
     </app-custom-button>
-
     <div class="ov-divider"><span>Ou</span></div>
-
-    <app-custom-button color="secondary" expand="block" fill="outline"
-      (click)="joinTontine()"> Rejoindre une tontine
+    <app-custom-button color="secondary" expand="block" fill="outline" (clicked)="joinTontine()">
+      Rejoindre une tontine
     </app-custom-button>
   </div>
 
@@ -91,57 +85,56 @@
     <!-- LISTE -->
     <ng-container *ngIf="!isLoading && !hasError && hasTontines">
       <div class="ov-card" *ngFor="let t of filteredTontines" (click)="openTontine(t)">
-
-        <!-- Icône / Photo -->
-        <div class="ov-card__icon">
+      
+        <!-- Avatar -->
+        <div class="ov-card__avatar">
           <img *ngIf="t.iconUrl" [src]="t.iconUrl" [alt]="t.name" (error)="onImageError(t)" />
           <ion-icon *ngIf="!t.iconUrl" name="people-circle-outline"></ion-icon>
         </div>
-
-        <!-- Contenu -->
+      
+        <!-- Body -->
         <div class="ov-card__body">
-          <div class="ov-card__row ov-card__row--top">
+      
+          <!-- Header : Nom + Badge -->
+          <div class="ov-card__header">
             <span class="ov-card__name">{{ t.name }}</span>
             <span class="ov-badge ov-badge--{{ statusColor(t.status) }}">
               {{ statusLabel(t.status) }}
             </span>
           </div>
-
-          <div class="ov-card__row ov-card__row--meta">
-            <span class="ov-card__meta-label">Gain :</span>
-            <span class="ov-card__gain">{{ t.potPerTurn | number }} FCFA</span>
-            <span class="ov-card__sep">·</span>
-            <span class="ov-card__meta-label">Cotisation :</span>
-            <span class="ov-card__cotis">{{ t.amount | number }} FCFA</span>
+      
+          <!-- Gain -->
+          <div class="ov-card__gain">
+            Gain : {{ t.potPerTurn | number:'1.0-0' }} FCFA
           </div>
-
-          <div class="ov-card__row ov-card__row--date">
-            <ion-icon name="calendar-outline" class="ov-card__date-icon"></ion-icon>
-            <span class="ov-card__date-label">
-              Prochaine distribution :
-              <ng-container *ngIf="t.status !== 'completed'">{{ nextDate(t) }}</ng-container>
-              <ng-container *ngIf="t.status === 'completed'">Terminée</ng-container>
-            </span>
+      
+          <!-- Meta -->
+          <div class="ov-card__meta">
+            Prochaine distribution : <strong>{{ nextPaymentLabel(t) }}</strong><br>
+            Cotisation : <strong>{{ t.amount | number:'1.0-0' }} FCFA</strong>
           </div>
-
+      
+          <!-- Barre de progression -->
           <div class="ov-progress">
             <div class="ov-progress__bar" [style.width.%]="progress(t)"></div>
           </div>
-
-          <div class="ov-card__row ov-card__row--members">
-            <ion-icon name="person-outline" class="ov-card__date-icon"></ion-icon>
-            <span class="ov-card__members">{{ t.currentMembers }}/{{ t.totalMembers }} membres</span>
+      
+          <!-- Membres -->
+          <div class="ov-card__members">
+            {{ t.currentMembers }}/{{ t.totalMembers }} membres
           </div>
+      
         </div>
-
-        <ion-icon name="chevron-forward-outline" class="ov-card__chevron"></ion-icon>
       </div>
 
+      <!-- Aucun résultat de recherche -->
       <div *ngIf="filteredTontines.length === 0 && searchQuery" class="ov-state ov-state--inline">
-        <p class="ov-state__sub">Aucune tontine ne correspond à "<strong>{{ searchQuery }}</strong>"</p>
+        <p class="ov-state__sub">
+          Aucune tontine ne correspond à "<strong>{{ searchQuery }}</strong>"
+        </p>
       </div>
     </ng-container>
+
   </div>
 
 </ion-content>
-

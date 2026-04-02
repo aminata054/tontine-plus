@@ -4,13 +4,17 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil, finalize } from 'rxjs/operators';
-import { IonContent, IonIcon, IonSkeletonText, IonRefresher, IonRefresherContent } from '@ionic/angular/standalone';
+import {
+  IonContent, IonIcon, IonSkeletonText,
+  IonRefresher, IonRefresherContent,
+} from '@ionic/angular/standalone';
+
 import { UserProfile } from 'src/app/core/models/auth.model';
-import { Tontine } from 'src/app/core/models/tontine.model';
+import { Tontine, Frequency, TontineStatus, TontineType } from 'src/app/core/models/tontine.model';
 import { TontineService } from 'src/app/core/services/tontine.service';
 import { AuthService } from 'src/app/core/services/auth.service';
-import { CustomButtonComponent } from "src/app/shared/ui/custom-button/custom-button.component";
-import { CustomInputComponent } from "src/app/shared/ui/custom-input/custom-input.component";
+import { CustomButtonComponent } from 'src/app/shared/ui/custom-button/custom-button.component';
+import { CustomInputComponent } from 'src/app/shared/ui/custom-input/custom-input.component';
 
 @Component({
   selector: 'app-tontine',
@@ -26,7 +30,8 @@ import { CustomInputComponent } from "src/app/shared/ui/custom-input/custom-inpu
     IonRefresher,
     IonRefresherContent,
     CustomButtonComponent,
-    CustomInputComponent],
+    CustomInputComponent,
+  ],
 })
 export class TontinePage implements OnInit, OnDestroy {
 
@@ -47,7 +52,6 @@ export class TontinePage implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.user = this.authService.currentUser;
-
     this.authService.currentUser$
       .pipe(takeUntil(this.destroy$))
       .subscribe(u => (this.user = u));
@@ -60,7 +64,7 @@ export class TontinePage implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // ── Chargement ─────────────────────────────────────────────
+  // ── Chargement ──────────────────────────────────────────────────────────────
 
   loadTontines(event?: any): void {
     this.hasError = false;
@@ -79,9 +83,7 @@ export class TontinePage implements OnInit, OnDestroy {
           this.tontines = res.data ?? [];
           this.applyFilter();
         },
-        error: () => {
-          this.hasError = true;
-        },
+        error: () => { this.hasError = true; },
       });
   }
 
@@ -89,10 +91,10 @@ export class TontinePage implements OnInit, OnDestroy {
     this.loadTontines(event);
   }
 
-  // ── Recherche ──────────────────────────────────────────────
+  // ── Recherche ────────────────────────────────────────────────────────────────
 
-  onSearch(event: any): void {
-    this.searchQuery = event.detail.value ?? '';
+  onSearch(value: string): void {
+    this.searchQuery = value ?? '';
     this.applyFilter();
   }
 
@@ -103,42 +105,25 @@ export class TontinePage implements OnInit, OnDestroy {
       : [...this.tontines];
   }
 
-  // ── Navigation ─────────────────────────────────────────────
+  // ── Navigation ───────────────────────────────────────────────────────────────
 
   openTontine(t: Tontine): void {
-    // Si la tontine n'a pas encore de tours, on redirige vers la page de succès pour afficher le lien d'invitation
-    if (t.currentTurn === 0) {
-      this.router.navigate(['/tontines', t.id, 'success']);
+    if (t.currentTurn === 0 && t.status === 'pending') {
+      this.router.navigate(['/tontines', t.id, 'overview']);
     } else {
       this.router.navigate(['/tontines', t.id, 'overview']);
     }
   }
 
-  createTontine(): void {
-    this.router.navigate(['/tontines/create']);
-  }
+  createTontine(): void { this.router.navigate(['/tontines/create']); }
+  joinTontine(): void { this.router.navigate(['/tontines/join']); }
+  openHelp(): void { this.router.navigate(['/help']); }
+  goToProfile(): void { this.router.navigate(['/profile']); }
 
-  joinTontine(): void {
-    this.router.navigate(['/tontines/join']);
-  }
-
-  openHelp(): void {
-    this.router.navigate(['/help']);
-  }
-
-  goToProfile(): void {
-    this.router.navigate(['/profile']);
-  }
-
-  openNotifications(): void {
-    this.router.navigate(['/notifications']);
-  }
-
-  // ── UI helpers ─────────────────────────────────────────────
+  // ── UI helpers ───────────────────────────────────────────────────────────────
 
   getInitials(): string {
-    const name = this.user?.fullName ?? '';
-    return name
+    return (this.user?.fullName ?? '')
       .split(' ')
       .map(w => w[0])
       .slice(0, 2)
@@ -146,44 +131,61 @@ export class TontinePage implements OnInit, OnDestroy {
       .toUpperCase() || '?';
   }
 
-  get hasTontines(): boolean {
-    return this.tontines.length > 0;
-  }
+  get hasTontines(): boolean { return this.tontines.length > 0; }
+  get isEmpty(): boolean { return !this.isLoading && !this.hasError && this.tontines.length === 0; }
 
-  get isEmpty(): boolean {
-    return !this.isLoading && !this.hasError && this.tontines.length === 0;
-  }
+  // ── Labels (délégués au service, typés) ─────────────────────────────────────
 
-  frequencyLabel(f: string): string {
-    return this.tontineService.frequencyLabel(f);
-  }
+  frequencyLabel(f: Frequency): string { return this.tontineService.frequencyLabel(f); }
+  statusLabel(s: TontineStatus): string { return this.tontineService.statusLabel(s); }
+  statusColor(s: TontineStatus): string { return this.tontineService.statusColor(s); }
+  typeLabel(t: TontineType): string { return this.tontineService.typeLabel(t); }
 
-  statusLabel(s: string): string {
-    return this.tontineService.statusLabel(s);
-  }
+  // ── Progression ──────────────────────────────────────────────────────────────
 
-  statusColor(s: string): string {
-    return this.tontineService.statusColor(s);
-  }
-
-  /** Progression de la tontine (tour courant / total tours) */
   progress(t: Tontine): number {
     if (!t.totalTurns || t.totalTurns === 0) return 0;
     return Math.min((t.currentTurn / t.totalTurns) * 100, 100);
   }
 
-  /** Prochaine distribution formatée */
-  nextDate(t: Tontine): string {
-    if (!t.nextPaymentDate) return '—';
-    const d: Date = t.nextPaymentDate.toDate
-      ? t.nextPaymentDate.toDate()
-      : new Date(t.nextPaymentDate);
+  // ── Dates (corrigées) ────────────────────────────────────────────────────────
+
+  /**
+   * Convertit n'importe quel format de date Firestore/ISO en objet Date.
+   * Gère : Firestore Timestamp ({ toDate() }), string ISO, number (epoch ms).
+   */
+  private toDate(value: any): Date | null {
+    if (!value) return null;
+    if (typeof value.toDate === 'function') return value.toDate();   // Firestore Timestamp
+    if (value instanceof Date) return value;
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  /** Prochaine date de cotisation (ex: "12 juin") */
+  nextPaymentLabel(t: Tontine): string {
+    if (t.status === 'completed') return 'Terminée';
+    if (t.status === 'cancelled') return 'Annulée';
+    const d = this.toDate(t.nextPaymentDate);
+    if (!d) return '—';
     return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
   }
 
-  onImageError(t: Tontine): void {
-    t.iconUrl = null;
+  /** Date de début formatée (ex: "Démarré le 1 janvier 2025") */
+  startedAtLabel(t: Tontine): string {
+    const d = this.toDate(t.startedAt);
+    if (!d) return '';
+    return 'Démarré le ' + d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   }
+
+  /** Date de création (ex: "Créé le 5 mai 2025") */
+  createdAtLabel(t: Tontine): string {
+    const d = this.toDate(t.createdAt);
+    if (!d) return '';
+    return 'Créé le ' + d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  onImageError(t: Tontine): void { t.iconUrl = null; }
 
   skeletons = Array(3);
 }

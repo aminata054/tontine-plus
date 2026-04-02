@@ -1,0 +1,51 @@
+<ion-content [fullscreen]="true" class="member-profile-content">
+
+  <app-page-header title="Profil"></app-page-header>
+
+  <div class="profile-container">
+
+    <!-- Avatar + Nom -->
+    <div class="profile-header">
+      <div class="profile-avatar">
+        <img [src]="member?.photoUrl" [alt]="member?.name" *ngIf="member?.photoUrl" />
+        <div class="profile-avatar-placeholder" *ngIf="!member?.photoUrl">
+          <!-- {{ getInitials(member?.name) }} -->
+        </div>
+      </div>
+      <h1 class="profile-name">{{ member?.name }}</h1>
+    </div>
+
+    <!-- Informations -->
+    <div class="profile-info">
+      <div class="info-row">
+        <span class="info-label">Membre depuis</span>
+        <span class="info-value">{{ member?.joinedDate | date:'dd/MM/yyyy' }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Numéro de tour</span>
+        <span class="info-value">{{ member?.turnNumber || '--' }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Historique de paiement</span>
+        <span class="info-value">{{ member?.paymentHistory || '--' }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Score de confiance</span>
+        <span class="info-value score-stars">
+          ★★★☆☆
+          <!-- Ou utilise *ngFor pour des étoiles dynamiques -->
+        </span>
+      </div>
+    </div>
+
+    <!-- Bouton Signaler -->
+    <div class="profile-actions">
+      <button class="report-button">
+        <ion-icon name="flag-outline"></ion-icon>
+        Signaler ou reporter
+      </button>
+    </div>
+
+  </div>
+
+</ion-content>

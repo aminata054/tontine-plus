@@ -32,8 +32,7 @@ const getNextPaymentDate = (frequency: string, paymentDay?: number): Date => {
 // ─────────────────────────────────────────────────────────────
 // POST /api/v1/tontines — CRÉER UNE TONTINE
 //
-// Changement clé : on écrit `tontineId` dans users/{uid}.tontineIds[]
-// via arrayUnion — plus besoin de collectionGroup sur members/
+// on écrit `tontineId` dans users/{uid}.tontineIds[]
 // ─────────────────────────────────────────────────────────────
 export const createTontine = async (req: Request, res: Response) => {
     const uid = (req as any).user.uid;
@@ -52,41 +51,117 @@ export const createTontine = async (req: Request, res: Response) => {
         gracePeriodDays,
         penaltyType,
         penaltyValue,
-        autoExclusionDays,
-        earlyExitAllowed,
-        earlyExitPenaltyType,
-        earlyExitPenaltyValue,
+        autoExclusionDays,         // nombre de jours OU null = jamais
+        earlyExitAllowed,          // 'penalty' | 'vote' | 'locked'
+        earlyExitPenaltyType,      // 'guarantee' | 'paid_contributions' | null
         modificationThreshold,
         securityModel,
         guaranteeAmount,
     } = req.body;
 
-    // ── Validation ────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // VALIDATION
+    // ─────────────────────────────────────────────────────────────────────────
     const errors: string[] = [];
 
-    if (!['rotative', 'crescendo'].includes(type))
-        errors.push('type invalide (rotative | crescendo)');
+    // ── 1. Type de tontine ────────────────────────────────────────────────────
+    const VALID_TYPES = ['rotative', 'crescendo', 'solidarity', 'savings_goal'];
+    if (!type || !VALID_TYPES.includes(type))
+        errors.push(`type invalide - valeurs acceptées : ${VALID_TYPES.join(' | ')}`);
+
+    // ── 2. Nom ────────────────────────────────────────────────────────────────
     if (!name || name.trim().length < 3)
-        errors.push('nom requis (min 3 caractères)');
-    if (!amount || isNaN(amount) || amount < 1000)
-        errors.push('montant minimum : 1 000 FCFA');
-    if (!['daily', 'weekly', 'biweekly', 'monthly'].includes(frequency))
-        errors.push('fréquence invalide');
-    if (!totalMembers || totalMembers < 2 || totalMembers > 50)
+        errors.push('nom requis (minimum 3 caractères)');
+
+    // ── 3. Visibilité ─────────────────────────────────────────────────────────
+    //   'public' accepté en base mais signalé comme non implémenté côté app
+    const VALID_VISIBILITY = ['private', 'semi_public', 'public'];
+    if (visibility && !VALID_VISIBILITY.includes(visibility))
+        errors.push(`visibility invalide - valeurs acceptées : ${VALID_VISIBILITY.join(' | ')}`);
+
+    // ── 4. Montant ────────────────────────────────────────────────────────────
+    if (!amount || isNaN(Number(amount)) || Number(amount) < 200)
+        errors.push('montant minimum : 200 FCFA');
+
+    // ── 5. Fréquence ──────────────────────────────────────────────────────────
+    const VALID_FREQUENCIES = ['daily', 'weekly', 'biweekly', 'monthly'];
+    if (!frequency || !VALID_FREQUENCIES.includes(frequency))
+        errors.push(`fréquence invalide - valeurs acceptées : ${VALID_FREQUENCIES.join(' | ')}`);
+
+    // ── 6. Nombre de membres ──────────────────────────────────────────────────
+    const membersCount = Number(totalMembers);
+    if (!totalMembers || isNaN(membersCount) || membersCount < 2 || membersCount > 50)
         errors.push('nombre de membres : entre 2 et 50');
-    if (!['random', 'seniority', 'consensual', 'manual'].includes(rotationMethod))
-        errors.push('ordre de rotation invalide');
-    if (!['escrow', 'direct', 'blocked_account', 'solidarity'].includes(securityModel))
-        errors.push('modèle de sécurité invalide');
-    if (securityModel === 'solidarity' && (!guaranteeAmount || guaranteeAmount < 0))
-        errors.push('montant de caution requis pour le modèle solidarité');
+
+    // ── 7. Ordre de rotation ──────────────────────────────────────────────────
+    const VALID_ROTATION = ['random', 'seniority', 'consensual', 'manual'];
+    if (!rotationMethod || !VALID_ROTATION.includes(rotationMethod))
+        errors.push(`ordre de rotation invalide - valeurs acceptées : ${VALID_ROTATION.join(' | ')}`);
+
+    // ── 8. Délai de grâce ─────────────────────────────────────────────────────
+    const VALID_GRACE_DAYS = [0, 1, 2, 3, 5, 7];
+    const graceDays = Number(gracePeriodDays ?? 0);
+    if (!VALID_GRACE_DAYS.includes(graceDays))
+        errors.push(`gracePeriodDays invalide - valeurs acceptées : ${VALID_GRACE_DAYS.join(' | ')}`);
+
+    // ── 9. Pénalité de retard ─────────────────────────────────────────────────
+    const VALID_PENALTY_TYPES = ['percentage', 'fixed'];
+    if (penaltyType && !VALID_PENALTY_TYPES.includes(penaltyType))
+        errors.push(`penaltyType invalide - valeurs acceptées : ${VALID_PENALTY_TYPES.join(' | ')}`);
+
+    const penaltyVal = Number(penaltyValue ?? 0);
+    if (penaltyType === 'percentage') {
+        const VALID_PCT = [0, 2, 5, 10];
+        if (!VALID_PCT.includes(penaltyVal))
+            errors.push(`penaltyValue (percentage) invalide - valeurs acceptées : ${VALID_PCT.join(' | ')}`);
+    }
+    if (penaltyType === 'fixed' && (isNaN(penaltyVal) || penaltyVal < 0))
+        errors.push('penaltyValue (fixed) doit être un montant positif');
+
+    // ── 10. Exclusion automatique ─────────────────────────────────────────────
+    //   null / undefined = jamais (vote requis) ; sinon 7 | 14 | 30
+    const VALID_EXCLUSION_DAYS = [7, 14, 30];
+    if (autoExclusionDays !== null && autoExclusionDays !== undefined) {
+        const excDays = Number(autoExclusionDays);
+        if (!VALID_EXCLUSION_DAYS.includes(excDays))
+            errors.push(`autoExclusionDays invalide - valeurs acceptées : ${VALID_EXCLUSION_DAYS.join(' | ')} ou null (jamais)`);
+    }
+
+    // ── 11. Règles de sortie anticipée ────────────────────────────────────────
+    const VALID_EARLY_EXIT = ['penalty', 'vote', 'locked'];
+    if (!earlyExitAllowed || !VALID_EARLY_EXIT.includes(earlyExitAllowed))
+        errors.push(`earlyExitAllowed invalide - valeurs acceptées : ${VALID_EARLY_EXIT.join(' | ')}`);
+
+    //   Si sortie avec pénalité, le type de pénalité est requis
+    if (earlyExitAllowed === 'penalty') {
+        const VALID_EXIT_PENALTY = ['guarantee', 'paid_contributions'];
+        if (!earlyExitPenaltyType || !VALID_EXIT_PENALTY.includes(earlyExitPenaltyType))
+            errors.push(`earlyExitPenaltyType requis quand earlyExitAllowed='penalty' - valeurs acceptées : ${VALID_EXIT_PENALTY.join(' | ')}`);
+    }
+
+    // ── 12. Modèle de sécurité ────────────────────────────────────────────────
+    const VALID_SECURITY = ['escrow', 'direct', 'solidarity_guarantee'];
+    if (!securityModel || !VALID_SECURITY.includes(securityModel))
+        errors.push(`securityModel invalide - valeurs acceptées : ${VALID_SECURITY.join(' | ')}`);
+
+    //   Caution obligatoire pour le modèle "garantie solidaire"
+    if (securityModel === 'solidarity_guarantee') {
+        const gAmt = Number(guaranteeAmount);
+        if (!guaranteeAmount || isNaN(gAmt) || gAmt <= 0)
+            errors.push('guaranteeAmount requis (> 0) pour le modèle solidarity_guarantee');
+    }
+
+    // ── 13. URL de l'icône (optionnel) ────────────────────────────────────────
     if (iconUrl && !/^https?:\/\/.+/.test(iconUrl))
-        errors.push('iconUrl invalide');
+        errors.push('iconUrl invalide (doit commencer par http:// ou https://)');
 
     if (errors.length > 0) {
         return res.status(400).json({ success: false, errors });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // CRÉATION EN BASE
+    // ─────────────────────────────────────────────────────────────────────────
     let tontineId: string | null = null;
 
     try {
@@ -96,6 +171,7 @@ export const createTontine = async (req: Request, res: Response) => {
         const tontineRef = db.collection('tontines').doc();
         tontineId = tontineRef.id;
 
+        // Code d'invitation unique
         let inviteCode = generateInviteCode();
         const existing = await db
             .collection('tontines')
@@ -104,7 +180,7 @@ export const createTontine = async (req: Request, res: Response) => {
         if (!existing.empty) inviteCode = generateInviteCode() + '1';
 
         const nextPaymentDate = getNextPaymentDate(frequency, paymentDay);
-        const totalTurns = Number(totalMembers);
+        const totalTurns = membersCount;
 
         await db.runTransaction(async (transaction) => {
 
@@ -114,40 +190,73 @@ export const createTontine = async (req: Request, res: Response) => {
                 name: name.trim(),
                 description: description?.trim() ?? null,
                 iconUrl: iconUrl ?? null,
-                type,
-                visibility: visibility ?? 'private',
+
+                // Identité
+                type,                                    // 'rotative' | 'crescendo' | 'solidarity' | 'savings_goal'
+                visibility: visibility ?? 'private',     // 'private' | 'semi_public' | 'public'
                 status: 'pending',
+
+                // Finance
                 amount: Number(amount),
                 currency: 'XOF',
                 frequency,
                 paymentDay: paymentDay ?? null,
-                totalMembers: Number(totalMembers),
+                potPerTurn: Number(amount) * membersCount,
+
+                // Membres & rotation
+                totalMembers: membersCount,
                 currentMembers: 1,
-                potPerTurn: Number(amount) * Number(totalMembers),
-                rotationMethod,
+                rotationMethod,                          // 'random' | 'seniority' | 'consensual' | 'manual'
                 currentTurn: 0,
                 totalTurns,
-                securityModel,
-                guaranteeAmount: securityModel === 'solidarity' ? Number(guaranteeAmount) : null,
+
+                // Sécurité
+                securityModel,                           // 'escrow' | 'direct' | 'solidarity_guarantee'
+                guaranteeAmount: securityModel === 'solidarity_guarantee'
+                    ? Number(guaranteeAmount)
+                    : null,
+
+                // Liens d'invitation
                 inviteCode,
                 inviteLink: `https://tontineplus.app/join/${inviteCode}`,
+
+                // Règles
                 rules: {
-                    gracePeriodDays: Number(gracePeriodDays ?? 0),
+                    // Retards
+                    gracePeriodDays: graceDays,
                     penaltyType: penaltyType ?? 'percentage',
-                    penaltyValue: Number(penaltyValue ?? 0),
-                    autoExclusionDays: autoExclusionDays ? Number(autoExclusionDays) : null,
-                    earlyExitAllowed: earlyExitAllowed === true || earlyExitAllowed === 'true',
-                    earlyExitPenaltyType: earlyExitPenaltyType ?? null,
-                    earlyExitPenaltyValue: earlyExitPenaltyValue ? Number(earlyExitPenaltyValue) : null,
-                    modificationThreshold: modificationThreshold ? Number(modificationThreshold) : 75,
-                    locked: modificationThreshold === 100,
+                    penaltyValue: penaltyVal,
+                    autoExclusionDays: autoExclusionDays != null
+                        ? Number(autoExclusionDays)
+                        : null,                         // null = jamais (vote requis)
+
+                    // Sortie anticipée
+                    earlyExit: {
+                        mode: earlyExitAllowed,          // 'penalty' | 'vote' | 'locked'
+                        penaltyType: earlyExitAllowed === 'penalty'
+                            ? (earlyExitPenaltyType ?? null) // 'guarantee' | 'paid_contributions'
+                            : null,
+                    },
+
+                    // Gouvernance
+                    modificationThreshold: modificationThreshold
+                        ? Number(modificationThreshold)
+                        : 75,
+                    locked: Number(modificationThreshold) === 100,
+
+                    // Rotation consensuelle : seuil de vote = 75 %
+                    consensusThreshold: rotationMethod === 'consensual' ? 75 : null,
                 },
+
+                // Stats initiales
                 stats: {
                     totalCollected: 0,
                     totalDistributed: 0,
                     onTimePaymentRate: 100,
                     averagePaymentDelay: 0,
                 },
+
+                // Méta
                 createdBy: uid,
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 startedAt: null,
@@ -155,7 +264,7 @@ export const createTontine = async (req: Request, res: Response) => {
                 nextPaymentDate: admin.firestore.Timestamp.fromDate(nextPaymentDate),
             });
 
-            // 2. Sous-collection members/ — données du créateur
+            // 2. Sous-collection members/ — créateur
             const memberRef = tontineRef.collection('members').doc(uid);
             transaction.set(memberRef, {
                 id: uid,
@@ -165,7 +274,7 @@ export const createTontine = async (req: Request, res: Response) => {
                 userPhotoUrl: creatorData.photoUrl ?? null,
                 role: 'creator',
                 status: 'active',
-                turnNumber: null,
+                turnNumber: rotationMethod === 'seniority' ? 1 : null, // créateur en 1er si ancienneté
                 validationCount: 0,
                 validatedBy: [],
                 joinedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -182,8 +291,7 @@ export const createTontine = async (req: Request, res: Response) => {
                 },
             });
 
-            // 3. ✅ NOUVEAU — on enregistre l'ID dans users/{uid}.tontineIds[]
-            //    arrayUnion évite les doublons et crée le champ s'il n'existe pas
+            // 3. Référence de la tontine dans le profil du créateur
             const userRef = db.collection('users').doc(uid);
             transaction.update(userRef, {
                 tontineIds: admin.firestore.FieldValue.arrayUnion(tontineId),
@@ -197,13 +305,14 @@ export const createTontine = async (req: Request, res: Response) => {
                 tontineId,
                 inviteCode,
                 inviteLink: `https://tontineplus.app/join/${inviteCode}`,
-                potPerTurn: Number(amount) * Number(totalMembers),
+                potPerTurn: Number(amount) * membersCount,
                 totalTurns,
                 status: 'pending',
             },
         });
 
     } catch (err: any) {
+        // Nettoyage en cas d'erreur partielle
         if (tontineId) {
             try { await db.collection('tontines').doc(tontineId).delete(); } catch (_) { }
         }
@@ -396,7 +505,7 @@ export const updateTontine = async (
 // ─────────────────────────────────────────────────────────────
 // DELETE /api/v1/tontines/:id — SUPPRIMER UNE TONTINE
 //
-// Changement clé : on retire aussi l'ID de users/{uid}.tontineIds[]
+// on retire l'ID de users/{uid}.tontineIds[]
 // ─────────────────────────────────────────────────────────────
 export const deleteTontine = async (
     req: Request<{ id: string }>,
@@ -450,7 +559,7 @@ export const deleteTontine = async (
         // 3. Supprimer le document tontine
         batch.delete(db.collection('tontines').doc(id));
 
-        // 4. ✅ NOUVEAU — retirer l'ID de tontineIds[] pour chaque membre
+        // 4. retirer l'ID de tontineIds[] pour chaque membre
         for (const memberUid of memberUids) {
             const userRef = db.collection('users').doc(memberUid);
             batch.update(userRef, {

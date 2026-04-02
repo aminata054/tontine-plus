@@ -1,0 +1,53 @@
+<ion-content [fullscreen]="true" class="invitation-content">
+
+  <app-page-header title="Invitations"></app-page-header>
+
+  <!-- Boutons principaux -->
+  <div class="invitation-actions">
+    <app-custom-button expand="block" color="primary" (clicked)="openShareModal()">
+      Partager le lien
+    </app-custom-button>
+
+    <div class="invitation-divider">
+      <span>Ou</span>
+    </div>
+
+    <app-custom-button expand="block" fill="outline" color="primary" (clicked)="openQrModal()">
+      Afficher le QR Code
+    </app-custom-button>
+  </div>
+
+  <!-- Liste d'invitations -->
+  <div class="invitation-list">
+    <h2 class="invitation-list__title">Liste d'invitation</h2>
+
+    <!-- Liste des invitations -->
+    <div class="invitation-item" *ngFor="let invite of invitations">
+      <div class="invitation-item__avatar"  (click)="openMemberProfile(invite.id)">
+        <img [src]="invite.photoUrl" [alt]="invite.name" *ngIf="invite.photoUrl" />
+        <div class="invitation-item__avatar-placeholder" *ngIf="!invite.photoUrl">
+          <!-- {{ getInitials(invite.name) }} -->
+        </div>
+      </div>
+
+      <div class="invitation-item__info">
+        <span class="invitation-item__name">{{ invite.name }}</span>
+      </div>
+
+      <div class="invitation-item__actions">
+        <button class="invitation-btn invitation-btn--accept">
+          Accepter
+        </button>
+        <button class="invitation-btn invitation-btn--refuse">
+          Refuser
+        </button>
+      </div>
+    </div>
+
+    <!-- Message si liste vide -->
+    <div class="invitation-empty">
+      <p>Aucune invitation en attente pour le moment.</p>
+    </div>
+  </div>
+
+</ion-content>

@@ -63,7 +63,6 @@ export const routes: Routes = [
             path: ':id/success',
             loadComponent: () => import('./features/tontines/success/success.page').then(m => m.SuccessPage)
           },
-
           {
             path: 'join',
             loadComponent: () => import('./features/tontines/join/join.page').then(m => m.JoinPage),
@@ -71,6 +70,14 @@ export const routes: Routes = [
           {
             path: ':id/overview',
             loadComponent: () => import('./features/tontines/overview/overview.page').then(m => m.OverviewPage),
+          },
+          {
+            path: ':id/invitation',
+            loadComponent: () => import('./features/tontines/invitation/invitation.page').then(m => m.InvitationPage)
+          },
+          {
+            path: ':id/members',
+            loadComponent: () => import('./features/tontines/members/members.page').then(m => m.MembersPage)
           },
           {
             path: ':id/flow',
@@ -83,7 +90,11 @@ export const routes: Routes = [
           {
             path: ':id/settings',
             loadComponent: () => import('./features/tontines/settings/settings.page').then(m => m.SettingsPage),
-          }
+          },
+          {
+            path: ':id/:memberId/member-profile',
+            loadComponent: () => import('./features/tontines/member-profile/member-profile.page').then(m => m.MemberProfilePage)
+          },
         ]
       },
       {
@@ -147,4 +158,7 @@ export const routes: Routes = [
     path: 'notification-page',
     loadComponent: () => import('./features/notifications/notification-page/notification-page.page').then(m => m.NotificationPagePage)
   },
+  
+ 
+
 ];

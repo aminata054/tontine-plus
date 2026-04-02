@@ -1,0 +1,140 @@
+.alert-modal-content {
+    --background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.alert-container {
+    background: white;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 380px;
+    padding: 32px 24px 24px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    text-align: center;
+}
+
+.close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #64748B;
+    cursor: pointer;
+}
+
+.icon-wrapper {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+
+    &.success {
+        background: #E6F9EE;
+        color: var(--ion-color-success);
+    }
+
+    &.error {
+        background: #FEE2E2;
+        color: var(--ion-color-danger);
+    }
+
+    &.warning {
+        background: #FEF3C7;
+        color: var(--badge-warning-color);
+    }
+
+    &.launch {
+        background: #DBEAFE;
+        color: var(--ion-color-primary);
+    }
+}
+
+.alert-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1E2937;
+    margin: 0 0 12px 0;
+}
+
+.alert-message {
+    font-size: 15px;
+    color: #475569;
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+
+.extra-content {
+    background: #F8FAFC;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 28px;
+    text-align: left;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14.5px;
+
+    .info-label {
+        color: #64748B;
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: #1E2937;
+    }
+}
+
+.alert-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.alert-btn {
+    flex: 1;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 15.5px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+
+    &--cancel {
+        background: white;
+        color: #475569;
+        border: 1.5px solid #E2E8F0;
+    }
+
+    &--confirm {
+        color: white;
+
+        &.danger {
+            background: var(--ion-color-danger);
+        }
+
+        &.success {
+            background: var(--ion-color-success);
+        }
+
+        &.primary {
+            background: var(--ion-color-primary);
+        }
+    }
+
+    &:active {
+        opacity: 0.9;
+        transform: scale(0.98);
+    }
+}

@@ -1,13 +1,243 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>overview</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content [fullscreen]="true" class="ov-content">
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">overview</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <!-- ── LOADING ────────────────────────────────────────────── -->
+  <ng-container *ngIf="status === 'loading'">
+    <app-page-header title="Vue d'ensemble"></app-page-header>
+    <div class="ov-skeleton">
+      <div class="ov-skeleton__hero">
+        <ion-skeleton-text animated style="width:64px;height:64px;border-radius:14px;"></ion-skeleton-text>
+        <div class="ov-skeleton__hero-body">
+          <ion-skeleton-text animated
+            style="width:55%;height:16px;border-radius:6px;margin-bottom:8px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width:35%;height:12px;border-radius:6px;"></ion-skeleton-text>
+        </div>
+      </div>
+      <ion-skeleton-text animated
+        style="width:100%;height:80px;border-radius:14px;margin-top:16px;"></ion-skeleton-text>
+      <ion-skeleton-text animated
+        style="width:100%;height:52px;border-radius:14px;margin-top:12px;"></ion-skeleton-text>
+      <ion-skeleton-text animated
+        style="width:100%;height:52px;border-radius:14px;margin-top:12px;"></ion-skeleton-text>
+    </div>
+  </ng-container>
+
+  <!-- ── ERREUR ─────────────────────────────────────────────── -->
+  <ng-container *ngIf="status === 'error'">
+    <app-page-header title="Vue d'ensemble"></app-page-header>
+    <div class="ov-state">
+      <ion-icon name="alert-circle-outline" class="ov-state__icon"></ion-icon>
+      <p class="ov-state__title">Impossible de charger</p>
+      <p class="ov-state__sub">Vérifiez votre connexion et réessayez.</p>
+      <app-custom-button fill="outline" (clicked)="load()">Réessayer</app-custom-button>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════════════════════════════════════════════════
+       CONTENU PRINCIPAL
+  ══════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="status === 'success' && tontine">
+
+    <!-- Header avec titre + bouton paramètres (créateur uniquement) -->
+    <app-page-header title="Vue d'ensemble">
+      <button *ngIf="isCreator" slot="end" class="ov-header__settings" (click)="openSettings()">
+        <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+      </button>
+    </app-page-header>
+
+    <!-- ─────────────────────────────────────────────────────────
+         HERO — Carte principale de la tontine
+    ──────────────────────────────────────────────────────────── -->
+    <div class="ov-hero">
+
+      <!-- Icône + infos de base -->
+      <div class="ov-hero__top">
+        <div class="ov-hero__icon">
+          <img *ngIf="tontine.iconUrl" [src]="tontine.iconUrl" [alt]="tontine.name" />
+          <ion-icon *ngIf="!tontine.iconUrl" name="people-circle-outline"></ion-icon>
+        </div>
+        <div class="ov-hero__info">
+          <h2 class="ov-hero__name">{{ tontine.name }}</h2>
+          <p class="ov-hero__desc" *ngIf="tontine.description">{{ tontine.description }}</p>
+        </div>
+        <span class="ov-badge ov-badge--{{ statusColor(tontine.status) }}">
+          {{ statusLabel(tontine.status) }}
+        </span>
+      </div>
+
+      <!-- Ligne type + membres -->
+      <div class="ov-hero__meta">
+        <div class="ov-hero__meta-item">
+          <ion-icon name="repeat-outline"></ion-icon>
+          <span>{{ tontine.type === 'rotative' ? 'Rotative classique' : tontine.type }}</span>
+        </div>
+        <span class="ov-hero__sep">·</span>
+        <div class="ov-hero__meta-item">
+          <ion-icon name="people-outline"></ion-icon>
+          <span>{{ tontine.currentMembers }}/{{ tontine.totalMembers }} membres</span>
+        </div>
+      </div>
+
+      <!-- Grille 2×2 : infos clés -->
+      <div class="ov-info-grid">
+        <div class="ov-info-grid__item">
+          <span class="ov-info-grid__label">Ordre de rotation</span>
+          <span class="ov-info-grid__value">{{ tontine.rotationMethod === 'random' ? 'Aléatoire' :
+            tontine.rotationMethod === 'seniority' ? 'Ancienneté' :
+            tontine.rotationMethod === 'consensual' ? 'Consensuel' : 'Prédéfini' }}</span>
+        </div>
+        <div class="ov-info-grid__item">
+          <span class="ov-info-grid__label">Visibilité</span>
+          <span class="ov-info-grid__value">{{ tontine.visibility === 'private' ? 'Privée : Sur invitation' :
+            tontine.visibility === 'semi_public' ? 'Semi-publique' : 'Publique' }}</span>
+        </div>
+        <div class="ov-info-grid__item">
+          <span class="ov-info-grid__label">Cotisation</span>
+          <span class="ov-info-grid__value ov-info-grid__value--accent">
+            {{ formatAmount(tontine.amount) }} FCFA
+          </span>
+        </div>
+        <div class="ov-info-grid__item">
+          <span class="ov-info-grid__label">Gain par tour</span>
+          <span class="ov-info-grid__value ov-info-grid__value--primary">
+            {{ formatAmount(tontine.potPerTurn) }} FCFA
+          </span>
+        </div>
+      </div>
+
+      <!-- Progression du cycle (masquée si pending) -->
+      <ng-container *ngIf="!isPending">
+        <div class="ov-cycle">
+          <div class="ov-cycle__row">
+            <span class="ov-cycle__label">Progression du cycle</span>
+            <span class="ov-cycle__value">Tour {{ tontine.currentTurn }}/{{ tontine.totalTurns }}</span>
+          </div>
+          <div class="ov-progress">
+            <div class="ov-progress__bar" [style.width.%]="progress()"></div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Barre remplissage membres (si pending) -->
+      <ng-container *ngIf="isPending">
+        <div class="ov-cycle">
+          <div class="ov-cycle__row">
+            <span class="ov-cycle__label">Membres rejoints</span>
+            <span class="ov-cycle__value">{{ tontine.currentMembers }}/{{ tontine.totalMembers }}</span>
+          </div>
+          <div class="ov-progress">
+            <div class="ov-progress__bar" [style.width.%]="membersProgress()"></div>
+          </div>
+          <p class="ov-cycle__hint ov-cycle__hint--ready" *ngIf="isFull && isCreator">
+            ✓ Groupe complet - vous pouvez lancer la tontine
+          </p>
+        </div>
+      </ng-container>
+
+      <!-- Dates contextuelles -->
+      <div class="ov-dates">
+        <div class="ov-dates__row" *ngIf="isPending">
+          <ion-icon name="calendar-outline"></ion-icon>
+          <span>Créée le {{ createdAtLabel() }}</span>
+        </div>
+        <div class="ov-dates__row" *ngIf="isActive">
+          <ion-icon name="play-circle-outline"></ion-icon>
+          <span>Démarrée le {{ startedAtLabel() }}</span>
+        </div>
+        <div class="ov-dates__row" *ngIf="isActive">
+          <ion-icon name="calendar-outline"></ion-icon>
+          <span>Prochaine cotisation : <strong>{{ nextPaymentLabel() }}</strong></span>
+        </div>
+        <div class="ov-dates__row" *ngIf="isCompleted">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <span>Cycle terminé</span>
+        </div>
+        <div class="ov-dates__row" *ngIf="isCancelled">
+          <ion-icon name="close-circle-outline"></ion-icon>
+          <span>Tontine annulée</span>
+        </div>
+      </div>
+
+    </div><!-- /ov-hero -->
+
+    <!-- ─────────────────────────────────────────────────────────
+         ACTIONS PRINCIPALES
+         Créateur + pending → "Lancer" + "Voir les invitations"
+         Créateur & membres + active  → "Consulter" + "Salle de message"
+         Membre (non créateur) → "Consulter est disabled " + "Salle de message"
+    ──────────────────────────────────────────────────────────── -->
+  <div class="ov-actions">
+  
+    <!-- CRÉATEUR / ADMIN — PENDING -->
+    <ng-container *ngIf="isAdmin && isPending">
+      <app-custom-button expand="block" color="primary" [disabled]="!isFull" (clicked)="showLaunchConfirm()">
+        Lancer la tontine
+      </app-custom-button>
+      <app-custom-button expand="block" fill="outline" (clicked)="openInvitations()">
+        Voir les invitations
+      </app-custom-button>
+    </ng-container>
+  
+    <!-- CRÉATEUR / ADMIN — ACTIVE -->
+    <ng-container *ngIf="isAdmin && isActive">
+      <app-custom-button expand="block" color="primary" (clicked)="openChat()">
+        Consulter la tontine
+      </app-custom-button>
+      <app-custom-button expand="block" fill="outline" (clicked)="openChat()">
+        Salle de message
+      </app-custom-button>
+    </ng-container>
+  
+    <!-- CRÉATEUR / ADMIN — COMPLETED / CANCELLED -->
+    <ng-container *ngIf="isAdmin && (isCompleted || isCancelled)">
+      <app-custom-button expand="block" color="primary" (clicked)="openChat()">
+        Consulter la tontine
+      </app-custom-button>
+    </ng-container>
+  
+    <!-- MEMBRE SIMPLE — ACTIVE / COMPLETED / CANCELLED -->
+    <ng-container *ngIf="!isAdmin && !isPending">
+      <app-custom-button expand="block" color="primary" [disabled]="true" (clicked)="openChat()">
+        Consulter la tontine
+      </app-custom-button>
+      <app-custom-button expand="block" fill="outline" (clicked)="openChat()">
+        Salle de message
+      </app-custom-button>
+    </ng-container>
+  
+  </div>
+
+    <!-- ─────────────────────────────────────────────────────────
+         MEMBRES
+    ──────────────────────────────────────────────────────────── -->
+    <div class="ov-members">
+      <div class="ov-members__header">
+        <h3 class="ov-members__title">Membres</h3>
+        <button class="ov-members__see-all" (click)="goToMembers()">Voir plus</button>
+      </div>
+
+      <div class="ov-member-row" *ngFor="let m of (tontine.myStats ? [] : [])">
+        <!-- placeholder — la liste réelle viendra d'une sous-collection members -->
+      </div>
+
+      <!-- Ligne du membre connecté si les stats sont disponibles -->
+      <div class="ov-member-row" *ngIf="tontine.myRole">
+        <div class="ov-member-row__avatar ov-member-row__avatar--self">
+          {{ getInitialsFromUser() }}
+        </div>
+        <div class="ov-member-row__info">
+          <span class="ov-member-row__name">{{ getCurrentUserName() }}</span>
+          <span class="ov-member-row__sub" *ngIf="tontine.myTurnNumber">
+            Tour n° {{ tontine.myTurnNumber }}
+          </span>
+        </div>
+        <span class="ov-member-badge ov-member-badge--{{ tontine.myRole }}">
+          {{ tontine.myRole === 'creator' ? 'Admin' :
+          tontine.myRole === 'admin' ? 'Admin' : 'Membre' }}
+        </span>
+      </div>
+
+    </div>
+
+  </ng-container>
+
 </ion-content>

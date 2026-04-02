@@ -1,13 +1,45 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// ÉNUMÉRATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type TontineType = 'rotative' | 'crescendo' | 'solidarity' | 'savings_goal';
+export type TontineVisibility = 'private' | 'semi_public' | 'public';
+export type TontineStatus = 'pending' | 'active' | 'completed' | 'cancelled';
+export type Frequency = 'daily' | 'weekly' | 'biweekly' | 'monthly';
+export type RotationMethod = 'random' | 'seniority' | 'consensual' | 'manual';
+export type SecurityModel = 'escrow' | 'direct' | 'solidarity_guarantee';  
+export type PenaltyType = 'percentage' | 'fixed';
+export type EarlyExitMode = 'penalty' | 'vote' | 'locked';
+export type EarlyExitPenalty = 'guarantee' | 'paid_contributions';
+export type MemberRole = 'creator' | 'admin' | 'member';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RÈGLES
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface EarlyExitRules {
+    /** 'penalty' | 'vote' | 'locked' */
+    mode: EarlyExitMode;
+    /** Uniquement renseigné quand mode === 'penalty' */
+    penaltyType: EarlyExitPenalty | null;
+}
+
 export interface TontineRules {
-    gracePeriodDays: number;
-    penaltyType: 'percentage' | 'fixed';
+    // Retards
+    gracePeriodDays: 0 | 2 | 3 | 5 | 7;
+    penaltyType: PenaltyType;
     penaltyValue: number;
-    autoExclusionDays: number | null;
-    earlyExitAllowed: boolean;
-    earlyExitPenaltyType: 'percentage' | 'fixed' | null;
-    earlyExitPenaltyValue: number | null;
-    modificationThreshold: 50 | 75 | 100;
+    /** null = jamais (vote requis) */
+    autoExclusionDays: 7 | 14 | 30 | null;
+
+    // Sortie anticipée
+    earlyExit: EarlyExitRules;
+
+    // Gouvernance
+    modificationThreshold: 75 | 100;
     locked: boolean;
+    /** Seuil de vote pour la rotation consensuelle (75 %) */
+    consensusThreshold: number | null;
 }
 
 export interface TontineStats {
@@ -17,37 +49,49 @@ export interface TontineStats {
     averagePaymentDelay: number;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DOCUMENT PRINCIPAL
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface Tontine {
     id: string;
     name: string;
     description: string | null;
     iconUrl: string | null;
-    type: 'rotative' | 'crescendo';
-    visibility: 'private' | 'semi_public' | 'public';
-    status: 'pending' | 'active' | 'completed' | 'cancelled';
+
+    type: TontineType;
+    visibility: TontineVisibility;
+    status: TontineStatus;
+
     amount: number;
     currency: string;
-    frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+    frequency: Frequency;
     paymentDay: number | null;
     totalMembers: number;
     currentMembers: number;
     potPerTurn: number;
-    rotationMethod: 'random' | 'seniority' | 'consensual' | 'manual';
+
+    rotationMethod: RotationMethod;
     currentTurn: number;
     totalTurns: number;
-    securityModel: 'escrow' | 'direct' | 'blocked_account' | 'solidarity';
+
+    securityModel: SecurityModel;
     guaranteeAmount: number | null;
+
     inviteCode: string;
     inviteLink: string;
+
     rules: TontineRules;
     stats: TontineStats;
+
     createdBy: string;
     createdAt: any;
     startedAt: any | null;
     endedAt: any | null;
     nextPaymentDate: any;
+
     // Infos contextuelles du membre connecté
-    myRole?: 'creator' | 'admin' | 'member';
+    myRole?: MemberRole;
     myTurnNumber?: number | null;
     myStats?: {
         totalPaid: number;
@@ -59,28 +103,51 @@ export interface Tontine {
     };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PAYLOAD DE CRÉATION
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface CreateTontinePayload {
-    type: 'rotative' | 'crescendo';
+    // Identité
+    type: TontineType;
     name: string;
     description?: string;
     iconUrl?: string;
-    visibility?: 'private' | 'semi_public' | 'public';
+    visibility?: TontineVisibility;
+
+    // Finance
     amount: number;
-    frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+    frequency: Frequency;
     paymentDay?: number;
     totalMembers: number;
-    rotationMethod: 'random' | 'seniority' | 'consensual' | 'manual';
-    gracePeriodDays?: number;
-    penaltyType?: 'percentage' | 'fixed';
+
+    // Rotation
+    rotationMethod: RotationMethod;
+
+    // Règles — retards
+    gracePeriodDays?: 0 | 2 | 3 | 5 | 7;
+    penaltyType?: PenaltyType;
     penaltyValue?: number;
-    autoExclusionDays?: number;
-    earlyExitAllowed?: boolean;
-    earlyExitPenaltyType?: 'percentage' | 'fixed';
-    earlyExitPenaltyValue?: number;
-    modificationThreshold?: 50 | 75 | 100;
-    securityModel: 'escrow' | 'direct' | 'blocked_account' | 'solidarity';
+    /** null = jamais ; absent = valeur par défaut backend */
+    autoExclusionDays?: 7 | 14 | 30 | null;
+
+    // Règles — sortie anticipée
+    /** 'penalty' | 'vote' | 'locked' */
+    earlyExitAllowed: EarlyExitMode;
+    /** Requis uniquement si earlyExitAllowed === 'penalty' */
+    earlyExitPenaltyType?: EarlyExitPenalty;
+
+    // Gouvernance
+    modificationThreshold?: 75 | 100;
+
+    // Sécurité
+    securityModel: SecurityModel;
     guaranteeAmount?: number;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RÉPONSES API
+// ─────────────────────────────────────────────────────────────────────────────
 
 export interface CreateTontineResponse {
     success: boolean;
@@ -91,7 +158,7 @@ export interface CreateTontineResponse {
         inviteLink: string;
         potPerTurn: number;
         totalTurns: number;
-        status: string;
+        status: TontineStatus;
     };
 }
 

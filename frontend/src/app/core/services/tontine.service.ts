@@ -3,7 +3,22 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
-import { CreateTontinePayload, CreateTontineResponse, Tontine, TontineDetailResponse, TontineInviteResponse, TontineListResponse } from '../models/tontine.model';
+import {
+    CreateTontinePayload,
+    CreateTontineResponse,
+    EarlyExitMode,
+    EarlyExitPenalty,
+    Frequency,
+    RotationMethod,
+    SecurityModel,
+    Tontine,
+    TontineDetailResponse,
+    TontineInviteResponse,
+    TontineListResponse,
+    TontineStatus,
+    TontineType,
+    TontineVisibility,
+} from '../models/tontine.model';
 
 @Injectable({ providedIn: 'root' })
 export class TontineService {
@@ -16,13 +31,13 @@ export class TontineService {
 
     constructor(private http: HttpClient) { }
 
-    // ── CRÉER ──────────────────────────────────────────────────
+    // ── CRÉER ──────────────────────────────────────────────────────────────────
     createTontine(payload: CreateTontinePayload): Observable<CreateTontineResponse> {
         return this.http.post<CreateTontineResponse>(this.API, payload);
     }
 
-    // ── MES TONTINES ───────────────────────────────────────────
-    getMyTontines(status?: string): Observable<TontineListResponse> {
+    // ── MES TONTINES ───────────────────────────────────────────────────────────
+    getMyTontines(status?: TontineStatus): Observable<TontineListResponse> {
         let params = new HttpParams();
         if (status) params = params.set('status', status);
 
@@ -33,42 +48,50 @@ export class TontineService {
         );
     }
 
-    // ── DÉTAILS ────────────────────────────────────────────────
+    // ── DÉTAILS ────────────────────────────────────────────────────────────────
     getTontineById(id: string): Observable<TontineDetailResponse> {
         return this.http.get<TontineDetailResponse>(`${this.API}/${id}`);
     }
 
-    // ── MODIFIER ───────────────────────────────────────────────
+    // ── MODIFIER ───────────────────────────────────────────────────────────────
     updateTontine(id: string, payload: Partial<CreateTontinePayload>): Observable<any> {
         return this.http.patch<any>(`${this.API}/${id}`, payload);
     }
 
-    // ── SUPPRIMER ──────────────────────────────────────────────
+    // ── SUPPRIMER ──────────────────────────────────────────────────────────────
     deleteTontine(id: string): Observable<any> {
         return this.http.delete<any>(`${this.API}/${id}`);
     }
 
-    // ── INVITATION ─────────────────────────────────────────────
+    // ── INVITATION ─────────────────────────────────────────────────────────────
     getTontineInvite(id: string): Observable<TontineInviteResponse> {
         return this.http.get<TontineInviteResponse>(`${this.API}/${id}/invite`);
     }
 
-    // ── UTILITAIRES ────────────────────────────────────────────
+    // ── LABELS LISIBLES EN FRANÇAIS ────────────────────────────────────────────
 
-    /** Fréquence lisible en français */
-    frequencyLabel(frequency: string): string {
-        const map: Record<string, string> = {
-            daily: 'jour',
-            weekly: 'semaine',
-            biweekly: '2 semaines',
-            monthly: 'mois',
+    frequencyLabel(frequency: Frequency): string {
+        const map: Record<Frequency, string> = {
+            daily: 'Quotidienne',
+            weekly: 'Hebdomadaire',
+            biweekly: 'Bimensuelle',
+            monthly: 'Mensuelle',
         };
         return map[frequency] ?? frequency;
     }
 
-    /** Statut lisible en français */
-    statusLabel(status: string): string {
-        const map: Record<string, string> = {
+    typeLabel(type: TontineType): string {
+        const map: Record<TontineType, string> = {
+            rotative: 'Rotative classique',
+            crescendo: 'Crescendo',
+            solidarity: 'Solidarité',
+            savings_goal: 'Épargne objectif',
+        };
+        return map[type] ?? type;
+    }
+
+    statusLabel(status: TontineStatus): string {
+        const map: Record<TontineStatus, string> = {
             pending: 'En attente',
             active: 'En cours',
             completed: 'Terminée',
@@ -77,9 +100,8 @@ export class TontineService {
         return map[status] ?? status;
     }
 
-    /** Couleur du badge de statut */
-    statusColor(status: string): string {
-        const map: Record<string, string> = {
+    statusColor(status: TontineStatus): string {
+        const map: Record<TontineStatus, string> = {
             pending: 'warning',
             active: 'success',
             completed: 'medium',
@@ -87,6 +109,53 @@ export class TontineService {
         };
         return map[status] ?? 'medium';
     }
+
+    rotationLabel(method: RotationMethod): string {
+        const map: Record<RotationMethod, string> = {
+            random: 'Aléatoire',
+            seniority: 'Ancienneté',
+            consensual: 'Consensuel',
+            manual: 'Prédéfini par moi',
+        };
+        return map[method] ?? method;
+    }
+
+    securityLabel(model: SecurityModel): string {
+        const map: Record<SecurityModel, string> = {
+            escrow: 'Escrow collectif',
+            direct: 'Virement direct',
+            solidarity_guarantee: 'Garantie solidaire',
+        };
+        return map[model] ?? model;
+    }
+
+    visibilityLabel(v: TontineVisibility): string {
+        const map: Record<TontineVisibility, string> = {
+            private: 'Privée - Sur invitation',
+            semi_public: 'Semi-publique',
+            public: 'Publique',
+        };
+        return map[v] ?? v;
+    }
+
+    earlyExitLabel(mode: EarlyExitMode): string {
+        const map: Record<EarlyExitMode, string> = {
+            penalty: 'Autorisée avec pénalité',
+            vote: 'Autorisée après vote',
+            locked: 'Non autorisée',
+        };
+        return map[mode] ?? mode;
+    }
+
+    earlyExitPenaltyLabel(type: EarlyExitPenalty): string {
+        const map: Record<EarlyExitPenalty, string> = {
+            guarantee: 'Perte de la caution',
+            paid_contributions: 'Perte des cotisations déjà payées',
+        };
+        return map[type] ?? type;
+    }
+
+    // ── UTILITAIRES ────────────────────────────────────────────────────────────
 
     /** Vider le cache local */
     clearCache(): void {

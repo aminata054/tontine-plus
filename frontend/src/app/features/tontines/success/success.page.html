@@ -1,5 +1,5 @@
 <ion-content [fullscreen]="true" class="success-content">
-<app-page-header></app-page-header>
+  <app-page-header></app-page-header>
   <!-- Chargement -->
   <div class="sc-result" *ngIf="status === 'loading'">
     <div class="sc-result__spinner">
@@ -12,8 +12,7 @@
   <app-state-screen *ngIf="status === 'success'" type="celebration" title="Félicitations !"
     subtitle="Votre tontine a été créée avec succès ! Invitez dès maintenant les membres du groupe."
     buttonText="Partager le lien" [showSecondaryButton]="true" secondaryButtonText="Afficher le QR Code"
-    secondaryButtonFill="outline"
-    (buttonClick)="openShareModal()" (secondaryButtonClick)="openQrModal()">
+    secondaryButtonFill="outline" (buttonClick)="openShareModal()" (secondaryButtonClick)="openQrModal()">
   </app-state-screen>
 
   <!-- Erreur -->

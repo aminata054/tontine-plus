@@ -35,6 +35,9 @@ import {
     logoSnapchat,
     logoGoogle,
     lockClosed,
+    syncOutline,
+    repeatOutline,
+    flagOutline,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -63,7 +66,8 @@ export function registerIcons() {
         shareOutline, qrCodeOutline, copyOutline, downloadOutline,
         refreshOutline,
         shieldCheckmarkOutline,
-        listOutline, shuffleOutline, logoWhatsapp, logoTwitter, logoSnapchat
+        listOutline, shuffleOutline, logoWhatsapp, logoTwitter, logoSnapchat, syncOutline,
+        repeatOutline, flagOutline
 
     });
 }
