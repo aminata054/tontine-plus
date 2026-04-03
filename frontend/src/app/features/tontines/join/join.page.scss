@@ -1,0 +1,241 @@
+// ─── Variables ────────────────────────────────────────────────────────────────
+:host {
+    --join-surface: #EBEBEB;
+    --join-border: #E2E8F0;
+    --join-corner: 3px;
+    --join-corner-size: 24px;
+}
+
+// ─── Layout général ───────────────────────────────────────────────────────────
+.join-content {
+    --background: var(---ion-background-color);
+}
+
+// ─── Toggle tabs ──────────────────────────────────────────────────────────────
+.tab-toggle {
+    display: flex;
+    margin: 20px 16px 0;
+    background: var(--join-surface);
+    border-radius: 50px;
+    padding: 4px;
+    border: 1px solid var(--join-border);
+    gap: 4px;
+}
+
+.tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 50px;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ion-text-gray);
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    ion-icon {
+        font-size: 16px;
+    }
+
+    &--active {
+        background: var(--ion-color-primary);
+        color: #ffffff;
+        box-shadow: 0 1px 3px rgba(26, 60, 110, 0.25);
+    }
+}
+
+// ─── Zone de scan ─────────────────────────────────────────────────────────────
+.scan-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+}
+
+.camera-viewfinder {
+    width: 100%;
+    max-width: 340px;
+    aspect-ratio: 1;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #0F1923;
+    position: relative;
+}
+
+.camera-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0F1923;
+
+    // En prod, la caméra native se superposera — ce fond sera invisible
+}
+
+// Cadre de scan avec coins animés
+.scan-frame {
+    width: 200px;
+    height: 200px;
+    position: relative;
+}
+
+.corner {
+    position: absolute;
+    width: var(--join-corner-size);
+    height: var(--join-corner-size);
+    border-color: var(--ion-color-primary);
+    border-style: solid;
+
+    &--tl {
+        top: 0;
+        left: 0;
+        border-width: var(--join-corner) 0 0 var(--join-corner);
+        border-radius: 4px 0 0 0;
+    }
+
+    &--tr {
+        top: 0;
+        right: 0;
+        border-width: var(--join-corner) var(--join-corner) 0 0;
+        border-radius: 0 4px 0 0;
+    }
+
+    &--bl {
+        bottom: 0;
+        left: 0;
+        border-width: 0 0 var(--join-corner) var(--join-corner);
+        border-radius: 0 0 0 4px;
+    }
+
+    &--br {
+        bottom: 0;
+        right: 0;
+        border-width: 0 var(--join-corner) var(--join-corner) 0;
+        border-radius: 0 0 4px 0;
+    }
+}
+
+// Ligne de scan animée
+.scan-line {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--ion-color-primary), transparent);
+    animation: scanMove 2s ease-in-out infinite;
+}
+
+@keyframes scanMove {
+    0% {
+        top: 4px;
+        opacity: 1;
+    }
+
+    50% {
+        top: calc(100% - 4px);
+        opacity: 1;
+    }
+
+    100% {
+        top: 4px;
+        opacity: 1;
+    }
+}
+
+.scan-hint {
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--ion-text-gray);
+    text-align: center;
+}
+
+.scan-actions {
+    margin-top: 24px;
+}
+
+// ─── Zone lien d'invitation ───────────────────────────────────────────────────
+.link-zone {
+    padding: 32px 20px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.link-hint {
+    font-size: 14px;
+    color: var(--ion-text-gray);
+    text-align: center;
+    line-height: 1.5;
+    margin-bottom: 28px;
+}
+
+.link-input-wrapper {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.link-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid var(--join-border);
+    border-radius: 12px;
+    background: var(--join-surface);
+    font-size: 15px;
+    color: var(--ion-text-color);
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+
+    &::placeholder {
+        color: var(--ion-text-gray);
+        font-size: 13px;
+    }
+
+    &:focus {
+        border-color: var(--ion-color-primary-light);
+    }
+}
+
+.validate-btn {
+    width: 100%;
+    --background: var(--ion-color-primary);
+    --background-activated: #152f57;
+    --border-radius: 12px;
+    --padding-top: 16px;
+    --padding-bottom: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+// ─── Alert personnalisée pour les erreurs ─────────────────────────────────────
+.join-error-alert {
+    .alert-wrapper {
+        border-radius: 20px;
+        padding: 8px;
+    }
+
+    .alert-head {
+        text-align: center;
+        padding-top: 20px;
+    }
+
+    .alert-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #DC2626;
+    }
+
+    .alert-message {
+        text-align: center;
+        font-size: 14px;
+        color: #64748B;
+    }
+}

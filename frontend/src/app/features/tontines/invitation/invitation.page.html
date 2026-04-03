@@ -2,52 +2,99 @@
 
   <app-page-header title="Invitations"></app-page-header>
 
-  <!-- Boutons principaux -->
-  <div class="invitation-actions">
-    <app-custom-button expand="block" color="primary" (clicked)="openShareModal()">
-      Partager le lien
-    </app-custom-button>
+  <!-- Skeleton / erreur globale -->
+  <ng-container *ngIf="status === 'loading'">
+    <div class="invitation-actions">
+      <div class="skeleton-btn"></div>
+      <div class="skeleton-btn"></div>
+    </div>
+  </ng-container>
 
-    <div class="invitation-divider">
-      <span>Ou</span>
+  <ng-container *ngIf="status === 'error'">
+    <div class="invitation-error">
+      <p>Impossible de charger les données d'invitation.</p>
+    </div>
+  </ng-container>
+
+  <!-- Contenu principal -->
+  <ng-container *ngIf="status === 'success'">
+
+    <!-- Boutons principaux -->
+    <div class="invitation-actions">
+      <app-custom-button expand="block" color="primary" (clicked)="openShareModal()">
+        Partager le lien
+      </app-custom-button>
+
+      <div class="invitation-divider"><span>Ou</span></div>
+
+      <app-custom-button expand="block" fill="outline" color="primary" (clicked)="openQrModal()">
+        Afficher le QR Code
+      </app-custom-button>
     </div>
 
-    <app-custom-button expand="block" fill="outline" color="primary" (clicked)="openQrModal()">
-      Afficher le QR Code
-    </app-custom-button>
-  </div>
+  </ng-container>
 
-  <!-- Liste d'invitations -->
+  <!-- ── Liste des demandes en attente ── -->
   <div class="invitation-list">
-    <h2 class="invitation-list__title">Liste d'invitation</h2>
+    <h2 class="invitation-list__title">
+      Demandes en attente
+      <span class="invitation-list__badge" *ngIf="pendingMembers.length > 0">
+        {{ pendingMembers.length }}
+      </span>
+    </h2>
 
-    <!-- Liste des invitations -->
-    <div class="invitation-item" *ngFor="let invite of invitations">
-      <div class="invitation-item__avatar"  (click)="openMemberProfile(invite.id)">
-        <img [src]="invite.photoUrl" [alt]="invite.name" *ngIf="invite.photoUrl" />
-        <div class="invitation-item__avatar-placeholder" *ngIf="!invite.photoUrl">
-          <!-- {{ getInitials(invite.name) }} -->
+    <!-- Chargement -->
+    <div class="invitation-loading" *ngIf="pendingStatus === 'loading'">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+
+    <!-- Erreur -->
+    <div class="invitation-error" *ngIf="pendingStatus === 'error'">
+      <p>Impossible de charger les demandes.</p>
+    </div>
+
+    <!-- Liste -->
+    <ng-container *ngIf="pendingStatus === 'success'">
+
+      <div class="invitation-item" *ngFor="let member of pendingMembers"
+        [class.invitation-item--processing]="isProcessing(member.id)">
+        <!-- Avatar -->
+        <div class="invitation-item__avatar" (click)="openMemberProfile(member.id)">
+          <img *ngIf="member.userPhotoUrl" [src]="member.userPhotoUrl" [alt]="member.userName ?? 'Membre'" />
+          <div class="invitation-item__avatar-placeholder" *ngIf="!member.userPhotoUrl">
+            {{ getInitials(member.userName) }}
+          </div>
+        </div>
+
+        <!-- Infos -->
+        <div class="invitation-item__info">
+          <span class="invitation-item__name">{{ member.userName ?? 'Utilisateur' }}</span>
+          <span class="invitation-item__date">
+            {{ member.joinedAt?.toDate?.() | date:'d MMM yyyy' }}
+          </span>
+        </div>
+
+        <!-- Actions -->
+        <div class="invitation-item__actions">
+          <button class="invitation-btn invitation-btn--accept" [disabled]="isProcessing(member.id)"
+            (click)="accept(member)">
+            <ion-spinner name="crescent" *ngIf="isProcessing(member.id)"></ion-spinner>
+            <span *ngIf="!isProcessing(member.id)">Accepter</span>
+          </button>
+
+          <button class="invitation-btn invitation-btn--refuse" [disabled]="isProcessing(member.id)"
+            (click)="reject(member)">
+            Refuser
+          </button>
         </div>
       </div>
 
-      <div class="invitation-item__info">
-        <span class="invitation-item__name">{{ invite.name }}</span>
+      <!-- Liste vide -->
+      <div class="invitation-empty" *ngIf="pendingMembers.length === 0">
+        <p>Aucune demande en attente pour le moment.</p>
       </div>
 
-      <div class="invitation-item__actions">
-        <button class="invitation-btn invitation-btn--accept">
-          Accepter
-        </button>
-        <button class="invitation-btn invitation-btn--refuse">
-          Refuser
-        </button>
-      </div>
-    </div>
-
-    <!-- Message si liste vide -->
-    <div class="invitation-empty">
-      <p>Aucune invitation en attente pour le moment.</p>
-    </div>
+    </ng-container>
   </div>
 
 </ion-content>

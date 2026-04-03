@@ -1,0 +1,180 @@
+<app-page-header title="Aperçu"></app-page-header>
+
+<ion-content class="preview-content">
+
+  <!-- ── CHARGEMENT ─────────────────────────────────────────────────────── -->
+<div class="state-center-container">
+  <div class="state-center" *ngIf="loading">
+    <ion-spinner name="crescent" color="primary" />
+    <p>Chargement des informations…</p>
+  </div>
+
+  <!-- Erreur -->
+  <app-state-screen *ngIf="!loading && error" type="error" title="Erreur !" [subtitle]="error" buttonText="Retour"
+    (buttonClick)="goBack()">
+  </app-state-screen>
+
+</div>
+
+  <!-- ── APERÇU ─────────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="!loading && !error && preview">
+
+    <!-- Déjà membre -->
+    <div class="already-banner" *ngIf="preview.alreadyMember">
+      <ion-icon name="information-circle-outline" />
+      <span>
+        <ng-container [ngSwitch]="preview.memberStatus">
+          <ng-container *ngSwitchCase="'active'">Vous êtes déjà membre de cette tontine.</ng-container>
+          <ng-container *ngSwitchCase="'pending_approval'">Votre demande est déjà en cours de traitement.</ng-container>
+          <ng-container *ngSwitchCase="'rejected'">Votre demande a été refusée.</ng-container>
+          <ng-container *ngSwitchDefault>Vous avez déjà interagi avec cette tontine.</ng-container>
+        </ng-container>
+      </span>
+    </div>
+
+  <div class="preview-hero">
+    <div class="preview-icon">
+      <img *ngIf="preview.iconUrl" [src]="preview.iconUrl" alt="icône" />
+      <ion-icon *ngIf="!preview.iconUrl" name="people-circle-outline" />
+    </div>
+  
+    <div class="preview-hero__info">
+      <h1 class="preview-name">{{ preview.name }}</h1>
+  
+      <div class="preview-hero__meta">
+        <ion-icon name="shuffle-outline"></ion-icon>
+        <span>{{ tontineTypeLabel(preview.type) }}</span>
+  
+        <span class="cr-dot">·</span>
+  
+        <ion-icon name="people-outline"></ion-icon>
+        <span>{{ preview.currentMembers }}/{{ preview.totalMembers }} membres</span>
+      </div>
+    </div>
+  </div>
+    <!-- ── GRILLE PRINCIPALE ────────────────────────────────────────────── -->
+    <div class="info-card">
+
+      <div class="info-row">
+        <span class="info-label">Créée par</span>
+        <span class="info-value">{{ preview.creatorName }}</span>
+      </div>
+
+      <div class="info-row">
+        <span class="info-label">Ordre de rotation</span>
+        <span class="info-value">{{ rotationLabel(preview.rotationMethod) }}</span>
+      </div>
+
+      <div class="info-divider"></div>
+
+      <div class="info-row">
+        <span class="info-label">Cotisation</span>
+        <span class="info-value info-value--primary">{{ preview.amount | number:'1.0-0' }} FCFA</span>
+      </div>
+
+      <div class="info-row">
+        <span class="info-label">Fréquence</span>
+        <span class="info-value">{{ frequencyLabel(preview.frequency) }}</span>
+      </div>
+
+      <div class="info-row">
+        <span class="info-label">Pot par tour</span>
+        <span class="info-value info-value--primary">{{ preview.potPerTurn | number:'1.0-0' }} FCFA</span>
+      </div>
+
+      <div class="info-row">
+        <span class="info-label">Durée du cycle</span>
+        <span class="info-value">
+          {{ formatDuration(preview.estimatedDuration) }}
+        </span>
+      </div>
+
+      <div class="info-divider"></div>
+
+      <div class="info-row">
+        <span class="info-label">Délai de grâce</span>
+        <span class="info-value">{{ preview.rules.gracePeriodDays }} jours</span>
+      </div>
+
+      <div class="info-row">
+        <span class="info-label">Pénalité</span>
+        <span class="info-value">
+          {{ preview.rules.penaltyValue }}
+          {{ preview.rules.penaltyType === 'percentage' ? '% par retard' : 'FCFA par retard' }}
+        </span>
+      </div>
+
+      <div class="info-row" *ngIf="preview.rules.earlyExit">
+        <span class="info-label">Exclusion après</span>
+        <span class="info-value">{{ preview.rules.autoExclusionDays || 0 }} jours de retard</span>
+      </div>
+
+      <div class="info-row">
+        <span class="info-label">Sortie anticipée</span>
+        <span class="info-value">{{ earlyExitLabel(preview.rules.earlyExit?.mode) }}</span>
+      </div>
+
+      <div class="info-divider"></div>
+
+      <div class="info-row">
+        <span class="info-label">Sécurité</span>
+        <span class="info-value">{{ securityLabel(preview.securityModel) }}</span>
+      </div>
+
+      <div class="info-row" *ngIf="preview.rules.gracePeriodDays">
+        <span class="info-label">Modifications</span>
+        <span class="info-value">{{ preview.rules.gracePeriodDays }}% d'approbation</span>
+      </div>
+
+    </div>
+
+    <!-- Places restantes -->
+    <div class="slots-chip" [class.slots-chip--full]="preview.slotsLeft === 0">
+      <ion-icon [name]="preview.slotsLeft > 0 ? 'checkmark-circle-outline' : 'close-circle-outline'" />
+      {{ preview.slotsLeft > 0
+      ? preview.slotsLeft + ' place(s) disponible(s)'
+      : 'Tontine complète' }}
+    </div>
+
+    <!-- Mention privée -->
+    <p class="privacy-note" *ngIf="preview.visibility === 'private' || preview.visibility === 'semi_public'">
+      <ion-icon name="lock-closed-outline" />
+      Cette tontine est privée. Votre demande devra être validée par le créateur.
+    </p>
+
+    <div class="cr-confirm-list">
+      <label class="cr-confirm-item" (click)="confirmedRules = !confirmedRules">
+        <div class="cr-checkbox" [class.cr-checkbox--on]="confirmedRules">
+          <ion-icon name="checkmark-circle" *ngIf="confirmedRules"></ion-icon>
+        </div>
+        <span>Je confirme avoir lu et compris
+          <strong class="cr-link">toutes les règles</strong> de cette tontine
+        </span>
+      </label>
+      <label class="cr-confirm-item" (click)="confirmedPayment = !confirmedPayment">
+        <div class="cr-checkbox" [class.cr-checkbox--on]="confirmedPayment">
+          <ion-icon name="checkmark-circle" *ngIf="confirmedPayment"></ion-icon>
+        </div>
+        <span>Je m'engage à respecter
+          <strong class="cr-link">mes obligations</strong> de paiement
+        </span>
+      </label>
+    </div>
+  </ng-container>
+
+</ion-content>
+
+<!-- ── FOOTER ──────────────────────────────────────────────────────────────── -->
+<ion-footer *ngIf="!loading && !error && preview && !preview.alreadyMember && preview.slotsLeft > 0"
+  class="ion-no-border">
+  <ion-toolbar class="footer-toolbar">
+    <app-custom-button fill="solid" color="primary" expand="block" [disabled]="joining || !canJoin()"
+      (clicked)="onJoin()">
+      <ion-spinner *ngIf="joining" name="crescent" slot="start" />
+      {{ preview.visibility === 'private' || preview.visibility === 'semi_public'
+      ? 'Envoyer ma demande'
+      : 'Rejoindre la tontine' }}
+    </app-custom-button>
+
+  </ion-toolbar>
+</ion-footer>

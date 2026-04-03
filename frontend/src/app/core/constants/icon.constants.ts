@@ -33,11 +33,17 @@ import {
     logoWhatsapp,
     logoTwitter,
     logoSnapchat,
-    logoGoogle,
-    lockClosed,
     syncOutline,
     repeatOutline,
     flagOutline,
+    personAddOutline,
+    lockClosedOutline,
+    playCircleOutline,
+    homeOutline,
+    closeCircleOutline,
+    informationCircleOutline,
+    thumbsUpOutline,
+    handLeftOutline,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -54,7 +60,7 @@ export function registerIcons() {
         notificationsOutline, chevronForwardOutline, addOutline,
         arrowForwardOutline, shareSocialOutline, checkmarkCircle,
         addCircleOutline, diamondOutline, peopleCircleOutline,
-         checkmarkDoneOutline, trashOutline,
+        checkmarkDoneOutline, trashOutline,
         ellipsisVerticalOutline, cashOutline, peopleOutline,
         alertCircleOutline, checkmarkCircleOutline, megaphoneOutline, timeOutline,
         helpCircleOutline,
@@ -62,12 +68,14 @@ export function registerIcons() {
         walletOutline,
         calendarOutline,
         chevronBackOutline, closeOutline,
-        imageOutline, pencilOutline, 
+        imageOutline, pencilOutline,
         shareOutline, qrCodeOutline, copyOutline, downloadOutline,
         refreshOutline,
         shieldCheckmarkOutline,
         listOutline, shuffleOutline, logoWhatsapp, logoTwitter, logoSnapchat, syncOutline,
-        repeatOutline, flagOutline
+        repeatOutline, flagOutline, playCircleOutline, personAddOutline, lockClosedOutline,
+        homeOutline, closeCircleOutline, informationCircleOutline, thumbsUpOutline,
+        handLeftOutline,
 
     });
 }

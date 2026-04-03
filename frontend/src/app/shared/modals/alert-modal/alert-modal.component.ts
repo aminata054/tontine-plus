@@ -1,7 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonContent, IonIcon } from '@ionic/angular/standalone';
-import { ModalController } from '@ionic/angular';
+import { IonContent, IonIcon, ModalController } from '@ionic/angular/standalone';
 
 export type AlertType = 'success' | 'error' | 'warning' | 'info' | 'launch';
 

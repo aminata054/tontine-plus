@@ -1,62 +1,77 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonHeader, IonTitle, IonToolbar, IonSpinner, ModalController } from '@ionic/angular/standalone';
-import { PageHeaderComponent } from "src/app/shared/ui/page-header/page-header.component";
+import {
+  IonContent, IonSpinner, ModalController, ToastController
+} from '@ionic/angular/standalone';
+import { PageHeaderComponent } from 'src/app/shared/ui/page-header/page-header.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TontineService } from 'src/app/core/services/tontine.service';
 import { QrPanelComponent } from 'src/app/shared/ui/qr-panel/qr-panel.component';
 import { SharePanelComponent } from 'src/app/shared/ui/share-panel/share-panel.component';
-import { CustomButtonComponent } from "src/app/shared/ui/custom-button/custom-button.component";
-
-export interface Invitations {
-  id: string;
-  name: string;
-  photoUrl?: string;
-  date: Date;
-}
+import { CustomButtonComponent } from 'src/app/shared/ui/custom-button/custom-button.component';
+import { TontineMember } from 'src/app/core/models/tontine.model';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-invitation',
   templateUrl: './invitation.page.html',
   styleUrls: ['./invitation.page.scss'],
   standalone: true,
-  imports: [IonSpinner, IonContent, CommonModule, FormsModule, PageHeaderComponent, CustomButtonComponent]
+  imports: [
+    IonSpinner, IonContent, CommonModule, FormsModule,
+    PageHeaderComponent, CustomButtonComponent
+  ]
 })
-export class InvitationPage implements OnInit {
+export class InvitationPage implements OnInit, OnDestroy {
 
+  tontineId: string | null = null;
+
+  // États de la page
   status: 'loading' | 'success' | 'error' = 'loading';
   inviteLink: string | null = null;
   inviteCode: string | null = null;
   qrUrl: string | null = null;
 
-  invitations: Invitations[] = [
-    {
-      id: '1',
-      name: 'Jean Dupont',
-      photoUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
-      date: new Date(),
-    },
-    {
-      id: '2',
-      name: 'Marie Curie',
-      photoUrl: 'https://randomuser.me/api/portraits/women/1.jpg',
-      date: new Date(),
-    },
-  ];
+  // Membres en attente
+  pendingMembers: TontineMember[] = [];
+  pendingStatus: 'loading' | 'success' | 'error' = 'loading';
 
-  constructor(private route: ActivatedRoute,
+  // IDs des membres en cours de traitement (pour désactiver les boutons)
+  processingIds = new Set<string>();
+
+  private destroy$ = new Subject<void>();
+
+  constructor(
+    private route: ActivatedRoute,
     private router: Router,
     private tontineService: TontineService,
     private modalCtrl: ModalController,
+    private toastCtrl: ToastController,
   ) { }
 
-  ngOnInit() {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) { this.status = 'error'; return; }
+  ngOnInit(): void {
+    this.tontineId = this.route.snapshot.paramMap.get('id');
+    if (!this.tontineId) { this.status = 'error'; return; }
 
+    this.loadInviteData(this.tontineId);
+    this.loadPendingMembers(this.tontineId);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    if (this.tontineId) {
+      this.tontineService.clearPendingCache(this.tontineId);
+    }
+  }
+
+  // ── Chargement ─────────────────────────────────────────────────────────────
+
+  private loadInviteData(id: string): void {
     this.tontineService.getTontineInvite(id).subscribe({
-      next: (res: any) => {
+      next: (res) => {
         if (res.success) {
           this.inviteCode = res.data.inviteCode;
           this.inviteLink = res.data.inviteLink;
@@ -70,13 +85,67 @@ export class InvitationPage implements OnInit {
     });
   }
 
+  private loadPendingMembers(tontineId: string): void {
+    this.pendingStatus = 'loading';
+
+    // S'abonner au BehaviorSubject réactif du service
+    this.tontineService.pendingMembers$(tontineId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(members => {
+        this.pendingMembers = members;
+      });
+
+    // Déclencher le premier chargement
+    this.tontineService.getPendingMembers(tontineId).subscribe({
+      next: () => { this.pendingStatus = 'success'; },
+      error: () => { this.pendingStatus = 'error'; },
+    });
+  }
+
+  // ── Actions membres ────────────────────────────────────────────────────────
+
+  accept(member: TontineMember): void {
+    this.validateMember(member, 'accept');
+  }
+
+  reject(member: TontineMember): void {
+    this.validateMember(member, 'reject');
+  }
+
+  private validateMember(member: TontineMember, action: 'accept' | 'reject'): void {
+    if (!this.tontineId || this.processingIds.has(member.id)) return;
+
+    this.processingIds.add(member.id);
+
+    this.tontineService.validateMember(this.tontineId, member.id, action).subscribe({
+      next: async (res) => {
+        this.processingIds.delete(member.id);
+        if (res.success) {
+          const msg = action === 'accept'
+            ? res.data.tontineAutoStarted
+              ? `${member.userName ?? 'Membre'} accepté — la tontine a démarré !`
+              : `${member.userName ?? 'Membre'} accepté avec succès`
+            : `${member.userName ?? 'Membre'} refusé`;
+          await this.showToast(msg, action === 'accept' ? 'success' : 'warning');
+        }
+      },
+      error: async () => {
+        this.processingIds.delete(member.id);
+        await this.showToast('Une erreur est survenue. Réessayez.', 'danger');
+      },
+    });
+  }
+
+  isProcessing(memberId: string): boolean {
+    return this.processingIds.has(memberId);
+  }
+
+  // ── Modals ─────────────────────────────────────────────────────────────────
+
   async openQrModal(): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: QrPanelComponent,
-      componentProps: {
-        qrUrl: this.qrUrl,
-        inviteCode: this.inviteCode,
-      },
+      componentProps: { qrUrl: this.qrUrl, inviteCode: this.inviteCode },
       breakpoints: [0, 0.6, 0.9],
       initialBreakpoint: 0.6,
       backdropDismiss: true,
@@ -88,9 +157,7 @@ export class InvitationPage implements OnInit {
   async openShareModal(): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: SharePanelComponent,
-      componentProps: {
-        inviteLink: this.inviteLink,
-      },
+      componentProps: { inviteLink: this.inviteLink },
       breakpoints: [0, 0.6, 0.9],
       initialBreakpoint: 0.6,
       backdropDismiss: true,
@@ -99,14 +166,28 @@ export class InvitationPage implements OnInit {
     await modal.present();
   }
 
+  // ── Navigation ─────────────────────────────────────────────────────────────
+
   openMemberProfile(memberId: string): void {
-    const tontineId = this.route.snapshot.paramMap.get('id');
-    if (tontineId) {
-      this.router.navigate(['/tontines', tontineId, memberId, 'member-profile']);
+    if (this.tontineId) {
+      this.router.navigate(['/tontines', this.tontineId, memberId, 'member-profile']);
     }
   }
 
+  // ── Utilitaire ─────────────────────────────────────────────────────────────
+
+  getInitials(name: string | null): string {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+  }
+
+  private async showToast(message: string, color: 'success' | 'warning' | 'danger'): Promise<void> {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 3000,
+      color,
+      position: 'top',
+    });
+    await toast.present();
+  }
 }
-
-
-

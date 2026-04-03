@@ -128,7 +128,7 @@
             <div class="ov-progress__bar" [style.width.%]="membersProgress()"></div>
           </div>
           <p class="ov-cycle__hint ov-cycle__hint--ready" *ngIf="isFull && isCreator">
-            ✓ Groupe complet - vous pouvez lancer la tontine
+            Groupe complet, vous pouvez lancer la tontine
           </p>
         </div>
       </ng-container>
@@ -165,79 +165,128 @@
          Créateur & membres + active  → "Consulter" + "Salle de message"
          Membre (non créateur) → "Consulter est disabled " + "Salle de message"
     ──────────────────────────────────────────────────────────── -->
-  <div class="ov-actions">
-  
-    <!-- CRÉATEUR / ADMIN — PENDING -->
-    <ng-container *ngIf="isAdmin && isPending">
-      <app-custom-button expand="block" color="primary" [disabled]="!isFull" (clicked)="showLaunchConfirm()">
-        Lancer la tontine
-      </app-custom-button>
-      <app-custom-button expand="block" fill="outline" (clicked)="openInvitations()">
-        Voir les invitations
-      </app-custom-button>
-    </ng-container>
-  
-    <!-- CRÉATEUR / ADMIN — ACTIVE -->
-    <ng-container *ngIf="isAdmin && isActive">
-      <app-custom-button expand="block" color="primary" (clicked)="openChat()">
-        Consulter la tontine
-      </app-custom-button>
-      <app-custom-button expand="block" fill="outline" (clicked)="openChat()">
-        Salle de message
-      </app-custom-button>
-    </ng-container>
-  
-    <!-- CRÉATEUR / ADMIN — COMPLETED / CANCELLED -->
-    <ng-container *ngIf="isAdmin && (isCompleted || isCancelled)">
-      <app-custom-button expand="block" color="primary" (clicked)="openChat()">
-        Consulter la tontine
-      </app-custom-button>
-    </ng-container>
-  
-    <!-- MEMBRE SIMPLE — ACTIVE / COMPLETED / CANCELLED -->
-    <ng-container *ngIf="!isAdmin && !isPending">
-      <app-custom-button expand="block" color="primary" [disabled]="true" (clicked)="openChat()">
-        Consulter la tontine
-      </app-custom-button>
-      <app-custom-button expand="block" fill="outline" (clicked)="openChat()">
-        Salle de message
-      </app-custom-button>
-    </ng-container>
-  
-  </div>
+    <div class="ov-actions">
 
-    <!-- ─────────────────────────────────────────────────────────
-         MEMBRES
-    ──────────────────────────────────────────────────────────── -->
-    <div class="ov-members">
-      <div class="ov-members__header">
-        <h3 class="ov-members__title">Membres</h3>
-        <button class="ov-members__see-all" (click)="goToMembers()">Voir plus</button>
-      </div>
-
-      <div class="ov-member-row" *ngFor="let m of (tontine.myStats ? [] : [])">
-        <!-- placeholder — la liste réelle viendra d'une sous-collection members -->
-      </div>
-
-      <!-- Ligne du membre connecté si les stats sont disponibles -->
-      <div class="ov-member-row" *ngIf="tontine.myRole">
-        <div class="ov-member-row__avatar ov-member-row__avatar--self">
-          {{ getInitialsFromUser() }}
+      <!-- CRÉATEUR / ADMIN — PENDING -->
+      <ng-container *ngIf="isAdmin && isPending">
+        <app-custom-button expand="block" color="primary" [disabled]="!isFull || isLaunching"
+          (clicked)="showLaunchConfirm()">
+          {{ isLaunching ? 'Lancement en cours…' : 'Lancer la tontine' }}
+        </app-custom-button>
+        <div class="ov-invite-btn-wrapper">
+          <span class="ov-invite-badge" *ngIf="pendingCount > 0">{{ pendingCount }}</span>
+          <app-custom-button expand="block" fill="outline" (clicked)="openInvitations()">
+            Voir les invitations
+          </app-custom-button>
         </div>
-        <div class="ov-member-row__info">
-          <span class="ov-member-row__name">{{ getCurrentUserName() }}</span>
-          <span class="ov-member-row__sub" *ngIf="tontine.myTurnNumber">
-            Tour n° {{ tontine.myTurnNumber }}
-          </span>
-        </div>
-        <span class="ov-member-badge ov-member-badge--{{ tontine.myRole }}">
-          {{ tontine.myRole === 'creator' ? 'Admin' :
-          tontine.myRole === 'admin' ? 'Admin' : 'Membre' }}
-        </span>
-      </div>
+      </ng-container>
+
+      <!-- CRÉATEUR / ADMIN — ACTIVE -->
+      <ng-container *ngIf="isAdmin && isActive">
+        <app-custom-button expand="block" color="primary" (clicked)="openTontineDetail()">
+          Consulter la tontine
+        </app-custom-button>
+        <app-custom-button expand="block" fill="outline" (clicked)="openChat()">
+          Salle de message
+        </app-custom-button>
+      </ng-container>
+
+      <!-- CRÉATEUR / ADMIN — COMPLETED / CANCELLED -->
+      <ng-container *ngIf="isAdmin && (isCompleted || isCancelled)">
+        <app-custom-button expand="block" color="primary" (clicked)="openTontineDetail()">
+          Consulter la tontine
+        </app-custom-button>
+      </ng-container>
+
+      <!-- MEMBRE SIMPLE — ACTIVE / COMPLETED / CANCELLED -->
+      <ng-container *ngIf="!isAdmin && !isPending">
+        <app-custom-button expand="block" color="primary" (clicked)="openChat()">
+          Consulter la tontine
+        </app-custom-button>
+        <app-custom-button expand="block" fill="outline" (clicked)="openChat()">
+          Salle de message
+        </app-custom-button>
+      </ng-container>
 
     </div>
 
+    <!-- ─────────────────────────────────────────────────────────
+       MEMBRES
+  ──────────────────────────────────────────────────────────── -->
+    <div class="ov-members">
+      <div class="ov-members__header">
+        <h3 class="ov-members__title">
+          Membres
+          <span class="ov-members__count" *ngIf="membersStatus === 'success'">
+            {{ tontine.currentMembers }}/{{ tontine.totalMembers }}
+          </span>
+        </h3>
+        <button class="ov-members__see-all" (click)="goToMembers()">Voir plus</button>
+      </div>
+
+      <!-- Chargement -->
+      <ng-container *ngIf="membersStatus === 'loading'">
+        <div class="ov-member-row" *ngFor="let _ of [1,2,3]">
+          <ion-skeleton-text animated style="width:40px;height:40px;border-radius:50%;flex-shrink:0;">
+          </ion-skeleton-text>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+            <ion-skeleton-text animated style="width:55%;height:13px;border-radius:4px;"></ion-skeleton-text>
+            <ion-skeleton-text animated style="width:35%;height:11px;border-radius:4px;"></ion-skeleton-text>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Erreur -->
+      <div class="ov-members__error" *ngIf="membersStatus === 'error'">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        <span>Impossible de charger les membres</span>
+      </div>
+
+      <!-- Liste réelle (max 5 affichés, le reste via "Voir plus") -->
+      <ng-container *ngIf="membersStatus === 'success'">
+        <div class="ov-member-row" *ngFor="let member of members | slice:0:5" (click)="openMemberProfile(member.id)">
+          <!-- Avatar -->
+          <div class="ov-member-row__avatar" [class.ov-member-row__avatar--self]="member.userId "
+            [class.ov-member-row__avatar--creator]="member.role === 'creator'">
+            <img *ngIf="member.userPhotoUrl" [src]="member.userPhotoUrl" [alt]="member.userName ?? 'Membre'" />
+            <span *ngIf="!member.userPhotoUrl">
+              {{ getMemberInitials(member) }}
+            </span>
+          </div>
+
+          <!-- Infos -->
+          <div class="ov-member-row__info">
+            <span class="ov-member-row__name">
+              {{ member.userName ?? 'Utilisateur' }}
+              <!-- <span class="ov-member-row__you" *ngIf="member.userId"></span> -->
+            </span>
+            <span class="ov-member-row__sub" *ngIf="member.turnNumber">
+              Tour n° {{ member.turnNumber }}
+            </span>
+            <span class="ov-member-row__sub" *ngIf="!member.turnNumber && isActive">
+              Tour non attribué
+            </span>
+          </div>
+
+          <!-- Badge rôle -->
+          <span class="ov-member-badge ov-member-badge--{{ member.role }}">
+            {{ member.role === 'creator' ? 'Admin' :
+            member.role === 'admin' ? 'Admin' : 'Membre' }}
+          </span>
+        </div>
+
+        <!-- Indicateur s'il y a plus de 5 membres -->
+        <div class="ov-members__more" *ngIf="members.length > 5" (click)="goToMembers()">
+          +{{ members.length - 5 }} autres membres · Voir tous
+        </div>
+
+        <!-- Vide -->
+        <div class="ov-members__empty" *ngIf="members.length === 0">
+          <p>Aucun membre actif pour le moment.</p>
+        </div>
+      </ng-container>
+
+    </div>
   </ng-container>
 
 </ion-content>

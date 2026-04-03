@@ -2,50 +2,144 @@
 
   <app-page-header title="Profil"></app-page-header>
 
-  <div class="profile-container">
-
-    <!-- Avatar + Nom -->
-    <div class="profile-header">
-      <div class="profile-avatar">
-        <img [src]="member?.photoUrl" [alt]="member?.name" *ngIf="member?.photoUrl" />
-        <div class="profile-avatar-placeholder" *ngIf="!member?.photoUrl">
-          <!-- {{ getInitials(member?.name) }} -->
+  <!-- ── LOADING ─────────────────────────────────────────────── -->
+  <ng-container *ngIf="status === 'loading'">
+    <div class="profile-container">
+      <div class="profile-header">
+        <ion-skeleton-text animated style="width:88px;height:88px;border-radius:50%;margin:0 auto 12px;">
+        </ion-skeleton-text>
+        <ion-skeleton-text animated style="width:45%;height:18px;border-radius:6px;margin:0 auto;">
+        </ion-skeleton-text>
+      </div>
+      <div class="profile-info">
+        <div class="info-row" *ngFor="let _ of [1,2,3,4]">
+          <ion-skeleton-text animated style="width:40%;height:13px;border-radius:4px;">
+          </ion-skeleton-text>
+          <ion-skeleton-text animated style="width:30%;height:13px;border-radius:4px;">
+          </ion-skeleton-text>
         </div>
       </div>
-      <h1 class="profile-name">{{ member?.name }}</h1>
     </div>
+  </ng-container>
 
-    <!-- Informations -->
-    <div class="profile-info">
-      <div class="info-row">
-        <span class="info-label">Membre depuis</span>
-        <span class="info-value">{{ member?.joinedDate | date:'dd/MM/yyyy' }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Numéro de tour</span>
-        <span class="info-value">{{ member?.turnNumber || '--' }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Historique de paiement</span>
-        <span class="info-value">{{ member?.paymentHistory || '--' }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Score de confiance</span>
-        <span class="info-value score-stars">
-          ★★★☆☆
-          <!-- Ou utilise *ngFor pour des étoiles dynamiques -->
-        </span>
-      </div>
+  <!-- ── ERREUR ──────────────────────────────────────────────── -->
+  <ng-container *ngIf="status === 'error'">
+    <div class="profile-state">
+      <ion-icon name="alert-circle-outline" class="profile-state__icon"></ion-icon>
+      <p class="profile-state__title">Membre introuvable</p>
+      <p class="profile-state__sub">Vérifiez votre connexion et réessayez.</p>
+      <button class="profile-state__retry" (click)="load()">Réessayer</button>
     </div>
+  </ng-container>
 
-    <!-- Bouton Signaler -->
-    <div class="profile-actions">
-      <button class="report-button">
-        <ion-icon name="flag-outline"></ion-icon>
-        Signaler ou reporter
-      </button>
+  <!-- ── CONTENU ─────────────────────────────────────────────── -->
+  <ng-container *ngIf="status === 'success' && member">
+    <div class="profile-container">
+
+      <!-- Avatar + Nom + badges -->
+      <div class="profile-header">
+        <div class="profile-avatar">
+          <img *ngIf="member.userPhotoUrl" [src]="member.userPhotoUrl" [alt]="member.userName ?? 'Membre'" />
+          <div class="profile-avatar-placeholder" *ngIf="!member.userPhotoUrl">
+            {{ getInitials(member.userName) }}
+          </div>
+        </div>
+
+        <h1 class="profile-name">{{ member.userName ?? 'Utilisateur' }}</h1>
+
+        <div class="profile-badges">
+          <span class="profile-badge profile-badge--role profile-badge--{{ member.role }}">
+            {{ roleLabel(member.role) }}
+          </span>
+          <span class="profile-badge profile-badge--status profile-badge--{{ statusColor(member.status) }}">
+            {{ statusLabel(member.status) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Informations générales -->
+      <div class="profile-section">
+        <h2 class="profile-section__title">Informations</h2>
+
+        <div class="info-row">
+          <span class="info-label">Membre depuis</span>
+          <span class="info-value">
+            {{ toDate(member.joinedAt) | date:'d MMM yyyy' : '' : 'fr-FR' }}
+          </span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">Numéro de tour</span>
+          <span class="info-value">
+            {{ member.turnNumber != null ? 'Tour n° ' + member.turnNumber : '—' }}
+          </span>
+        </div>
+
+        <div class="info-row" *ngIf="member.validatedAt">
+          <span class="info-label">Validé le</span>
+          <span class="info-value">
+            {{ toDate(member.validatedAt) | date:'d MMM yyyy' : '' : 'fr-FR' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Statistiques de paiement -->
+      <div class="profile-section">
+        <h2 class="profile-section__title">Statistiques</h2>
+
+        <div class="info-row">
+          <span class="info-label">Total cotisé</span>
+          <span class="info-value info-value--accent">
+            {{ formatAmount(member.stats.totalPaid) }} FCFA
+          </span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">Total reçu</span>
+          <span class="info-value info-value--primary">
+            {{ formatAmount(member.stats.totalReceived) }} FCFA
+          </span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">Paiements à temps</span>
+          <span class="info-value">{{ member.stats.onTimePayments }}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">Paiements en retard</span>
+          <span class="info-value" [class.info-value--danger]="member.stats.latePayments > 0">
+            {{ member.stats.latePayments }}
+          </span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">Paiements manqués</span>
+          <span class="info-value" [class.info-value--danger]="member.stats.missedPayments > 0">
+            {{ member.stats.missedPayments }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Score de confiance -->
+      <div class="profile-section">
+        <h2 class="profile-section__title">Score de confiance</h2>
+        <div class="trust-score">
+          <span *ngFor="let filled of stars" class="trust-score__star"
+            [class.trust-score__star--filled]="filled">★</span>
+          <span class="trust-score__label">{{ trustScore }}/5</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="profile-actions">
+        <button class="report-button" (click)="report()">
+          <ion-icon name="flag-outline"></ion-icon>
+          Signaler ce membre
+        </button>
+      </div>
+
     </div>
-
-  </div>
+  </ng-container>
 
 </ion-content>

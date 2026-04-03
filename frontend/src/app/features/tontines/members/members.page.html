@@ -1,13 +1,73 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>members</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content [fullscreen]="true" class="members-content">
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">members</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <app-page-header title="Membres"></app-page-header>
+
+  <!-- ── LOADING ─────────────────────────────────────────────── -->
+  <ng-container *ngIf="status === 'loading'">
+    <div class="members-list">
+      <div class="member-row" *ngFor="let _ of [1,2,3,4,5]">
+        <ion-skeleton-text animated style="width:42px;height:42px;border-radius:50%;flex-shrink:0;">
+        </ion-skeleton-text>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          <ion-skeleton-text animated style="width:55%;height:13px;border-radius:4px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width:35%;height:11px;border-radius:4px;"></ion-skeleton-text>
+        </div>
+        <ion-skeleton-text animated style="width:52px;height:24px;border-radius:9999px;"></ion-skeleton-text>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ── ERREUR ──────────────────────────────────────────────── -->
+  <ng-container *ngIf="status === 'error'">
+    <div class="members-state">
+      <ion-icon name="alert-circle-outline" class="members-state__icon"></ion-icon>
+      <p class="members-state__title">Impossible de charger</p>
+      <p class="members-state__sub">Vérifiez votre connexion et réessayez.</p>
+      <app-custom-button fill="outline" (clicked)="load()">Réessayer</app-custom-button>
+    </div>
+  </ng-container>
+
+  <!-- ── CONTENU ─────────────────────────────────────────────── -->
+  <ng-container *ngIf="status === 'success'">
+
+    <!-- Compteur -->
+    <div class="members-summary">
+      <span class="members-summary__count">{{ members.length }} membre{{ members.length > 1 ? 's' : '' }}</span>
+      <span class="members-summary__total">sur {{ totalMembers }}</span>
+    </div>
+
+    <!-- Liste -->
+    <div class="members-list">
+      <div class="member-row" *ngFor="let member of members" (click)="openMemberProfile(member.id)">
+        <!-- Avatar -->
+        <div class="member-row__avatar" [class.member-row__avatar--creator]="member.role === 'creator'">
+          <img *ngIf="member.userPhotoUrl" [src]="member.userPhotoUrl" [alt]="member.userName ?? 'Membre'" />
+          <span *ngIf="!member.userPhotoUrl">{{ getInitials(member.userName) }}</span>
+        </div>
+
+        <!-- Infos -->
+        <div class="member-row__info">
+          <span class="member-row__name">{{ member.userName ?? 'Utilisateur' }}</span>
+          <span class="member-row__sub" *ngIf="member.turnNumber">Tour n° {{ member.turnNumber }}</span>
+          <span class="member-row__sub member-row__sub--muted" *ngIf="!member.turnNumber">Tour non attribué</span>
+        </div>
+
+        <!-- Badge rôle -->
+        <span class="member-badge member-badge--{{ member.role }}">
+          {{ member.role === 'creator' || member.role === 'admin' ? 'Admin' : 'Membre' }}
+        </span>
+
+        <!-- Chevron -->
+        <ion-icon name="chevron-forward-outline" class="member-row__chevron"></ion-icon>
+      </div>
+
+      <!-- Vide -->
+      <div class="members-empty" *ngIf="members.length === 0">
+        <ion-icon name="people-outline"></ion-icon>
+        <p>Aucun membre actif pour le moment.</p>
+      </div>
+    </div>
+
+  </ng-container>
+
 </ion-content>

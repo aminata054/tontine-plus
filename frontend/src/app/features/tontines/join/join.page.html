@@ -1,13 +1,69 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>join</ion-title>
-  </ion-toolbar>
-</ion-header>
+<app-page-header title="Rejoindre une tontine"></app-page-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">join</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="join-content">
+
+  <!-- ══════════════════════════════════
+       TOGGLE SCAN / LIEN D'INVITATION
+  ══════════════════════════════════ -->
+  <div class="tab-toggle">
+    <button class="tab-btn" [class.tab-btn--active]="activeTab === 'scan'" (click)="switchTab('scan')">
+      <ion-icon name="qr-code-outline" />
+      Scan
+    </button>
+    <button class="tab-btn" [class.tab-btn--active]="activeTab === 'link'" (click)="switchTab('link')">
+      <ion-icon name="link-outline" />
+      Lien d'invitation
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════
+       ONGLET SCAN
+  ══════════════════════════════════ -->
+  <div class="scan-zone" *ngIf="activeTab === 'scan'">
+
+    <!-- Viewfinder caméra -->
+    <div class="camera-viewfinder">
+      <!-- La caméra native se superpose ici via le plugin -->
+      <!-- En attendant, placeholder visuel -->
+      <div class="camera-placeholder">
+        <div class="scan-frame">
+          <span class="corner corner--tl"></span>
+          <span class="corner corner--tr"></span>
+          <span class="corner corner--bl"></span>
+          <span class="corner corner--br"></span>
+          <div class="scan-line"></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="scan-hint">Placez le QR code dans le cadre pour le scanner</p>
+
+    <div class="scan-actions">
+      <ion-button fill="outline" color="light" (click)="switchTab('link')">
+        Saisir le lien manuellement
+      </ion-button>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════
+       ONGLET LIEN D'INVITATION
+  ══════════════════════════════════ -->
+  <div class="link-zone" *ngIf="activeTab === 'link'">
+
+    <p class="link-hint">
+      Saisir le code d'invitation envoyé pour<br>rejoindre la tontine
+    </p>
+    <app-custom-input placeholder="https://TontinePlus/tontinesalon0312"
+      [(value)]="inviteInput" (input)="onInputChange($any($event.target).value)" autocomplete="off" autocorrect="off"
+      spellcheck="false"></app-custom-input>
+
+    <app-custom-button fill="solid" color="primary" expand="block" [disabled]="!isInputValid || isValidating"
+      (click)="validate()">
+      <ion-spinner *ngIf="isValidating" name="crescent" slot="start" />
+      Valider
+    </app-custom-button>
+
+  </div>
+
 </ion-content>

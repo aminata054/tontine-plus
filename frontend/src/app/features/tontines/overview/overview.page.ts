@@ -8,7 +8,7 @@ import {
   ModalController, ToastController,
 } from '@ionic/angular/standalone';
 
-import { Tontine, TontineStatus } from 'src/app/core/models/tontine.model';
+import { Tontine, TontineMember, TontineStatus } from 'src/app/core/models/tontine.model';
 import { TontineService } from 'src/app/core/services/tontine.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { PageHeaderComponent } from 'src/app/shared/ui/page-header/page-header.component';
@@ -39,12 +39,18 @@ export class OverviewPage implements OnInit, OnDestroy {
   tontine: Tontine | null = null;
   tontineId: string | null = null;
 
+  members: TontineMember[] = [];
+  membersStatus: 'loading' | 'success' | 'error' = 'loading';
+
   inviteLink: string | null = null;
   inviteCode: string | null = null;
   qrUrl: string | null = null;
 
   private destroy$ = new Subject<void>();
   private uid: string | null = null;
+
+  pendingCount = 0;
+  isLaunching = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -91,7 +97,8 @@ export class OverviewPage implements OnInit, OnDestroy {
           if (res.success) {
             this.tontine = res.data;
             this.status = 'success';
-            // Pré-charger le lien d'invitation pour le bouton "Voir les invitations"
+            this.loadMembers();
+            if (this.isAdmin && this.isPending) this.loadPendingCount();
             if (this.isCreator) this.loadInvite();
           } else {
             this.status = 'error';
@@ -99,6 +106,38 @@ export class OverviewPage implements OnInit, OnDestroy {
         },
         error: () => { this.status = 'error'; },
       });
+  }
+
+  private loadMembers(): void {
+    this.membersStatus = 'loading';
+    this.tontineService.getTontineMembers(this.tontineId!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.members = res.data
+              .filter(m => m.status === 'active')
+              .sort((a, b) => {
+                const order = { creator: 0, admin: 1, member: 2 };
+                return (order[a.role] ?? 3) - (order[b.role] ?? 3);
+              });
+            this.membersStatus = 'success';
+          } else {
+            this.membersStatus = 'error';
+          }
+        },
+        error: () => { this.membersStatus = 'error'; },
+      });
+  }
+
+  private loadPendingCount(): void {
+    this.tontineService.getPendingMembers(this.tontineId!).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.pendingCount = res.data?.length ?? 0;
+        }
+      },
+    });
   }
 
   private loadInvite(): void {
@@ -141,36 +180,133 @@ export class OverviewPage implements OnInit, OnDestroy {
   // ── Actions ─────────────────────────────────────────────────────────────────
 
   launchTontine(): void {
-    // TODO: appel API pour démarrer la tontine
-    this.showToast('Lancement en cours…');
+    if (!this.tontineId || !this.tontine) return;
+    const rotationMethod = this.tontine.rotationMethod;
+
+    if (rotationMethod === 'manual') {
+      this.showManualTurnPicker();
+      return;
+    }
+
+    if (rotationMethod === 'consensual') {
+      this.openFirstVote();
+      return;
+    }
+
+    // random / seniority
+    this.isLaunching = true;
+    this.tontineService.launchTontine(this.tontineId)   
+      .pipe(finalize(() => this.isLaunching = false))
+      .subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.showToast(`Tour 1 attribué à ${res.data.firstBeneficiary.name} !`);
+            this.load();
+          } else {
+            this.showToast(res.error ?? 'Erreur lors du lancement');
+          }
+        },
+        error: () => this.showToast('Erreur réseau, réessayez'),
+      });
   }
 
-  async showLaunchConfirm() {
-    if (!this.canLaunch) return;
+  // ── Lancement avec sélection manuelle du bénéficiaire ────────────────────────
+  private async showManualTurnPicker(): Promise<void> {
+    // Filtrer les membres éligibles (sans tour déjà reçu)
+    const completedTurns: string[] = (this.tontine as any)?.completedTurns ?? [];
+    const eligible = this.members.filter(m => !completedTurns.includes(m.userId));
+
+    const modal = await this.modalCtrl.create({
+      component: AlertModalComponent,
+      componentProps: {
+        type: 'manual_turn',
+        title: 'Choisir le bénéficiaire du tour 1',
+        members: eligible,
+        confirmText: 'Confirmer',
+        cancelText: 'Annuler',
+      },
+      cssClass: 'alert-modal',
+      backdropDismiss: true,
+    });
+
+    await modal.present();
+    const { data } = await modal.onWillDismiss();
+
+    if (data?.confirmed && data?.selectedUid) {
+      this.isLaunching = true;
+      this.tontineService.processNextTurn(this.tontineId!, data.selectedUid)
+        .pipe(finalize(() => this.isLaunching = false))
+        .subscribe({
+          next: (res) => {
+            if (res.success) {
+              this.showToast(`Tour 1 attribué à ${res.data.beneficiaryName}`);
+              this.load();
+            }
+          },
+          error: () => this.showToast('Erreur réseau'),
+        });
+    }
+  }
+
+  // ── Lancement du vote consensuel pour le tour 1 ───────────────────────────────
+  private openFirstVote(): void {
+    if (!this.tontineId) return;
+    this.isLaunching = true;
+    this.tontineService.processNextTurn(this.tontineId)
+      .pipe(finalize(() => this.isLaunching = false))
+      .subscribe({
+        next: (res) => {
+          if (res.success && res.data?.voteId) {
+            this.showToast('🗳️ Vote ouvert ! Les membres peuvent voter.');
+            // Rediriger vers la page de vote
+            this.router.navigate([
+              '/tontines', this.tontineId, 'vote', res.data.voteId
+            ]);
+          }
+        },
+        error: () => this.showToast('Erreur réseau'),
+      });
+  }
+
+  async showLaunchConfirm(): Promise<void> {
+    if (!this.canLaunch || !this.tontine) return;
+
+    const rotationMethod = this.tontine.rotationMethod;
+
+    // Message contextuel selon le mode de rotation
+    const rotationMessages: Record<string, string> = {
+      random: 'L\'ordre de passage sera tiré au sort automatiquement.',
+      seniority: 'L\'ordre sera défini par ancienneté d\'adhésion.',
+      manual: 'Vous choisirez manuellement le bénéficiaire à chaque tour.',
+      consensual: 'Les membres voteront pour désigner le bénéficiaire à chaque tour.',
+    };
 
     const modal = await this.modalCtrl.create({
       component: AlertModalComponent,
       componentProps: {
         type: 'launch',
-        title: 'Vous vous apprêtez à lancer la tontine',
+        title: 'Lancer la tontine',
+        message: rotationMessages[rotationMethod] ?? '',
         extraData: [
-          { label: 'Date de début', value: '01/02/2026' },
-          { label: 'Date de fin', value: '01/12/2026' }
+          { label: 'Membres', value: `${this.tontine.currentMembers}` },
+          { label: 'Cotisation', value: `${this.formatAmount(this.tontine.amount)} FCFA` },
+          { label: 'Gain par tour', value: `${this.formatAmount(this.tontine.potPerTurn)} FCFA` },
+          { label: 'Rotation', value: this.tontineService.rotationLabel(rotationMethod) },
         ],
-        confirmText: 'Lancer',
+        confirmText: rotationMethod === 'consensual' ? 'Ouvrir le vote' : 'Lancer',
         cancelText: 'Annuler',
-        confirmColor: 'primary'
+        confirmColor: 'primary',
       },
-      cssClass: 'alert-modal',           
-      backdropDismiss: true
+      cssClass: 'alert-modal',
+      backdropDismiss: true,
+      showBackdrop: true,
     });
 
     await modal.present();
-
-    const { data } = await modal.onWillDismiss();  
+    const { data } = await modal.onWillDismiss();
 
     if (data?.confirmed) {
-      this.launchTontine();   
+      this.launchTontine();
     }
   }
 
@@ -178,10 +314,16 @@ export class OverviewPage implements OnInit, OnDestroy {
     this.router.navigate(['/tontines', this.tontineId, 'chat']);
   }
 
+  openTontineDetail(): void {
+    this.router.navigate(['/tontines', this.tontineId, 'tontine-detail']);
+  }
   goToMembers(): void {
     this.router.navigate(['/tontines', this.tontineId, 'members']);
   }
 
+  openMemberProfile(memberId: string): void {
+    this.router.navigate(['/tontines', this.tontineId, 'member-profile', memberId]);
+  }
   goBack(): void {
     this.router.navigate(['/tabs/tontine']);
   }
@@ -274,6 +416,10 @@ export class OverviewPage implements OnInit, OnDestroy {
   getInitials(name: string | null | undefined): string {
     return (name ?? '')
       .split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+  }
+
+  getMemberInitials(member: TontineMember): string {
+    return this.getInitials(member.userName);
   }
 
   private async showToast(msg: string): Promise<void> {

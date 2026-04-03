@@ -15,6 +15,11 @@ export type NotificationType =
     | 'payout_sent'             // Paiement envoyé
     | 'vote_opened'             // Vote ouvert
     | 'vote_closed'             // Vote clôturé
+    | 'join_request'
+    | 'join_accepted'
+    | 'join_rejected'
+    | 'vote_open'
+    | 'vote_next_turn'
     | 'system';                 // Message système
 
 export interface NotificationPayload {

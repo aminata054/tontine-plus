@@ -48,6 +48,10 @@ export const routes: Routes = [
         title: 'Accueil'
       },
       {
+        path: 'join/:code',
+        loadComponent: () => import('./features/tontines/join-preview/join-preview.page').then(m => m.JoinPreviewPage)
+      },
+      {
         path: 'tontines',
         loadComponent: () => import('./features/tontines/layout/layout.page').then(m => m.LayoutPage),
         children: [
@@ -68,6 +72,10 @@ export const routes: Routes = [
             loadComponent: () => import('./features/tontines/join/join.page').then(m => m.JoinPage),
           },
           {
+            path: 'join-state',
+            loadComponent: () => import('./features/tontines/join-state/join-state.page').then(m => m.JoinStatePage)
+          },
+          {
             path: ':id/overview',
             loadComponent: () => import('./features/tontines/overview/overview.page').then(m => m.OverviewPage),
           },
@@ -80,19 +88,15 @@ export const routes: Routes = [
             loadComponent: () => import('./features/tontines/members/members.page').then(m => m.MembersPage)
           },
           {
-            path: ':id/flow',
-            loadComponent: () => import('./features/tontines/flow/flow.page').then(m => m.FlowPage),
-          },
-          {
-            path: ':id/history',
-            loadComponent: () => import('./features/tontines/history/history.page').then(m => m.HistoryPage),
+            path: ':id/tontine-detail',
+            loadComponent: () => import('./features/tontines/tontine-detail/tontine-detail.page').then(m => m.TontineDetailPage)
           },
           {
             path: ':id/settings',
             loadComponent: () => import('./features/tontines/settings/settings.page').then(m => m.SettingsPage),
           },
           {
-            path: ':id/:memberId/member-profile',
+            path: ':id/member-profile/:memberId',
             loadComponent: () => import('./features/tontines/member-profile/member-profile.page').then(m => m.MemberProfilePage)
           },
         ]
@@ -158,7 +162,4 @@ export const routes: Routes = [
     path: 'notification-page',
     loadComponent: () => import('./features/notifications/notification-page/notification-page.page').then(m => m.NotificationPagePage)
   },
-  
- 
-
 ];

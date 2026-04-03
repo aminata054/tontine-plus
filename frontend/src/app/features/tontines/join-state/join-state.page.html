@@ -1,0 +1,9 @@
+<ion-content class="success-content">
+  <app-page-header title="Demande"></app-page-header>
+  <app-state-screen [type]="stateType" [title]="stateTitle" [subtitle]="stateSubtitle" [buttonText]="primaryButtonText"
+    [showSecondaryButton]="true" [secondaryButtonText]="secondaryButtonText" [secondaryButtonFill]="secondaryButtonFill"
+    (buttonClick)="onPrimaryAction()" (secondaryButtonClick)="onSecondaryAction()" [secondaryText]="linkText"
+    (secondaryClick)="goHome()">
+  </app-state-screen>
+
+</ion-content>

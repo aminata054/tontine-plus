@@ -184,3 +184,178 @@ export interface TontineInviteResponse {
         membersCount: string;
     };
 }
+
+export type MemberStatus = 'active' | 'pending_approval' | 'rejected' | 'left' | 'excluded';
+
+// ─────────────────────────────────────────────────────────────
+// MODÈLES
+// ─────────────────────────────────────────────────────────────
+
+export interface TontinePreview {
+    tontineId: string;
+    createdBy: string;
+    creatorName: string | null;
+    estimatedDuration: number | null;
+    name: string;
+    description: string | null;
+    iconUrl: string | null;
+    type: TontineType;
+    visibility: string;
+    amount: number;
+    currency: string;
+    frequency: Frequency;
+    potPerTurn: number;
+    totalMembers: number;
+    currentMembers: number;
+    slotsLeft: number;
+    rotationMethod: RotationMethod;
+    securityModel: SecurityModel;
+    nextPaymentDate: any;
+    rules: {
+        gracePeriodDays: number;
+        penaltyType: string | null;
+        penaltyValue: number;
+        earlyExit: { mode: string; penaltyType: string | null } | null;
+        autoExclusionDays: number | null;
+    };
+    // Contextuel si authentifié
+    alreadyMember: boolean;
+    memberStatus: MemberStatus | null;
+}
+
+export interface TontineMember {
+    id: string;
+    tontineId: string;
+    userId: string;
+    userName: string | null;
+    userPhotoUrl: string | null;
+    role: MemberRole;
+    status: MemberStatus;
+    turnNumber: number | null;
+    joinedAt: any;
+    validatedAt: any | null;
+    rejectedAt: any | null;
+    leftAt: any | null;
+    excludedAt: any | null;
+    stats: {
+        totalPaid: number;
+        totalReceived: number;
+        onTimePayments: number;
+        latePayments: number;
+        missedPayments: number;
+        voteParticipation: number;
+    };
+}
+
+// ─────────────────────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────
+
+export type NotificationType =
+    | 'join_request'
+    | 'join_accepted'
+    | 'join_rejected'
+    | 'tontine_started';
+
+export interface TontineNotification {
+    id: string;
+    type: NotificationType;
+    recipientUid: string;
+    senderUid?: string;
+    senderName?: string;
+    senderPhotoUrl?: string | null;
+    tontineId: string;
+    tontineName: string;
+    read: boolean;
+    createdAt: any;
+}
+
+// ─────────────────────────────────────────────────────────────
+// RÉPONSES API
+// ─────────────────────────────────────────────────────────────
+
+export interface JoinPreviewResponse {
+    success: boolean;
+    data: TontinePreview;
+}
+
+export interface JoinTontineResponse {
+    success: boolean;
+    message: string;
+    data: {
+        tontineId: string;
+        memberStatus: MemberStatus;
+        autoAccepted: boolean;
+    };
+}
+
+export interface MembersListResponse {
+    success: boolean;
+    data: TontineMember[];
+    count: number;
+    tontineName: string;
+}
+
+export interface ValidateMemberResponse {
+    success: boolean;
+    message: string;
+    data: {
+        memberUid: string;
+        newStatus: MemberStatus;
+        tontineAutoStarted: boolean;
+    };
+}
+
+// ─────────────────────────────────────────────────────────────
+// PAYLOAD
+// ─────────────────────────────────────────────────────────────
+
+export interface ValidateMemberPayload {
+    action: 'accept' | 'reject';
+}
+
+
+export interface TurnItem {
+    number: number;
+    memberId: string;
+    memberName: string;
+    dateLabel: string;
+    isMe: boolean;
+    isCurrent: boolean;
+    isDone: boolean;
+    estimatedDate: Date | null;
+}
+
+export interface MyContribution {
+    status: 'paid' | 'due' | 'late';
+    paidAt?: any;
+    receiptRef?: string;
+    dueDate?: any;
+    timeLeft?: string;
+    penalty?: number;
+    totalDue?: number;
+    daysLate?: number;
+}
+
+export interface HistoryEntry {
+    date: any;
+    description?: string;
+    turnNumber?: number;
+    beneficiary?: string;
+    amount?: number;
+    method?: string;
+    transactionId?: string;
+    status?: string;
+    expanded: boolean;
+}
+
+export interface PageStats {
+    totalCollected: number;
+    currentBeneficiary: string;
+    nextDate: any;
+    paidCount: number;
+    unpaidCount: number;
+    punctualityRate: number;
+    completedTurns: number;
+    nextDueLabel: string;
+}

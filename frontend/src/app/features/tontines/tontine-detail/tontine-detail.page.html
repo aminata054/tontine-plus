@@ -1,0 +1,349 @@
+<ion-content [fullscreen]="true" class="detail-content">
+
+  <app-page-header [title]="tontine?.name ?? 'Tontine'"></app-page-header>
+
+  <!-- ── LOADING ─────────────────────────────────────── -->
+  <ng-container *ngIf="status === 'loading'">
+    <div class="detail-skeleton">
+      <ion-skeleton-text animated
+        style="width:60%;height:18px;border-radius:6px;margin-bottom:8px;"></ion-skeleton-text>
+      <ion-skeleton-text animated
+        style="width:100%;height:48px;border-radius:12px;margin-bottom:20px;"></ion-skeleton-text>
+      <ion-skeleton-text animated style="width:100%;height:120px;border-radius:14px;"></ion-skeleton-text>
+    </div>
+  </ng-container>
+
+  <!-- ── ERREUR ──────────────────────────────────────── -->
+  <ng-container *ngIf="status === 'error'">
+    <div class="detail-state">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <p>Impossible de charger la tontine</p>
+      <app-custom-button fill="outline" (clicked)="load()">Réessayer</app-custom-button>
+    </div>
+  </ng-container>
+
+  <!-- ── CONTENU ─────────────────────────────────────── -->
+  <ng-container *ngIf="status === 'success' && tontine">
+
+    <!-- Onglets -->
+    <div class="tabs">
+      <button *ngFor="let tab of tabs" class="tabs__btn" [class.tabs__btn--active]="activeTab === tab.key"
+        (click)="setTab(tab.key)">{{ tab.label }}</button>
+    </div>
+
+    <!-- ══════════════ FLUX ══════════════ -->
+    <ng-container *ngIf="activeTab === 'flux'">
+      <div class="tab-content">
+
+        <div class="timeline">
+          <div class="timeline__item" *ngFor="let turn of turns; let last = last"
+            [class.timeline__item--current]="turn.isCurrent" [class.timeline__item--done]="turn.isDone"
+            [class.timeline__item--last]="last">
+            <!-- Ligne verticale + dot -->
+            <div class="timeline__track">
+              <div class="timeline__dot" [class.timeline__dot--current]="turn.isCurrent"
+                [class.timeline__dot--done]="turn.isDone">
+              </div>
+              <div class="timeline__line" *ngIf="!last"></div>
+            </div>
+
+            <!-- Contenu -->
+            <div class="timeline__body">
+              <div class="timeline__header">
+                <span class="timeline__turn-label">
+                  Tour {{ turn.number }}
+                  <span class="timeline__you-badge" *ngIf="turn.isMe"> – Votre tour</span>
+                </span>
+                <span class="timeline__date">{{ turn.dateLabel }}</span>
+              </div>
+              <span class="timeline__member">{{ turn.memberName }}</span>
+            </div>
+          </div>
+
+          <!-- Date fin estimée — dernier tour -->
+          <div class="timeline__footer" *ngIf="turns.length > 0 && turns[turns.length - 1]?.estimatedDate">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span>Date de fin estimée le {{ formatDate(turns[turns.length - 1].estimatedDate) }}</span>
+          </div>
+        </div>
+
+      </div>
+    </ng-container>
+
+    <!-- ══════════════ TOUR ══════════════ -->
+    <ng-container *ngIf="activeTab === 'tour'">
+      <div class="tab-content">
+
+        <!-- Icône + titre contextuel -->
+        <div class="turn-hero">
+          <div class="turn-hero__icon">
+            <ion-icon src="assets/icon/receive-money.svg"></ion-icon>
+          </div>
+          <p class="turn-hero__label">{{ myTurnHeadline() }}</p>
+        </div>
+
+        <!-- Infos pot -->
+        <div class="info-card">
+          <div class="info-card__row">
+            <span class="info-card__label">Date estimée</span>
+            <span class="info-card__value">{{ myTurnDateLabel() }}</span>
+          </div>
+          <div class="info-card__row">
+            <span class="info-card__label">Montant</span>
+            <span class="info-card__value info-card__value--primary">{{ formatAmount(tontine.potPerTurn) }} FCFA</span>
+          </div>
+          <div class="info-card__row">
+            <span class="info-card__label">Compte à rebours</span>
+            <span class="info-card__value">{{ myTurnCountdown() }}</span>
+          </div>
+        </div>
+
+        <!-- Ma cotisation ce tour -->
+        <h3 class="section-title">Ma cotisation ce tour</h3>
+
+        <!-- PAYÉE -->
+        <div class="contribution-card contribution-card--paid" *ngIf="myContribution?.status === 'paid'">
+          <div class="contribution-card__header">
+            <ion-icon name="checkmark-circle" class="contribution-card__icon contribution-card__icon--paid"></ion-icon>
+            <span>Cotisation payée</span>
+          </div>
+          <div class="info-card__row">
+            <span class="info-card__label">Montant</span>
+            <span class="info-card__value">{{ formatAmount(tontine.amount) }} FCFA</span>
+          </div>
+          <div class="info-card__row">
+            <span class="info-card__label">Date</span>
+            <span class="info-card__value">{{ formatDateTime(myContribution?.paidAt) }}</span>
+          </div>
+          <div class="info-card__row">
+            <span class="info-card__label">Reçu</span>
+            <span class="info-card__value info-card__value--ref">{{ myContribution?.receiptRef ?? '—' }}</span>
+          </div>
+          <app-custom-button expand="block" fill="outline" (clicked)="openReceipt()">
+            Voir le reçu
+          </app-custom-button>
+        </div>
+
+        <!-- À PAYER -->
+        <div class="contribution-card contribution-card--due" *ngIf="myContribution?.status === 'due'">
+          <div class="contribution-card__header">
+            <ion-icon name="time-outline" class="contribution-card__icon contribution-card__icon--due"></ion-icon>
+            <span>Cotisation à payer</span>
+          </div>
+          <div class="info-card__row">
+            <span class="info-card__label">Montant</span>
+            <span class="info-card__value">{{ formatAmount(tontine.amount) }} FCFA</span>
+          </div>
+          <div class="info-card__row">
+            <span class="info-card__label">Date</span>
+            <span class="info-card__value">{{ formatDate(myContribution?.dueDate) }}</span>
+          </div>
+          <div class="info-card__row">
+            <span class="info-card__label">Temps restant</span>
+            <span class="info-card__value info-card__value--warning">{{ myContribution?.timeLeft ?? '—' }}</span>
+          </div>
+          <app-custom-button expand="block" color="success" (clicked)="payNow()">
+            Payer maintenant
+          </app-custom-button>
+        </div>
+
+        <!-- EN RETARD -->
+        <div class="contribution-card contribution-card--late" *ngIf="myContribution?.status === 'late'">
+          <div class="contribution-card__header">
+            <ion-icon name="close-circle-outline" class="contribution-card__icon contribution-card__icon--late"></ion-icon>
+            <span>Cotisation en retard</span>
+          </div>
+          <div class="info-card__row">
+            <span class="info-card__label">Montant initial</span>
+            <span class="info-card__value">{{ formatAmount(tontine.amount) }} FCFA</span>
+          </div>
+          <div class="info-card__row">
+            <span class="info-card__label">Pénalité (+5%/jour)</span>
+            <span class="info-card__value info-card__value--danger">{{ formatAmount(myContribution?.penalty ?? 0) }}
+              FCFA</span>
+          </div>
+          <div class="info-card__row info-card__row--total">
+            <span class="info-card__label">Total à payer</span>
+            <span class="info-card__value info-card__value--danger">{{ formatAmount(myContribution?.totalDue ?? 0) }}
+              FCFA</span>
+          </div>
+          <div class="info-card__row">
+            <span class="info-card__label">Retard</span>
+            <span class="info-card__value info-card__value--danger">{{ myContribution?.daysLate ?? 0 }} jours</span>
+          </div>
+          <app-custom-button expand="block" color="danger" (clicked)="payNow()">
+            Régler maintenant
+          </app-custom-button>
+        </div>
+
+      </div>
+    </ng-container>
+
+    <!-- ══════════════ HISTORIQUES ══════════════ -->
+    <ng-container *ngIf="activeTab === 'historiques'">
+      <div class="tab-content">
+
+        <!-- Donut + bénéficiaire -->
+        <div class="history-summary">
+          <div class="donut-wrapper">
+            <canvas id="donutCanvas" width="130" height="130"></canvas>
+            <div class="donut-center">
+              <span class="donut-center__amount">{{ formatAmount(stats.totalCollected) }}</span>
+              <span class="donut-center__currency">FCFA</span>
+            </div>
+          </div>
+          <div class="history-summary__meta">
+            <div class="history-summary__row">
+              <ion-icon name="person-outline"></ion-icon>
+              <span>Bénéficiaire : <strong>{{ stats.currentBeneficiary }}</strong></span>
+            </div>
+            <div class="history-summary__row">
+              <ion-icon name="calendar-outline"></ion-icon>
+              <span>{{ formatDate(stats.nextDate) }}</span>
+            </div>
+            <div class="history-summary__row history-summary__row--warning" *ngIf="stats.unpaidCount > 0">
+              <ion-icon name="warning-outline"></ion-icon>
+              <span>{{ stats.unpaidCount }} membre(s) à n'avoir pas payé</span>
+            </div>
+            <div class="history-summary__row history-summary__row--success">
+              <ion-icon name="people-outline"></ion-icon>
+              <span>{{ stats.paidCount }} membres ont payé</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats cards -->
+        <div class="stats-grid">
+          <div class="stat-card stat-card--blue">
+            <span class="stat-card__label">Total collecté</span>
+            <span class="stat-card__value">{{ formatAmount(stats.totalCollected) }} FCFA</span>
+          </div>
+          <div class="stat-card stat-card--yellow">
+            <span class="stat-card__label">Taux de ponctualité</span>
+            <span class="stat-card__value">{{ stats.punctualityRate }}%</span>
+          </div>
+          <div class="stat-card stat-card--gray">
+            <span class="stat-card__label">Tours complétés</span>
+            <span class="stat-card__value">{{ stats.completedTurns }}/{{ tontine.totalTurns }}</span>
+          </div>
+          <div class="stat-card stat-card--pink">
+            <span class="stat-card__label">Prochaine échéance</span>
+            <span class="stat-card__value">{{ stats.nextDueLabel }}</span>
+          </div>
+        </div>
+
+        <!-- Historiques cotisations -->
+        <h3 class="section-title">Historiques (mes cotisations)</h3>
+
+        <div class="history-list">
+          <div class="history-item" *ngFor="let entry of historyEntries" (click)="toggleHistoryEntry(entry)">
+            <div class="history-item__row">
+              <span class="history-item__date">{{ formatDateTime(entry.date) }}</span>
+              <ion-icon [name]="entry.expanded ? 'chevron-up-outline' : 'chevron-down-outline'"
+                class="history-item__chevron">
+              </ion-icon>
+            </div>
+
+            <div class="history-item__detail" *ngIf="entry.expanded">
+              <div class="history-detail__row" *ngIf="entry.description">
+                <span class="history-detail__label">Opération</span>
+                <span class="history-detail__value">{{ entry.description }}</span>
+              </div>
+              <div class="history-detail__row" *ngIf="entry.turnNumber">
+                <span class="history-detail__label">Tour</span>
+                <span class="history-detail__value">Tour {{ entry.turnNumber }}</span>
+              </div>
+              <div class="history-detail__row" *ngIf="entry.beneficiary">
+                <span class="history-detail__label">Bénéficiaire</span>
+                <span class="history-detail__value">{{ entry.beneficiary }}</span>
+              </div>
+              <div class="history-detail__row" *ngIf="entry.amount">
+                <span class="history-detail__label">Montant distribué</span>
+                <span class="history-detail__value history-detail__value--primary">{{ formatAmount(entry.amount) }}
+                  FCFA</span>
+              </div>
+              <div class="history-detail__row" *ngIf="entry.method">
+                <span class="history-detail__label">Méthode</span>
+                <span class="history-detail__value">{{ entry.method }}</span>
+              </div>
+              <div class="history-detail__row" *ngIf="entry.transactionId">
+                <span class="history-detail__label">ID Transaction</span>
+                <span class="history-detail__value history-detail__value--ref">{{ entry.transactionId }}</span>
+              </div>
+              <div class="history-detail__row" *ngIf="entry.status">
+                <span class="history-detail__label">Statut</span>
+                <span class="history-detail__value history-detail__value--success">{{ entry.status }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </ng-container>
+
+    <!-- ══════════════ PARAMÈTRES ══════════════ -->
+    <ng-container *ngIf="activeTab === 'parametres'">
+      <div class="tab-content">
+
+        <!-- Bloc finance -->
+        <div class="params-card">
+          <div class="params-row">
+            <span class="params-label">Cotisation</span>
+            <span class="params-value">{{ formatAmount(tontine.amount) }} FCFA</span>
+          </div>
+          <div class="params-row">
+            <span class="params-label">Fréquence</span>
+            <span class="params-value">{{ frequencyLabel() }}</span>
+          </div>
+          <div class="params-row">
+            <span class="params-label">Pot par tour</span>
+            <span class="params-value">{{ formatAmount(tontine.potPerTurn) }} FCFA</span>
+          </div>
+          <div class="params-row">
+            <span class="params-label">Durée du cycle</span>
+            <span class="params-value">{{ cycleDurationLabel() }}</span>
+          </div>
+        </div>
+
+        <!-- Bloc règles -->
+        <div class="params-card">
+          <div class="params-row">
+            <span class="params-label">Délai de grâce</span>
+            <span class="params-value">{{ tontine.rules.gracePeriodDays }} jours</span>
+          </div>
+          <div class="params-row">
+            <span class="params-label">Pénalité</span>
+            <span class="params-value">{{ penaltyLabel() }}</span>
+          </div>
+          <div class="params-row">
+            <span class="params-label">Exclusion après</span>
+            <span class="params-value">{{ exclusionLabel() }}</span>
+          </div>
+          <div class="params-row">
+            <span class="params-label">Sortie anticipée</span>
+            <span class="params-value">{{ earlyExitLabel() }}</span>
+          </div>
+        </div>
+
+        <!-- Bloc gouvernance -->
+        <div class="params-card">
+          <div class="params-row">
+            <span class="params-label">Sécurité</span>
+            <span class="params-value">{{ securityLabel() }}</span>
+          </div>
+          <div class="params-row">
+            <span class="params-label">Modifications</span>
+            <span class="params-value">{{ modificationLabel() }}</span>
+          </div>
+        </div>
+
+        <p class="params-footer" *ngIf="tontine.createdAt">
+          Tontine créée le {{ formatDate(tontine.createdAt) }}
+        </p>
+
+      </div>
+    </ng-container>
+
+  </ng-container>
+
+</ion-content>

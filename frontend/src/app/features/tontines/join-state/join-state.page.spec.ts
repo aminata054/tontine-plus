@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HistoryPage } from './history.page';
+import { JoinStatePage } from './join-state.page';
 
-describe('HistoryPage', () => {
-  let component: HistoryPage;
-  let fixture: ComponentFixture<HistoryPage>;
+describe('JoinStatePage', () => {
+  let component: JoinStatePage;
+  let fixture: ComponentFixture<JoinStatePage>;
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(HistoryPage);
+    fixture = TestBed.createComponent(JoinStatePage);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

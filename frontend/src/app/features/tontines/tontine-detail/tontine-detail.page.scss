@@ -1,0 +1,626 @@
+:host {
+    --radius: 16px;
+    --radius-sm: 12px;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    --text-muted: #64748B;
+    --blue: #1D4ED8;
+    --green: #16A34A;
+    --orange: #D97706;
+    --red: #DC2626;
+}
+
+.detail-content {
+    --background: var(--ion-background-color);
+    --ion-font-family: var(--font-urbanist);
+}
+
+// ─── Skeleton / État ───────────────────────────────────
+.detail-skeleton {
+    padding: 20px 16px;
+}
+
+.detail-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 60px 24px;
+    text-align: center;
+
+    ion-icon {
+        font-size: 48px;
+        color: var(--ion-color-danger);
+    }
+
+    p {
+        font-size: 15px;
+        color: var(--text-muted);
+        margin: 0;
+    }
+}
+
+// ─── Onglets ───────────────────────────────────────────
+.tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 16px 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
+    &__btn {
+        flex-shrink: 0;
+        padding: 8px 18px;
+        border-radius: 9999px;
+        border: 1px solid #E2E8F0;
+        background: #fff;
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.18s;
+        font-family: var(--font-urbanist);
+
+        &--active {
+            background: var(--ion-color-primary);
+            border-color: var(--ion-color-primary);
+            color: #fff;
+            font-weight: 600;
+        }
+    }
+}
+
+// ─── Contenu onglet ────────────────────────────────────
+.tab-content {
+    padding: 0 16px 40px;
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ion-color-text);
+    margin: 24px 0 12px;
+    font-family: var(--font-urbanist);
+}
+
+// ─── Timeline (Flux) ───────────────────────────────────
+.timeline {
+    padding: 28px 0 20px;
+    gap: 12px;
+}
+
+.timeline__item {
+    display: flex;
+    gap: 16px;
+    min-height: 56px;
+
+    &--last .timeline__line {
+        display: none;
+    }
+}
+
+.timeline__track {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 20px;
+    flex-shrink: 0;
+}
+
+.timeline__dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2.5px solid #CBD5E1;
+    background: #fff;
+    flex-shrink: 0;
+    margin-top: 4px;
+
+    &--done {
+        background: var(--ion-color-primary);
+        border-color: var(--ion-color-primary);
+    }
+
+    &--current {
+        background: #fff;
+        border-color: var(--ion-color-primary);
+        box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
+        width: 16px;
+        height: 16px;
+    }
+}
+
+.timeline__line {
+    flex: 1;
+    width: 2px;
+    background: #E2E8F0;
+    margin: 4px 0;
+}
+
+.timeline__body {
+    flex: 1;
+    padding-bottom: 18px;
+}
+
+.timeline__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.timeline__turn-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ion-color-text);
+    font-family: var(--font-urbanist);
+}
+
+.timeline__you-badge {
+    color: var(--ion-color-primary);
+}
+
+.timeline__date {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.timeline__member {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.timeline__footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px dashed #E2E8F0;
+
+    ion-icon {
+        font-size: 14px;
+        color: var(--ion-color-primary);
+    }
+}
+
+// ─── Hero tour ─────────────────────────────────────────
+.turn-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 28px 0 20px;
+
+    &__icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: #EFF6FF;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        ion-icon {
+            font-size: 32px;
+            color: var(--ion-color-primary);
+        }
+    }
+
+    &__label {
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--ion-color-text);
+        margin: 0;
+        text-align: center;
+        font-family: var(--font-urbanist);
+    }
+}
+
+// ─── Info card (lignes clé/valeur) ─────────────────────
+.info-card {
+    background: #F8FAFC;
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-bottom: 8px;
+
+    &__row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #F1F5F9;
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        &--total {
+            border-top: 1px solid #E2E8F0;
+            margin-top: 4px;
+            padding-top: 10px;
+
+            .info-card__label,
+            .info-card__value {
+                font-weight: 700;
+            }
+        }
+    }
+
+    &__label {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    &__value {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ion-color-text);
+
+        &--primary {
+            color: var(--ion-color-primary);
+        }
+
+        &--warning {
+            color: var(--orange);
+        }
+
+        &--danger {
+            color: var(--red);
+        }
+
+        &--ref {
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+    }
+}
+
+// ─── Cotisation cards ──────────────────────────────────
+.contribution-card {
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-top: 8px;
+
+    .info-card__row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+        &:last-of-type {
+            border-bottom: none;
+            margin-bottom: 16px;
+        }
+    }
+
+    app-custom-button {
+        --border-radius: 12px;
+        height: 50px;
+    }
+
+    &--paid {
+        background: #F0FDF4;
+        border: 1px solid #BBF7D0;
+    }
+
+    &--due {
+        background: #FFFBEB;
+        border: 1px solid #FDE68A;
+    }
+
+    &--late {
+        background: #FEF2F2;
+        border: 1px solid #FECACA;
+    }
+
+    &__header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 14px;
+        font-family: var(--font-urbanist);
+    }
+
+    &__icon {
+        font-size: 22px;
+
+        &--paid {
+            color: var(--green);
+        }
+
+        &--due {
+            color: var(--orange);
+        }
+
+        &--late {
+            color: var(--red);
+        }
+    }
+}
+
+// ─── Historiques ──────────────────────────────────────
+.history-summary {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+
+.donut-wrapper {
+    position: relative;
+    flex-shrink: 0;
+    width: 130px;
+    height: 130px;
+}
+
+.donut-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+
+    &__amount {
+        display: block;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--ion-color-text);
+        font-family: var(--font-urbanist);
+        line-height: 1.2;
+    }
+
+    &__currency {
+        display: block;
+        font-size: 10px;
+        color: var(--text-muted);
+    }
+}
+
+.history-summary__meta {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.history-summary__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+
+    ion-icon {
+        font-size: 14px;
+        color: var(--ion-color-primary);
+        flex-shrink: 0;
+    }
+
+    strong {
+        color: var(--ion-color-text);
+        font-weight: 600;
+    }
+
+    &--warning {
+        color: var(--orange);
+
+        ion-icon {
+            color: var(--orange);
+        }
+    }
+
+    &--success {
+        color: var(--green);
+
+        ion-icon {
+            color: var(--green);
+        }
+    }
+}
+
+// ─── Stats grid ────────────────────────────────────────
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.stat-card {
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    &__label {
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    &__value {
+        font-size: 15px;
+        font-weight: 700;
+        font-family: var(--font-urbanist);
+    }
+
+    &--blue {
+        background: #DBEAFE;
+
+        .stat-card__label {
+            color: #1E40AF;
+        }
+
+        .stat-card__value {
+            color: #1E3A8A;
+        }
+    }
+
+    &--yellow {
+        background: #FEF9C3;
+
+        .stat-card__label {
+            color: #A16207;
+        }
+
+        .stat-card__value {
+            color: #854D0E;
+        }
+    }
+
+    &--gray {
+        background: #F1F5F9;
+
+        .stat-card__label {
+            color: var(--text-muted);
+        }
+
+        .stat-card__value {
+            color: var(--ion-color-text);
+        }
+    }
+
+    &--pink {
+        background: #FDE8F0;
+
+        .stat-card__label {
+            color: #9D174D;
+        }
+
+        .stat-card__value {
+            color: #831843;
+        }
+    }
+}
+
+// ─── Liste historiques ─────────────────────────────────
+.history-list {
+    background: #fff;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.history-item {
+    border-bottom: 1px solid #F1F5F9;
+    padding: 14px 16px;
+    cursor: pointer;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &__row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    &__date {
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--ion-color-text);
+    }
+
+    &__chevron {
+        font-size: 16px;
+        color: var(--text-muted);
+    }
+
+    &__detail {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #F1F5F9;
+    }
+}
+
+.history-detail__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+}
+
+.history-detail__label {
+    font-size: 12.5px;
+    color: var(--text-muted);
+}
+
+.history-detail__value {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ion-color-text);
+
+    &--primary {
+        color: var(--ion-color-primary);
+    }
+
+    &--success {
+        color: var(--green);
+    }
+
+    &--ref {
+        font-family: monospace;
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+}
+
+// ─── Paramètres ────────────────────────────────────────
+.params-card {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 4px 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+}
+
+.params-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #F1F5F9;
+
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.params-label {
+    font-size: 13.5px;
+    color: var(--text-muted);
+}
+
+.params-value {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ion-color-text);
+    text-align: right;
+    max-width: 55%;
+}
+
+.params-footer {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 8px;
+}

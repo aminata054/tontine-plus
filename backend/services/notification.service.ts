@@ -210,3 +210,28 @@ export const notifyMemberToValidate = (
         tontineId,
         memberName,
     });
+
+export const buildNotificationDoc = (
+    userId: string,
+    payload: NotificationPayload
+) => {
+    const notifRef = db.collection('notifications').doc();
+
+    const { title, body, type, ...rest } = payload;
+
+    return {
+        ref: notifRef,
+        data: {
+            id: notifRef.id,
+            userId,
+            title,
+            body,
+            type,
+            isRead: false,
+            data: rest,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            readAt: null,
+            deletedAt: null,
+        }
+    };
+};

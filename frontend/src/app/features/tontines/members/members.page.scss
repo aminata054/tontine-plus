@@ -1,0 +1,185 @@
+:host {
+    --radius: 16px;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+    --text-muted: #64748B;
+}
+
+.members-content {
+    --background: var(--ion-background-color);
+    --ion-font-family: var(--font-urbanist);
+}
+
+// ─── Résumé ────────────────────────────────────────────
+.members-summary {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 4px 20px 12px;
+
+    &__count {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--ion-color-text);
+    }
+
+    &__total {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+}
+
+// ─── Liste ─────────────────────────────────────────────
+.members-list {
+    background: #fff;
+    border-radius: var(--radius);
+    margin: 0 16px 30px;
+    padding: 4px 16px;
+    box-shadow: var(--shadow);
+}
+
+// ─── Ligne membre ──────────────────────────────────────
+.member-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid #F1F5F9;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &:active {
+        background: #F8FAFC;
+        border-radius: 12px;
+    }
+
+    &__avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: #E0F2FE;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 15px;
+        color: var(--ion-color-primary);
+        overflow: hidden;
+        flex-shrink: 0;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        &--creator {
+            background: #DBEAFE;
+            border: 2px solid var(--ion-color-primary);
+        }
+    }
+
+    &__info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    &__name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ion-color-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &__sub {
+        font-size: 12px;
+        color: var(--ion-color-primary);
+        font-weight: 500;
+
+        &--muted {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+    }
+
+    &__chevron {
+        font-size: 16px;
+        color: #CBD5E1;
+        flex-shrink: 0;
+    }
+}
+
+// ─── Badge rôle ────────────────────────────────────────
+.member-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    background: #F1F5F9;
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+
+    &--admin,
+    &--creator {
+        background: #DBEAFE;
+        color: var(--ion-color-primary);
+    }
+}
+
+// ─── État vide ─────────────────────────────────────────
+.members-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 40px 20px;
+    color: var(--text-muted);
+
+    ion-icon {
+        font-size: 40px;
+        opacity: 0.4;
+    }
+
+    p {
+        font-size: 14px;
+        margin: 0;
+    }
+}
+
+// ─── État erreur ───────────────────────────────────────
+.members-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 60px 24px;
+    text-align: center;
+
+    &__icon {
+        font-size: 48px;
+        color: var(--ion-color-danger);
+        opacity: 0.7;
+    }
+
+    &__title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ion-color-text);
+        margin: 0;
+    }
+
+    &__sub {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin: 0;
+    }
+}

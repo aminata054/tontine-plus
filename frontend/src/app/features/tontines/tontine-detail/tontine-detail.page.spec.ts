@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FlowPage } from './flow.page';
+import { TontineDetailPage } from './tontine-detail.page';
 
-describe('FlowPage', () => {
-  let component: FlowPage;
-  let fixture: ComponentFixture<FlowPage>;
+describe('TontineDetailPage', () => {
+  let component: TontineDetailPage;
+  let fixture: ComponentFixture<TontineDetailPage>;
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FlowPage);
+    fixture = TestBed.createComponent(TontineDetailPage);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
