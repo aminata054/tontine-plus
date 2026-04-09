@@ -1,0 +1,264 @@
+.user-profile-content {
+    --background: var(--ion-background-color);
+
+    .profile-container {
+        padding: 24px 16px 60px;
+        max-width: 480px;
+        margin: 0 auto;
+    }
+
+    /* ====================== HEADER ====================== */
+    .profile-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 32px;
+        text-align: center;
+    }
+
+    .profile-avatar {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        cursor: pointer;
+    }
+
+    .avatar-img {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .profile-avatar img {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .profile-avatar-placeholder {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--ion-color-primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        font-weight: 600;
+    }
+
+    .profile-name {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1E2937;
+        margin: 0 0 18px 0;
+        font-family: var(--font-urbanist, 'Urbanist', sans-serif);
+    }
+
+    .subscribe-btn {
+        background: linear-gradient(90deg, #A2D2FF, #EFF7FF);
+        color: var(--ion-color-text);
+        border: none;
+        border-radius: 12px;
+        padding: 20px 75px;
+        font-size: 15px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+
+        &:active {
+            transform: scale(0.97);
+        }
+
+        .crown {
+            font-size: 18px;
+        }
+    }
+
+    /* ====================== MENU ====================== */
+    .menu-list {
+        background: var(--ion-background-color);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .menu-section {
+        &:not(:last-child) {
+            border-bottom: 8px solid #F8FAFC;
+        }
+    }
+
+    .menu-section__label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ion-color-primary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 20px 20px 10px 20px;
+        margin: 0;
+    }
+
+    .menu-item {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        padding: 16px 20px;
+        background: transparent;
+        border: none;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.2s;
+
+        &:active {
+            background: var(--ion-background-color);
+        }
+    }
+
+    .menu-item__icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--ion-color-primary-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        flex-shrink: 0;
+
+        ion-icon {
+            font-size: 20px;
+            color: var(--ion-color-primary);
+        }
+    }
+
+    .menu-item__label {
+        flex: 1;
+        font-size: 16px;
+        font-weight: 500;
+        color: #1E2937;
+    }
+
+    .menu-item__arrow {
+        font-size: 18px;
+        color: #94A3B8;
+
+    }
+
+    .menu-item--danger .menu-item__label {
+        color: #EF4444;
+    }
+
+    .skeleton-menu .skeleton-item {
+        border-radius: 16px;
+        margin-bottom: 8px;
+    }
+}
+
+// ── Bottom sheet : Contact ────────────────────────────────────
+.contact-sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    animation: fadeIn 0.2s ease;
+}
+
+.contact-sheet {
+    width: 100%;
+    background: #FFFFFF;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 20px 36px;
+    animation: slideUp 0.25s ease;
+    position: relative;
+}
+
+.contact-sheet__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: #F1F5F9;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    ion-icon {
+        font-size: 18px;
+        color: #64748B;
+    }
+}
+
+.contact-option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    background: #F8FAFC;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-align: left;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    &:active {
+        background: #F1F5F9;
+    }
+}
+
+.contact-option__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 14px;
+    flex-shrink: 0;
+
+    ion-icon {
+        font-size: 22px;
+        color: #fff;
+    }
+
+    &--whatsapp {
+        background: #25D366;
+    }
+
+    &--call {
+        background: #3B82F6;
+    }
+}
+
+.contact-option__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.contact-option__name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1E2937;
+}
+
+.contact-option__desc {
+    font-size: 12.5px;
+    color: #94A3B8;
+}

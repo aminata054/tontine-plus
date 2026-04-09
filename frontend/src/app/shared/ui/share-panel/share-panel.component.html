@@ -1,8 +1,8 @@
 <div class="sp-panel">
   <div class="sp-panel__handle"></div>
-  <p class="sp-panel__title">Partager le lien de la tontine</p>
+  <p class="sp-panel__title">{{ title }}</p>
   <div class="sp-panel__link-row">
-    <span class="sp-panel__link-url">{{ inviteLink }}</span>
+    <span class="sp-panel__link-url">{{ link }}</span>
     <button class="sp-panel__copy-btn" (click)="copyLink()">Copier</button>
   </div>
 
@@ -14,7 +14,7 @@
     </button>
 
     <button class="sp-panel__app sp-panel__app--telegram" (click)="shareVia('telegram')">
-      <ion-icon name="logo-telegram"></ion-icon>
+      <ion-icon src="/assets/icon/telegram.svg"></ion-icon>
       <span>Telegram</span>
     </button>
 

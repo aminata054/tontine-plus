@@ -157,7 +157,10 @@ export class InvitationPage implements OnInit, OnDestroy {
   async openShareModal(): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: SharePanelComponent,
-      componentProps: { inviteLink: this.inviteLink },
+      componentProps: { 
+        link: this.inviteLink,
+        title: 'Partager la tontine',
+      },
       breakpoints: [0, 0.6, 0.9],
       initialBreakpoint: 0.6,
       backdropDismiss: true,

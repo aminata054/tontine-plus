@@ -1,4 +1,4 @@
-import { Component, ViewChildren, QueryList, ElementRef, forwardRef, Output, EventEmitter, Input } from '@angular/core';
+import { Component, ViewChildren, QueryList, ElementRef, forwardRef, Output, EventEmitter, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -16,7 +16,7 @@ import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/f
     }
   ]
 })
-export class OtpInputComponent implements ControlValueAccessor {
+export class OtpInputComponent implements ControlValueAccessor, OnInit {
 
   @Input() length: number = 6;
   @Output() completed = new EventEmitter<string>();
@@ -31,6 +31,9 @@ export class OtpInputComponent implements ControlValueAccessor {
   private onTouched: any = () => { };
 
   constructor() {
+  }
+
+  ngOnInit(): void {
     this.digits = Array(this.length).fill('');
   }
 

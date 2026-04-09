@@ -602,7 +602,7 @@ router.post('/:id/votes/:voteId/cast', verifyToken, castVote);
  *                       type: string
  *                       description: UID du premier bénéficiaire (selon la méthode de rotation)
  *       400:
- *         description: Impossible de lancer la tontine (conditions non remplies : membres insuffisants, validations en attente, etc.)
+ *         description: Impossible de lancer la tontine (conditions non remplies,  membres insuffisants, validations en attente, etc.)
  *       403:
  *         description: Non autorisé (seul le créateur ou admin peut lancer la tontine)
  *       404:

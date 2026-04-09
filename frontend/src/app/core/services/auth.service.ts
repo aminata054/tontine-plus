@@ -24,6 +24,9 @@ export class AuthService {
 
   private currentUserSubject = new BehaviorSubject<UserProfile | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  private userLoaded$ = new BehaviorSubject<boolean>(false);
+  public readonly isLoaded$ = this.userLoaded$.asObservable();
+
 
   constructor(
     private http: HttpClient,
@@ -41,6 +44,7 @@ export class AuthService {
   private async loadUserFromStorage(): Promise<void> {
     const user = await this.storage.getUser();
     if (user) this.currentUserSubject.next(user);
+    this.userLoaded$.next(true);
   }
 
   sendOtp(phoneNumber: string): Observable<SendOtpResponse> {
@@ -60,18 +64,22 @@ export class AuthService {
     }).pipe(
       switchMap(res => {
         if (res.success) {
-          return from(
-            Promise.all([
-              this.storage.setToken(res.idToken),
-              this.storage.setPhoneNumber(phoneNumber)
-            ])
-          ).pipe(map(() => res));
+          const saves: Promise<any>[] = [
+            this.storage.setToken(res.idToken),
+            this.storage.setPhoneNumber(phoneNumber),
+          ];
+
+          if (res.profile) {
+            saves.push(this.storage.setUser(res.profile));
+            this.currentUserSubject.next(res.profile);
+          }
+
+          return from(Promise.all(saves)).pipe(map(() => res));
         }
         return of(res);
       })
     );
   }
-
   setupPin(pin: string): Observable<SetupPinResponse> {
     return this.http.post<SetupPinResponse>(`${this.API}/setup-pin`, { pin });
   }
@@ -114,6 +122,29 @@ export class AuthService {
         return res;
       })
     );
+  }
+
+  updateProfile(data: {
+    fullName?: string;
+    email?: string;
+    photoUrl?: string;
+  }): Observable<{ success: boolean; data?: UserProfile }> {
+    return this.http.patch<{ success: boolean; data?: UserProfile }>(`${this.API}/update-profile`, data).pipe(
+      tap(async (res) => {
+        if (res.success && res.data) {
+          await this.storage.setUser(res.data);
+          this.currentUserSubject.next(res.data);
+        }
+      })
+    );
+  }
+
+  changePin(currentPin: string, newPin: string): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean }>(`${this.API}/update-pin`, { currentPin, newPin });
+  }
+
+  async getReferralLink(): Promise<any> {
+    return this.http.get<any>(`${this.API}/referral-link`).toPromise();
   }
 
   private exchangeCustomToken(customToken: string): Promise<FirebaseSignInResponse> {

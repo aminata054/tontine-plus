@@ -1,13 +1,60 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>help-center</ion-title>
-  </ion-toolbar>
-</ion-header>
+<app-page-header title="Centre d'aide"></app-page-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">help-center</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="help-content">
+  <div class="search-bar">
+    <app-custom-input placeholder="Rechercher une question" expand="block"/>
+
+  </div>
+
+  <div class="faq-list">
+
+    <ion-accordion-group class="faq-group">
+      <ion-accordion value="q1">
+        <ion-item slot="header" lines="none">
+          <ion-label class="faq-question">Comment s'inscrire à Tontine Plus ?</ion-label>
+        </ion-item>
+        <div class="faq-content" slot="content">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+          incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.
+        </div>
+      </ion-accordion>
+    </ion-accordion-group>
+
+    <ion-accordion-group class="faq-group">
+      <ion-accordion value="q2">
+        <ion-item slot="header" lines="none">
+          <ion-label class="faq-question">Comment rejoindre une tontine en cours ?</ion-label>
+        </ion-item>
+        <div class="faq-content" slot="content">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+          incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.
+        </div>
+      </ion-accordion>
+    </ion-accordion-group>
+
+    <ion-accordion-group class="faq-group">
+      <ion-accordion value="q3">
+        <ion-item slot="header" lines="none">
+          <ion-label class="faq-question">Comment s'inscrire à Tontine Plus ?</ion-label>
+        </ion-item>
+        <div class="faq-content" slot="content">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+          incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.
+        </div>
+      </ion-accordion>
+    </ion-accordion-group>
+
+    <ion-accordion-group class="faq-group">
+      <ion-accordion value="q4">
+        <ion-item slot="header" lines="none">
+          <ion-label class="faq-question">Comment s'inscrire à Tontine Plus ?</ion-label>
+        </ion-item>
+        <div class="faq-content" slot="content">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+          incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.
+        </div>
+      </ion-accordion>
+    </ion-accordion-group>
+
+  </div>
 </ion-content>

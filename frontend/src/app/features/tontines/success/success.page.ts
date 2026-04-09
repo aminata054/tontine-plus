@@ -74,7 +74,9 @@ export class SuccessPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: SharePanelComponent,
       componentProps: {
-        inviteLink: this.inviteLink,
+        link: this.inviteLink,
+        title: 'Partager la tontine',
+        // shareText: shareText,
       },
       breakpoints: [0, 0.6, 0.9],
       initialBreakpoint: 0.6,

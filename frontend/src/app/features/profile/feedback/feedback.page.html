@@ -1,13 +1,19 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>feedback</ion-title>
-  </ion-toolbar>
-</ion-header>
+<app-page-header title="Feedback"></app-page-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">feedback</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="feedback-content">
+  <div class="feedback-container">
+    <p class="feedback-intro">
+      Nous aimerions savoir ce que vous pensez<br>
+      de l’application. Vos retours nous aident à nous améliorer.
+    </p>
+
+    <ion-textarea placeholder="Comment pouvons-nous améliorer votre expérience ?" rows="8" class="feedback-textarea">
+    </ion-textarea>
+
+    <div class="feedback-actions">
+      <app-custom-button color="primary" expand="block" >
+        Envoyer
+      </app-custom-button>
+    </div>
+  </div>
 </ion-content>

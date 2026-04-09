@@ -437,3 +437,205 @@ export const getProfile = async (req: Request, res: Response) => {
         return res.status(500).json({ success: false, error: err.message });
     }
 };
+
+// ─────────────────────────────────────────────
+// UPDATE PROFILE
+// PATCH /api/v1/auth/update-profile
+// Header: Authorization: Bearer <idToken>
+// Body: { fullName?, email?, birthDate?, photoUrl? }
+// ─────────────────────────────────────────────
+export const updateProfile = async (req: Request, res: Response) => {
+    const uid = (req as any).user.uid;
+    const { fullName, email, birthDate, photoUrl } = req.body;
+
+    const updates: Record<string, any> = {
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    const authUpdates: admin.auth.UpdateRequest = {};
+
+    if (fullName !== undefined) {
+        if (fullName.trim().length < 2) {
+            return res.status(400).json({
+                success: false,
+                error: 'Le nom complet doit contenir au moins 2 caractères',
+            });
+        }
+        updates.fullName = fullName.trim();
+        authUpdates.displayName = fullName.trim();
+    }
+
+    if (email !== undefined) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({ success: false, error: 'Format email invalide' });
+        }
+        updates.email = email.toLowerCase().trim();
+        authUpdates.email = email.toLowerCase().trim();
+    }
+
+    if (birthDate !== undefined) {
+        if (isNaN(Date.parse(birthDate))) {
+            return res.status(400).json({
+                success: false,
+                error: 'Date de naissance invalide. Format : YYYY-MM-DD',
+            });
+        }
+        const age = Math.floor(
+            (Date.now() - new Date(birthDate).getTime()) / (365.25 * 24 * 3600 * 1000)
+        );
+        if (age < 18) {
+            return res.status(400).json({
+                success: false,
+                error: 'Vous devez avoir au moins 18 ans',
+            });
+        }
+        updates.birthDate = admin.firestore.Timestamp.fromDate(new Date(birthDate));
+    }
+
+    if (photoUrl !== undefined) {
+        if (photoUrl && !/^https?:\/\/.+/.test(photoUrl)) {
+            return res.status(400).json({ success: false, error: 'URL de photo invalide' });
+        }
+        updates.photoUrl = photoUrl ?? null;
+        authUpdates.photoURL = photoUrl ?? undefined;
+    }
+
+    try {
+        await db.collection('users').doc(uid).update(updates);
+        if (Object.keys(authUpdates).length > 0) {
+            await admin.auth().updateUser(uid, authUpdates);
+        }
+
+        const userDoc = await db.collection('users').doc(uid).get();
+        const { pinHash, ...safeData } = userDoc.data() as any;
+
+        return res.json({
+            success: true,
+            message: 'Profil mis à jour avec succès',
+            data: safeData,
+        });
+    } catch (err: any) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+// ─────────────────────────────────────────────
+// UPDATE PIN
+// PATCH /api/v1/auth/update-pin
+// Header: Authorization: Bearer <idToken>
+// Body: { currentPin, newPin }
+// ─────────────────────────────────────────────
+export const updatePin = async (req: Request, res: Response) => {
+    const uid = (req as any).user.uid;
+    const { currentPin, newPin } = req.body;
+
+    if (!currentPin || !newPin) {
+        return res.status(400).json({
+            success: false,
+            error: 'currentPin et newPin sont requis',
+        });
+    }
+
+    if (!/^\d{4}$/.test(newPin)) {
+        return res.status(400).json({
+            success: false,
+            error: 'Le nouveau PIN doit contenir exactement 4 chiffres',
+        });
+    }
+
+    const suites = ['0123', '1234', '2345', '3456', '4567', '5678', '6789',
+        '9876', '8765', '7654', '6543', '5432', '4321', '3210'];
+    if (suites.includes(newPin) || /^(\d)\1{3}$/.test(newPin)) {
+        return res.status(400).json({
+            success: false,
+            error: 'PIN trop simple. Évitez les suites (1234) et répétitions (1111)',
+        });
+    }
+
+    if (currentPin === newPin) {
+        return res.status(400).json({
+            success: false,
+            error: 'Le nouveau PIN doit être différent de l\'ancien',
+        });
+    }
+
+    try {
+        const userDoc = await db.collection('users').doc(uid).get();
+
+        if (!userDoc.exists) {
+            return res.status(404).json({ success: false, error: 'Compte introuvable' });
+        }
+
+        const userData = userDoc.data()!;
+
+        if (!userData.pinHash) {
+            return res.status(400).json({
+                success: false,
+                error: 'Aucun PIN configuré. Utilisez /setup-pin.',
+            });
+        }
+
+        const pinMatch = await bcrypt.compare(currentPin, userData.pinHash);
+        if (!pinMatch) {
+            return res.status(401).json({ success: false, error: 'PIN actuel incorrect' });
+        }
+
+        const newPinHash = await bcrypt.hash(newPin, 10);
+
+        await db.collection('users').doc(uid).update({
+            pinHash: newPinHash,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        return res.json({ success: true, message: 'Code PIN mis à jour avec succès' });
+    } catch (err: any) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+// ─────────────────────────────────────────────
+// SHARE — Générer le lien de parrainage
+// GET /api/v1/auth/referral-link
+// Header: Authorization: Bearer <idToken>
+// ─────────────────────────────────────────────
+export const getReferralLink = async (req: Request, res: Response) => {
+    const uid = (req as any).user.uid;
+
+    try {
+        const userDoc = await db.collection('users').doc(uid).get();
+
+        if (!userDoc.exists) {
+            return res.status(404).json({ success: false, error: 'Compte introuvable' });
+        }
+
+        const { referralCode, fullName, referralCount = 0 } = userDoc.data() as any;
+
+        if (!referralCode) {
+            return res.status(400).json({
+                success: false,
+                error: 'Aucun code de parrainage trouvé. Complétez votre profil.',
+            });
+        }
+
+        const baseUrl = process.env.APP_DEEP_LINK_URL ?? 'https://tontineplus.app';
+        const referralLink = `${baseUrl}/register?ref=${referralCode}`;
+
+        const shareText =
+            `Rejoins-moi sur Tontine Plus.\n` +
+            `Définis tes propres règles de gestion de tontine et partage avec les personnes en qui tu as confiance.\n` +
+            `Utilise mon code ${referralCode} à l'inscription et profite de 14 jours d'essai offerts !\n` +
+            `${referralLink}`;
+
+        return res.json({
+            success: true,
+            data: {
+                referralCode,
+                referralLink,
+                shareText,
+                referralCount,           // nb de filleuls déjà actifs
+                rewardPerReferral: '1 mois offert',
+            },
+        });
+    } catch (err: any) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+};

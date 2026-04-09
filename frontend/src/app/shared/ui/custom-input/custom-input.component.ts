@@ -26,6 +26,7 @@ export class CustomInputComponent implements ControlValueAccessor {
   @Input() disabled: boolean = false;
   @Input() size: 'small' | 'default' = 'default';
   @Input() errorMessage: string = '';
+  @Input() readonly: boolean = false;
 
   @Input() ngModel?: any;
   @Input() ngModelChange?: any;
@@ -54,5 +55,5 @@ export class CustomInputComponent implements ControlValueAccessor {
     this.value = val;
     this.valueChange.emit(val);
   }
-  
+
 }

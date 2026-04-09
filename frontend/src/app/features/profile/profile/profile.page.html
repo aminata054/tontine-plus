@@ -1,13 +1,194 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>profile</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content [fullscreen]="true" class="user-profile-content">
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">profile</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <app-page-header title="Profil"></app-page-header>
+
+  <!-- ── LOADING ─────────────────────────────────────────────── -->
+  <ng-container *ngIf="status === 'loading'">
+    <div class="profile-container">
+      <div class="profile-header">
+        <ion-skeleton-text animated style="width:92px;height:92px;border-radius:50%;margin:0 auto 12px;">
+        </ion-skeleton-text>
+        <ion-skeleton-text animated style="width:50%;height:20px;border-radius:6px;margin:0 auto 8px;">
+        </ion-skeleton-text>
+        <ion-skeleton-text animated style="width:30%;height:28px;border-radius:20px;margin:0 auto;">
+        </ion-skeleton-text>
+      </div>
+      <div class="skeleton-menu">
+        <div class="skeleton-section-label">
+          <ion-skeleton-text animated style="width:25%;height:13px;border-radius:4px;"></ion-skeleton-text>
+        </div>
+        <div class="skeleton-item" *ngFor="let _ of [1,2]">
+          <ion-skeleton-text animated style="width:36px;height:36px;border-radius:10px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width:55%;height:14px;border-radius:4px;flex:1;margin:0 12px;">
+          </ion-skeleton-text>
+          <ion-skeleton-text animated style="width:18px;height:18px;border-radius:4px;"></ion-skeleton-text>
+        </div>
+        <div class="skeleton-section-label" style="margin-top:12px;">
+          <ion-skeleton-text animated style="width:35%;height:13px;border-radius:4px;"></ion-skeleton-text>
+        </div>
+        <div class="skeleton-item" *ngFor="let _ of [1,2,3,4]">
+          <ion-skeleton-text animated style="width:36px;height:36px;border-radius:10px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width:50%;height:14px;border-radius:4px;flex:1;margin:0 12px;">
+          </ion-skeleton-text>
+          <ion-skeleton-text animated style="width:18px;height:18px;border-radius:4px;"></ion-skeleton-text>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ── ERREUR ──────────────────────────────────────────────── -->
+  <ng-container *ngIf="status === 'error'">
+    <div class="profile-state">
+      <ion-icon name="alert-circle-outline" class="profile-state__icon"></ion-icon>
+      <p class="profile-state__title">Profil introuvable</p>
+      <p class="profile-state__sub">Vérifiez votre connexion et réessayez.</p>
+      <button class="profile-state__retry" (click)="load()">Réessayer</button>
+    </div>
+  </ng-container>
+
+  <!-- ── CONTENU ─────────────────────────────────────────────── -->
+  <!-- CONTENU PRINCIPAL -->
+  <ng-container *ngIf="status === 'success' && user">
+    <div class="profile-container">
+
+      <!-- HEADER -->
+      <div class="profile-header">
+        <div class="profile-avatar">
+          <img *ngIf="user.photoUrl" [src]="user.photoUrl" [alt]="user.fullName"  class="avatar-img"/>
+          <div class="profile-avatar-placeholder" *ngIf="!user.photoUrl">
+            {{ getInitials(user.fullName) }}
+          </div>
+        </div>
+
+        <h1 class="profile-name">{{ user.fullName }}</h1>
+
+        <button class="subscribe-btn" (click)="goToSubscription()">
+          S'abonner maintenant
+          <ion-icon src="/assets/icon/premium.svg" class="crown"></ion-icon>
+        </button>
+      </div>
+
+      <!-- MENU -->
+      <div class="menu-list">
+
+        <!-- Général -->
+        <div class="menu-section">
+          <p class="menu-section__label">Général</p>
+
+          <button class="menu-item" (click)="inviteFriend()">
+            <div class="menu-item__icon">
+              <ion-icon name="person-add-outline"></ion-icon>
+            </div>
+            <span class="menu-item__label">Inviter un ami</span>
+            <ion-icon name="chevron-forward-outline" class="menu-item__arrow"></ion-icon>
+          </button>
+
+          <button class="menu-item" (click)="goToSubscription()">
+            <div class="menu-item__icon">
+              <ion-icon name="card-outline"></ion-icon>
+            </div>
+            <span class="menu-item__label">Abonnement</span>
+            <ion-icon name="chevron-forward-outline" class="menu-item__arrow"></ion-icon>
+          </button>
+        </div>
+
+        <!-- Aide & Supports -->
+        <div class="menu-section">
+          <p class="menu-section__label">Aide & Supports</p>
+
+          <button class="menu-item" (click)="goToHelpCenter()">
+            <div class="menu-item__icon">
+              <ion-icon name="help-circle-outline"></ion-icon>
+            </div>
+            <span class="menu-item__label">Centre d'aide</span>
+            <ion-icon name="chevron-forward-outline" class="menu-item__arrow"></ion-icon>
+          </button>
+
+          <button class="menu-item" (click)="goToAbout()">
+            <div class="menu-item__icon">
+              <ion-icon name="information-circle-outline"></ion-icon>
+            </div>
+            <span class="menu-item__label">À propos</span>
+            <ion-icon name="chevron-forward-outline" class="menu-item__arrow"></ion-icon>
+          </button>
+
+          <button class="menu-item" (click)="goToFeedback()">
+            <div class="menu-item__icon">
+              <ion-icon name="send-outline"></ion-icon>
+            </div>
+            <span class="menu-item__label">Feedback</span>
+            <ion-icon name="chevron-forward-outline" class="menu-item__arrow"></ion-icon>
+          </button>
+
+          <button class="menu-item" (click)="contactSupport()">
+            <div class="menu-item__icon">
+              <ion-icon name="headset-outline"></ion-icon>
+            </div>
+            <span class="menu-item__label">Contacter le service client</span>
+            <ion-icon name="chevron-forward-outline" class="menu-item__arrow"></ion-icon>
+          </button>
+        </div>
+
+        <!-- Compte -->
+        <div class="menu-section">
+          <p class="menu-section__label">Compte</p>
+
+          <button class="menu-item" (click)="goToMyAccount()">
+            <div class="menu-item__icon">
+              <ion-icon name="person-outline"></ion-icon>
+            </div>
+            <span class="menu-item__label">Modifier mes informations </span>
+            <ion-icon name="chevron-forward-outline" class="menu-item__arrow"></ion-icon>
+          </button>
+
+          <button class="menu-item" (click)="goToChangePin()">
+            <div class="menu-item__icon">
+              <ion-icon name="lock-closed-outline"></ion-icon>
+            </div>
+            <span class="menu-item__label">Modifier mon code secret</span>
+            <ion-icon name="chevron-forward-outline" class="menu-item__arrow"></ion-icon>
+          </button>
+
+          <button class="menu-item menu-item--danger" (click)="logout()">
+            <div class="menu-item__icon">
+              <ion-icon name="log-out-outline"></ion-icon>
+            </div>
+            <span class="menu-item__label">Déconnexion</span>
+            <ion-icon name="chevron-forward-outline" class="menu-item__arrow"></ion-icon>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ── BOTTOM SHEET : Contacter le service client ── -->
+  <div class="contact-sheet-overlay" *ngIf="showContactSheet" (click)="closeContactSheet()">
+    <div class="contact-sheet" (click)="$event.stopPropagation()">
+      <button class="contact-sheet__close" (click)="closeContactSheet()">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+
+      <button class="contact-option" (click)="contactViaWhatsapp()">
+        <div class="contact-option__icon contact-option__icon--whatsapp">
+          <ion-icon name="logo-whatsapp"></ion-icon>
+        </div>
+        <div class="contact-option__text">
+          <span class="contact-option__name">WhatsApp</span>
+          <span class="contact-option__desc">Messages et notes vocales uniquement</span>
+        </div>
+      </button>
+
+      <button class="contact-option" (click)="contactViaCall()">
+        <div class="contact-option__icon contact-option__icon--call">
+          <ion-icon name="call-outline"></ion-icon>
+        </div>
+        <div class="contact-option__text">
+          <span class="contact-option__name">Appel</span>
+          <span class="contact-option__desc">Appel facturé</span>
+        </div>
+      </button>
+    </div>
+  </div>
+
 </ion-content>

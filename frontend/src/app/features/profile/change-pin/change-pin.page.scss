@@ -1,0 +1,24 @@
+.pin-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 32px;
+    height: calc(100% - 60px);
+}
+
+.pin-subtitle {
+    color: var(--ion-color-medium);
+    font-size: 14px;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+
+.pin-error {
+    color: var(--ion-color-danger);
+    font-size: 13px;
+    margin: 8px 0 0;
+    min-height: 18px;
+    text-align: center;
+}
+

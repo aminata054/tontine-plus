@@ -4,8 +4,9 @@
     {{ label }}
   </ion-label>
 
-  <ion-input [type]="type" [placeholder]="placeholder" [value]="value" (ionInput)="onInput($event)" (ngModelChange)="ngModelChange?.($event)"
-    [disabled]="disabled" fill="outline" shape="round" class="custom-input">
+  <ion-input [type]="type" [placeholder]="placeholder" [value]="value" (ionInput)="onInput($event)"
+    (ngModelChange)="ngModelChange?.($event)" [disabled]="disabled" fill="outline" shape="round" class="custom-input"
+    [readonly]="readonly">
   </ion-input>
 
   <!-- Message d'erreur -->

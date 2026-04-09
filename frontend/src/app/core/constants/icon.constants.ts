@@ -44,6 +44,12 @@ import {
     informationCircleOutline,
     thumbsUpOutline,
     handLeftOutline,
+    cameraOutline,
+    cardOutline,
+    sendOutline,
+    headsetOutline,
+    logOutOutline,
+    callOutline,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -75,7 +81,10 @@ export function registerIcons() {
         listOutline, shuffleOutline, logoWhatsapp, logoTwitter, logoSnapchat, syncOutline,
         repeatOutline, flagOutline, playCircleOutline, personAddOutline, lockClosedOutline,
         homeOutline, closeCircleOutline, informationCircleOutline, thumbsUpOutline,
-        handLeftOutline,
+        handLeftOutline, cameraOutline,
+         cardOutline,
+        sendOutline, headsetOutline, logOutOutline,
+        callOutline,
 
     });
 }

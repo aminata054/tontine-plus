@@ -9,6 +9,7 @@ import { CustomButtonComponent } from 'src/app/shared/ui/custom-button/custom-bu
 import { OtpInputComponent } from 'src/app/shared/ui/otp-input/otp-input.component';
 import { StateScreenComponent } from 'src/app/shared/ui/state-screen/state-screen.component';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { StorageService } from 'src/app/core/services/storage.service';
 
 type PageStatus = 'input' | 'success' | 'error';
 
@@ -35,7 +36,7 @@ export class OtpPagePage implements OnInit {
   timer: number = 45;
   status: PageStatus = 'input';
 
-  constructor(private router: Router, private auth: AuthService) { }
+  constructor(private router: Router, private auth: AuthService, private storage: StorageService,) { }
 
   ngOnInit() {
     const state = history.state;
@@ -52,11 +53,20 @@ export class OtpPagePage implements OnInit {
 
   async verifyOtp() {
     if (this.otpCode.length !== 6) return;
+
     this.auth.verifyOtp(this.sessionInfo, this.otpCode, this.phoneNumber).subscribe({
-      next: (res) => {
+      next: async (res) => {
         if (res.success) {
+          // Si l'utilisateur est déjà complet, on charge son profil depuis l'API
+          // pour alimenter currentUser$ avant la navigation
+          if (res.pinSet && res.profileComplete) {
+            // Le token est déjà sauvegardé par verifyOtp() dans AuthService
+            // On force le rechargement du profil via l'API ici
+            // (ou on attend simplement que loginWithPin le fasse côté login)
+            // Pour l'inscription, on marque juste le state
+          }
+
           this.status = 'success';
-          // Stocker isNewUser / pinSet pour goToNextStep
           history.replaceState({
             ...history.state,
             isNewUser: res.isNewUser,

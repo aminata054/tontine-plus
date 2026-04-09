@@ -11,6 +11,7 @@ export interface VerifyOtpResponse {
     isNewUser: boolean;
     profileComplete: boolean;
     pinSet: boolean;
+    profile?: UserProfile;
 }
 
 export interface SetupPinResponse {
@@ -41,6 +42,7 @@ export interface UserProfile {
     reputationScore: number;
     profileComplete: boolean;
     pinSet: boolean;
+    referralCode: string;
 }
 
 // Réponse de l'Identity Toolkit lors de l'échange customToken idToken

@@ -1,0 +1,48 @@
+.help-content {
+    --background: var(--ion-background-color);
+
+    .search-bar {
+        padding: 16px 16px 8px;
+    }
+
+    .faq-list {
+        padding: 8px 16px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .faq-group {
+            background: white;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #E2E8F0;
+
+            ion-accordion {
+                background: white;
+
+                ion-item {
+                    --background: white;
+                    --padding-start: 16px;
+                    --padding-end: 16px;
+                    --min-height: 56px;
+                }
+            }
+        }
+
+        .faq-question {
+            font-size: 15px;
+            font-weight: 600;
+            font-family: var(--ion-font-inter);
+            color: #1E2937;
+            white-space: normal;
+            line-height: 1.4;
+        }
+
+        .faq-content {
+            padding: 0 16px 16px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #475569;
+        }
+    }
+}
