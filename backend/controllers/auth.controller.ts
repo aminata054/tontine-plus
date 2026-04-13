@@ -7,6 +7,13 @@ const normalizePhoneNumber = (phone: string): string => {
     return phone.replace(/[\s-]/g, '');
 };
 
+const REFERRAL_CONFIG = {
+    referrerRewardDays: 15,      // +15j pour le parrain par filleul
+    refereeRewardDays: 15,       // +15j pour le filleul à l'inscription
+    maxReferrals: 5,             // Max 5 filleuls par utilisateur
+    triggerEvent: 'paid_subscription' as const,
+};
+
 // ─────────────────────────────────────────────
 // ÉTAPE 1A — Envoyer l'OTP SMS
 // POST /api/v1/auth/send-otp
@@ -285,7 +292,7 @@ export const completeProfile = async (req: Request, res: Response) => {
                 currency: 'XOF',
                 interval: selectedPlan === 'annual' ? 'year' : 'month',
                 currentPeriodStart: admin.firestore.Timestamp.fromDate(now),
-                currentPeriodEnd: admin.firestore.Timestamp.fromDate(periodEnd),
+                currentPeriodEnd: admin.firestore.Timestamp.fromDate(trialEnd),
                 cancelAtPeriodEnd: false,
                 paymentMethod: 'manual',
                 transactionId: null,
@@ -635,6 +642,68 @@ export const getReferralLink = async (req: Request, res: Response) => {
                 rewardPerReferral: '1 mois offert',
             },
         });
+    } catch (err: any) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+// ─────────────────────────────────────────────────────────────
+// GET /api/v1/auth/referral-stats
+// Retourne les stats de parrainage de l'utilisateur connecté
+// ─────────────────────────────────────────────────────────────
+export const getReferralStats = async (req: Request, res: Response) => {
+    const uid = (req as any).user.uid;
+
+    try {
+        const userDoc = await db.collection('users').doc(uid).get();
+        if (!userDoc.exists) {
+            return res.status(404).json({ success: false, error: 'Compte introuvable' });
+        }
+
+        const userData = userDoc.data() as any;
+
+        // Récupérer les filleuls (ceux qui ont utilisé le code)
+        const refereesSnap = await db
+            .collection('users')
+            .where('referredBy', '==', uid)
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        const referees = refereesSnap.docs.map(doc => {
+            const d = doc.data() as any;
+            return {
+                uid: doc.id,
+                fullName: d.fullName ?? 'Utilisateur',
+                joinedAt: d.createdAt ?? null,
+                // true = a activé un abonnement payant et le parrain a été récompensé
+                rewardClaimed: d.referralRewardClaimed === true && d.referralRewardSkipped !== true,
+                // false = inscrit mais pas encore payant
+                isPending: !d.referralRewardClaimed,
+            };
+        });
+
+        const rewardedCount: number = userData.referralRewardedCount ?? 0;
+        const totalDaysEarned: number = userData.totalReferralDaysEarned ?? 0;
+        const remainingSlots = Math.max(0, REFERRAL_CONFIG.maxReferrals - (userData.referralCount ?? 0));
+
+        const baseUrl = process.env.APP_DEEP_LINK_URL ?? 'https://tontineplus.app';
+        const referralLink = `${baseUrl}/register?ref=${userData.referralCode}`;
+
+        return res.json({
+            success: true,
+            data: {
+                referralCode: userData.referralCode,
+                referralLink,
+                referralCount: userData.referralCount ?? 0,       // filleuls inscrits
+                rewardedCount,                                      // filleuls ayant payé
+                totalDaysEarned,                                    // total jours gagnés
+                maxReferrals: REFERRAL_CONFIG.maxReferrals,
+                remainingSlots,                                     // slots restants
+                rewardPerReferral: REFERRAL_CONFIG.referrerRewardDays,
+                referees,
+            },
+        });
+
     } catch (err: any) {
         return res.status(500).json({ success: false, error: err.message });
     }

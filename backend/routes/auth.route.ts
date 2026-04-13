@@ -4,7 +4,8 @@ import {
     sendOtp, verifyOtp, setupPin, completeProfile, loginWithPin, getProfile,
     updateProfile,
     getReferralLink,
-    updatePin
+    updatePin,
+    getReferralStats
 } from '../controllers/auth.controller';
 
 const router = Router();
@@ -253,5 +254,7 @@ router.patch('/update-profile', verifyToken, updateProfile);
  *         description: PIN mis à jour avec succès
  */
 router.patch('/update-pin', verifyToken, updatePin);
+
+router.get('/referral-stats', verifyToken, getReferralStats);
 
 export default router;

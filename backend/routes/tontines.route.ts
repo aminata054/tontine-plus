@@ -9,6 +9,7 @@ import {
     castVote,
     launchTontine
 } from '../controllers/tontines.controller';
+import { requirePremium } from '../middleware/premium.middleware';
 
 const router = Router();
 
@@ -510,7 +511,7 @@ router.get('/:id/members/:uid', verifyToken, getMemberProfile);
  *       400:
  *         description: Impossible de passer au tour suivant (conditions non remplies)
  */
-router.post('/:id/next-turn', verifyToken, processNextTurn);
+router.post('/:id/next-turn', verifyToken, requirePremium, processNextTurn);
 
 /**
  * @swagger
