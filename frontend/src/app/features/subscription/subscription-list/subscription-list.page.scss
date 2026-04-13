@@ -1,0 +1,606 @@
+:host {
+    --primary: var(--ion-color-primary, #1A3A8F);
+    --primary-light: var(--ion-color-primary-light);
+    --text-mid: #4A5568;
+    --border: #E2E8F0;
+    --card-bg: #FFFFFF;
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+    --shadow-md: 0 4px 20px rgba(26, 58, 143, 0.14);
+    --radius: 14px;
+    --radius-sm: 10px;
+
+}
+
+// ─── Content / Wrapper ──────────────────────────────────────
+
+.sl-content {
+    --background: var(--ion-background-color);
+}
+
+.sl-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    padding-bottom: calc(68px + 16px + env(safe-area-inset-bottom));
+}
+
+// ══════════════════════════════════════════════════════
+// CAS 1 — Aucun abonnement
+// ══════════════════════════════════════════════════════
+
+.sl-empty {
+    padding: 24px 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sl-empty__card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 28px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border: 1.5px solid var(--border);
+}
+
+.sl-empty__icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    background: #EEF2FF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+
+    ion-icon {
+        font-size: 32px;
+        color: var(--ion-color-primary);
+    }
+}
+
+.sl-empty__title {
+    font-size: 17px;
+    font-weight: 700;
+    font-family: var(--ion-font-poppins, 'Poppins', sans-serif);
+    color: var(--text-dark);
+    margin: 0 0 8px;
+}
+
+.sl-empty__desc {
+    font-size: 13px;
+    color: var(--text-mid);
+    line-height: 1.6;
+    margin: 0 0 20px;
+}
+
+// ─── Liste des avantages ────────────────────────────────────
+
+.sl-features {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    padding: 16px;
+}
+
+.sl-features__label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ion-text-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 12px;
+}
+
+.sl-feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+
+    &:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    &__icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: #EEF2FF;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+
+        ion-icon {
+            font-size: 16px;
+            color: var(--primary);
+        }
+    }
+
+    &__text {
+        font-size: 13px;
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+}
+
+// ══════════════════════════════════════════════════════
+// CAS 2 — Abonnement actif
+// ══════════════════════════════════════════════════════
+
+.sl-active {
+    padding: 24px 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+// ─── Hero card ──────────────────────────────────────────────
+
+.sl-hero-card {
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+
+    // Fond dégradé selon statut
+    &--active {
+        background: linear-gradient(135deg, #1B873B 0%, #2EA04A 100%);
+    }
+
+    &--trialing {
+        background: linear-gradient(135deg, #1A3A8F 0%, #2952C8 100%);
+    }
+
+    &--canceled {
+        background: linear-gradient(135deg, #6B7280 0%, #9AA5B4 100%);
+    }
+
+    &--past_due {
+        background: linear-gradient(135deg, #E65100 0%, #FF6D00 100%);
+    }
+
+    // Motif décoratif en fond
+    &::before {
+        content: '';
+        position: absolute;
+        top: -30px;
+        right: -30px;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -50px;
+        right: 30px;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    &__badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 16px;
+        backdrop-filter: blur(4px);
+
+        ion-icon {
+            font-size: 12px;
+        }
+    }
+
+    &__plan {
+        margin-bottom: 20px;
+    }
+
+    &__plan-name {
+        display: block;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.75);
+        font-weight: 500;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    &__amount {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+    }
+
+    &__price {
+        font-size: 34px;
+        font-weight: 800;
+        font-family: var(--ion-font-poppins, 'Poppins', sans-serif);
+        color: #fff;
+        line-height: 1;
+    }
+
+    &__currency {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.75);
+        font-weight: 500;
+    }
+}
+
+// ─── Barre de progression période ──────────────────────────
+
+.sl-progress-block {
+    position: relative;
+    z-index: 1;
+}
+
+.sl-progress-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 6px;
+
+    &__fill {
+        height: 100%;
+        background: #fff;
+        border-radius: 4px;
+        transition: width 0.6s ease;
+    }
+}
+
+.sl-progress-dates {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.65);
+    font-weight: 500;
+}
+
+// ─── Grille d'infos ─────────────────────────────────────────
+
+.sl-info-grid {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1.5px solid var(--border);
+}
+
+.sl-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+
+    &__label {
+        font-size: 12px;
+        color: var(--ion-text-gray);
+        flex-shrink: 0;
+    }
+
+    &__value {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-dark);
+        text-align: right;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+
+        &--bold {
+            font-weight: 700;
+            font-size: 11px;
+        }
+
+        &--warn {
+            color: var(--color-warn);
+        }
+
+        &--mono {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: var(--text-mid);
+        }
+    }
+
+    &__link {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--primary);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        ion-icon {
+            font-size: 12px;
+        }
+    }
+}
+
+.sl-info-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+}
+
+// ─── Dot de statut ──────────────────────────────────────────
+
+.sl-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &--active {
+        background: var(--color-active);
+    }
+
+    &--trialing {
+        background: var(--color-trialing);
+    }
+
+    &--canceled {
+        background: var(--color-canceled);
+    }
+
+    &--past_due {
+        background: var(--color-past_due);
+    }
+}
+
+// ─── Section historique ─────────────────────────────────────
+
+.sl-section {
+    &__title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0 0 12px;
+    }
+}
+
+.sl-history-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card-bg);
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+
+    &__dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--ion-color-primary);
+        flex-shrink: 0;
+        opacity: 0.5;
+    }
+
+    &__info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    &__name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-dark);
+        text-transform: capitalize;
+    }
+
+    &__date {
+        font-size: 11px;
+        color: var(--ion-text-gray);
+    }
+
+    &__amount {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-mid);
+    }
+}
+
+// ─── Actions ────────────────────────────────────────────────
+
+.sl-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 8px;
+}
+
+// ─── Animation shimmer ───────────────────────────────────────
+
+@keyframes shimmer {
+    0% {
+        background-position: -600px 0;
+    }
+
+    100% {
+        background-position: 600px 0;
+    }
+}
+
+.sk {
+    background: linear-gradient(90deg,
+            var(--ion-color-light-shade, #e2e8f0) 25%,
+            var(--ion-color-light, #edf2f7) 50%,
+            var(--ion-color-light-shade, #e2e8f0) 75%);
+    background-size: 1200px 100%;
+    animation: shimmer 1.4s infinite linear;
+    border-radius: 6px;
+
+    // Variantes de tailles
+    &--badge {
+        width: 90px;
+        height: 22px;
+        border-radius: 20px;
+        margin-bottom: 18px;
+    }
+
+    &--label {
+        width: 60px;
+        height: 12px;
+        margin-bottom: 8px;
+    }
+
+    &--price {
+        width: 150px;
+        height: 36px;
+        margin-bottom: 22px;
+    }
+
+    &--bar {
+        width: 100%;
+        height: 4px;
+        border-radius: 4px;
+        margin-bottom: 6px;
+    }
+
+    &--date {
+        width: 72px;
+        height: 10px;
+    }
+
+    &--row-label {
+        width: 90px;
+        height: 12px;
+    }
+
+    &--row-value {
+        width: 70px;
+        height: 12px;
+    }
+
+    &--btn {
+        width: 100%;
+        height: 48px;
+        border-radius: 10px;
+        margin-top: 4px;
+    }
+}
+
+// ─── Skeleton layout ─────────────────────────────────────────
+
+.sl-skeleton {
+    padding: 24px 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    &__hero {
+        background: var(--ion-color-light-tint, #f7fafc);
+        border-radius: var(--radius, 14px);
+        padding: 20px;
+        border: 1.5px solid var(--border, #E2E8F0);
+    }
+
+    &__dates {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 2px;
+    }
+
+    &__grid {
+        background: var(--card-bg, #fff);
+        border-radius: var(--radius, 14px);
+        border: 1.5px solid var(--border, #E2E8F0);
+        overflow: hidden;
+    }
+
+    &__row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 13px 16px;
+
+        &:not(:last-child) {
+            border-bottom: 1px solid var(--border, #E2E8F0);
+        }
+    }
+}
+
+// ─── Bannières contextuelles ─────────────────────────────────
+
+.sl-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.5;
+
+    ion-icon {
+        font-size: 16px;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    &--warn {
+        background: #FFF3E0;
+        color: #BF360C;
+        border: 1px solid #FFCC80;
+
+        ion-icon {
+            color: #E65100;
+        }
+    }
+
+    &--info {
+        background: #EEF2FF;
+        color: #1A3A8F;
+        border: 1px solid #C5CAE9;
+
+        ion-icon {
+            color: #1A3A8F;
+        }
+    }
+}
+
+// ─── Erreur réseau ────────────────────────────────────────────
+
+.sl-error {
+    padding: 40px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+
+    ion-icon {
+        font-size: 40px;
+        color: var(--ion-color-medium);
+    }
+
+    p {
+        font-size: 13px;
+        color: var(--ion-text-gray);
+        margin: 0;
+        max-width: 260px;
+        line-height: 1.5;
+    }
+}

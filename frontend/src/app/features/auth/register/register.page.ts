@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent } from '@ionic/angular/standalone';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PageHeaderComponent } from 'src/app/shared/ui/page-header/page-header.component';
 import { CustomInputComponent } from 'src/app/shared/ui/custom-input/custom-input.component';
 import { CustomButtonComponent } from 'src/app/shared/ui/custom-button/custom-button.component';
@@ -23,11 +23,18 @@ import { AuthService } from 'src/app/core/services/auth.service';
   templateUrl: './register.page.html',
   styleUrls: ['./register.page.scss']
 })
-export class RegisterPage {
+export class RegisterPage implements OnInit {
   phoneNumber: string = '';
   isPhoneValid: boolean = false;
 
-  constructor(private router: Router, private auth: AuthService) { }
+  constructor(private router: Router, private auth: AuthService, private route: ActivatedRoute) { }
+
+  ngOnInit(): void {
+    const ref = this.route.snapshot.queryParamMap.get('ref');
+    if (ref) {
+      sessionStorage.setItem('pendingReferralCode', ref.toUpperCase().trim());
+    }
+  }
 
   onPhoneChange() {
     let raw = this.phoneNumber || '';

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonIcon, IonSpinner } from '@ionic/angular/standalone';
+import { IonContent, IonIcon, IonSpinner, ToastController } from '@ionic/angular/standalone';
 
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { getStorage, ref, uploadString, getDownloadURL } from '@angular/fire/storage';
@@ -14,6 +14,7 @@ import { CustomInputComponent } from 'src/app/shared/ui/custom-input/custom-inpu
 import { CustomButtonComponent } from 'src/app/shared/ui/custom-button/custom-button.component';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { UserProfile } from 'src/app/core/models/auth.model';
+import { SubscriptionService } from 'src/app/core/services/subscription.service';
 
 @Component({
   selector: 'app-profile-completion',
@@ -44,7 +45,34 @@ export class ProfileCompletionPage {
 
   private fireStorage = inject(Storage);
 
-  constructor(private router: Router, private auth: AuthService) { }
+  constructor(private router: Router, 
+    private auth: AuthService, 
+    private subscriptionService: SubscriptionService,
+    private toastCtrl: ToastController
+  ) { }
+
+  private async applyPendingReferral(): Promise<void> {
+    const code = sessionStorage.getItem('pendingReferralCode');
+    if (!code) return;
+
+    try {
+      const res = await this.subscriptionService.applyReferral(code).toPromise();
+      if (res?.success) {
+        sessionStorage.removeItem('pendingReferralCode');
+        const toast = await this.toastCtrl.create({
+          message: '🎁 15 jours offerts grâce au parrainage !',
+          duration: 4000,
+          color: 'success',
+          position: 'top',
+        });
+        await toast.present();
+      }
+    } catch {
+      // Code invalide ou déjà utilisé → on nettoie silencieusement
+      // L'inscription reste valide dans tous les cas
+      sessionStorage.removeItem('pendingReferralCode');
+    }
+  }
 
   get isFormValid(): boolean {
     return this.fullName.trim().length > 1 &&
@@ -96,7 +124,7 @@ export class ProfileCompletionPage {
     return await getDownloadURL(storageRef);
   }
 
-  completeProfile() {
+  async completeProfile() {
     if (!this.isFormValid) return;
 
     this.errorMessage = '';
@@ -106,8 +134,9 @@ export class ProfileCompletionPage {
       email: this.email || undefined,
       photoUrl: this.photoUrl || undefined, 
     }).subscribe({
-      next: (res) => {
+      next: async (res) => {
         if (res.success) {
+          await this.applyPendingReferral();
           this.router.navigate(['/dashboard']);
         }
          error: (err: any) => {

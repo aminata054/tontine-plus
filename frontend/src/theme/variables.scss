@@ -30,6 +30,17 @@
     --ion-color-grey-font: #898483;
     --ion-color-font-light: #F5F5F5;
 
+    // Subscription status colors
+    --color-active: #1B873B;
+    --color-active-bg: #E8F5E9;
+    --color-trialing: #1A3A8F;
+    --color-trialing-bg: #EEF2FF;
+    --color-canceled: #C62828;
+    --color-canceled-bg: #FFEBEE;
+    --color-past_due: #E65100;
+    --color-past_due-bg: #FFF3E0;
+    --color-warn: #E65100;
+
     /* Background & Text global */
     --ion-background-color: #FFFFFF;
     --ion-background-color-rgb: 255, 255, 255;

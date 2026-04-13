@@ -50,6 +50,13 @@ import {
     headsetOutline,
     logOutOutline,
     callOutline,
+    rocketOutline,
+    openOutline,
+    starOutline,
+    flashOutline,
+    infiniteOutline,
+    trendingUpOutline,
+    sparkles,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -82,9 +89,13 @@ export function registerIcons() {
         repeatOutline, flagOutline, playCircleOutline, personAddOutline, lockClosedOutline,
         homeOutline, closeCircleOutline, informationCircleOutline, thumbsUpOutline,
         handLeftOutline, cameraOutline,
-         cardOutline,
+        cardOutline,
         sendOutline, headsetOutline, logOutOutline,
         callOutline,
+        rocketOutline, openOutline,
+        infiniteOutline,
+        trendingUpOutline, starOutline, flashOutline,
+        sparkles
 
     });
 }

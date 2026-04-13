@@ -1,13 +1,222 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>subscription-list</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content [fullscreen]="true" class="sl-content">
+  <div class="sl-wrapper">
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">subscription-list</ion-title>
-    </ion-toolbar>
-  </ion-header>
+    <app-page-header title="Mes abonnements"></app-page-header>
+
+    <!-- ══════════════════════════════════════════════
+         SKELETON — pendant le chargement
+    ══════════════════════════════════════════════ -->
+    <div class="sl-skeleton" *ngIf="loading">
+
+      <!-- Fausse hero card -->
+      <div class="sl-skeleton__hero">
+        <div class="sk sk--badge"></div>
+        <div class="sk sk--label"></div>
+        <div class="sk sk--price"></div>
+        <div class="sk sk--bar"></div>
+        <div class="sl-skeleton__dates">
+          <div class="sk sk--date"></div>
+          <div class="sk sk--date"></div>
+        </div>
+      </div>
+
+      <!-- Fausse grille d'infos -->
+      <div class="sl-skeleton__grid">
+        <div class="sl-skeleton__row" *ngFor="let i of [1,2,3,4]">
+          <div class="sk sk--row-label"></div>
+          <div class="sk sk--row-value"></div>
+        </div>
+      </div>
+
+      <!-- Faux bouton -->
+      <div class="sk sk--btn"></div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         ERREUR RÉSEAU
+    ══════════════════════════════════════════════ -->
+    <div class="sl-error" *ngIf="!loading && networkError">
+      <ion-icon name="cloud-offline-outline"></ion-icon>
+      <p>{{ networkError }}</p>
+      <app-custom-button fill="outline" expand="block" (clicked)="loadSubscription()">
+        Réessayer
+      </app-custom-button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         CAS 1 — Aucun abonnement
+    ══════════════════════════════════════════════ -->
+    <div class="sl-empty" *ngIf="!loading && !networkError && !hasSubscription">
+
+      <div class="sl-empty__card">
+        <div class="sl-empty__icon">
+          <ion-icon name="rocket-outline"></ion-icon>
+        </div>
+        <h3 class="sl-empty__title">Aucun abonnement actif</h3>
+        <p class="sl-empty__desc">
+          Débloquez toutes les fonctionnalités premium et gérez vos tontines sans limites.
+        </p>
+        <app-custom-button fill="solid" expand="block" (clicked)="goToSubscribe()">
+          S'abonner maintenant
+        </app-custom-button>
+      </div>
+
+      <div class="sl-features">
+        <p class="sl-features__label">Ce que vous obtenez</p>
+        <div class="sl-feature-item" *ngFor="let f of features">
+          <div class="sl-feature-item__icon">
+            <ion-icon [name]="f.icon"></ion-icon>
+          </div>
+          <span class="sl-feature-item__text">{{ f.label }}</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         CAS 2 — Abonnement existant
+    ══════════════════════════════════════════════ -->
+    <div class="sl-active" *ngIf="!loading && !networkError && hasSubscription && subscription">
+
+      <!-- Bannière trial expirée -->
+      <div class="sl-banner sl-banner--warn" *ngIf="isExpiredOrCanceled">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        <span>Votre abonnement est expiré. Renouvelez pour continuer à accéder à toutes les fonctionnalités.</span>
+      </div>
+
+      <!-- Bannière annulation programmée -->
+      <div class="sl-banner sl-banner--info" *ngIf="isCanceling && !isExpiredOrCanceled">
+        <ion-icon name="information-circle-outline"></ion-icon>
+        <span>Votre abonnement sera annulé le {{ formatDate(subscription.currentPeriodEnd) }}.</span>
+      </div>
+
+      <!-- ── Carte hero ── -->
+      <div class="sl-hero-card" [class]="'sl-hero-card--' + (subscription.effectiveStatus ?? subscription.status)">
+
+        <div class="sl-hero-card__badge">
+          <ion-icon [name]="statusIcon"></ion-icon>
+          {{ statusLabel }}
+          <span class="sl-hero-card__days"
+            *ngIf="subscription.daysRemaining !== null && subscription.daysRemaining !== undefined">
+            · {{ subscription.daysRemaining }}j restants
+          </span>
+        </div>
+
+        <div class="sl-hero-card__plan">
+          <span class="sl-hero-card__plan-name">Plan {{ planLabel }}</span>
+          <div class="sl-hero-card__amount">
+            <span class="sl-hero-card__price">{{ formatAmount(subscription.amount) }}</span>
+            <span class="sl-hero-card__currency">{{ subscription.currency }} / mois</span>
+          </div>
+        </div>
+
+        <div class="sl-progress-block">
+          <div class="sl-progress-bar">
+            <div class="sl-progress-bar__fill" [style.width.%]="periodProgress"></div>
+          </div>
+          <div class="sl-progress-dates">
+            <span>{{ formatDate(subscription.currentPeriodStart) }}</span>
+            <span>{{ formatDate(subscription.currentPeriodEnd) }}</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Infos détaillées ── -->
+      <div class="sl-info-grid">
+
+        <div class="sl-info-row">
+          <span class="sl-info-row__label">Statut</span>
+          <span class="sl-info-row__value">
+            <span class="sl-status-dot"
+              [class]="'sl-status-dot--' + (subscription.effectiveStatus ?? subscription.status)"></span>
+            {{ statusLabel }}
+          </span>
+        </div>
+
+        <div class="sl-info-row">
+          <span class="sl-info-row__label">Méthode de paiement</span>
+          <span class="sl-info-row__value">{{ paymentMethodLabel }}</span>
+        </div>
+
+        <div class="sl-info-row">
+          <span class="sl-info-row__label">Début d'abonnement</span>
+          <span class="sl-info-row__value">{{ formatDate(subscription.subscribedAt) }}</span>
+        </div>
+
+        <div class="sl-info-divider"></div>
+
+        <div class="sl-info-row">
+          <span class="sl-info-row__label">Période en cours</span>
+          <span class="sl-info-row__value sl-info-row__value--bold">
+            {{ formatDate(subscription.currentPeriodStart) }} au {{ formatDate(subscription.currentPeriodEnd) }}
+          </span>
+        </div>
+
+        <div class="sl-info-row" *ngIf="subscription.expiresAt">
+          <span class="sl-info-row__label">Expire le</span>
+          <span class="sl-info-row__value sl-info-row__value--warn">
+            {{ formatDate(subscription.expiresAt) }}
+          </span>
+        </div>
+
+        <div class="sl-info-row">
+          <span class="sl-info-row__label">Renouvellement auto</span>
+          <span class="sl-info-row__value">
+            {{ subscription.cancelAtPeriodEnd ? 'Non, annulé' : 'Oui' }}
+          </span>
+        </div>
+
+        <div class="sl-info-divider"></div>
+
+        <div class="sl-info-row">
+          <span class="sl-info-row__label">ID transaction</span>
+          <span class="sl-info-row__value sl-info-row__value--mono">
+            {{ subscription.transactionId ?? '-' }}
+          </span>
+        </div>
+
+        <div class="sl-info-row" *ngIf="subscription.receiptUrl">
+          <span class="sl-info-row__label">Reçu</span>
+          <a class="sl-info-row__link" [href]="subscription.receiptUrl" target="_blank">
+            Voir le reçu <ion-icon name="open-outline"></ion-icon>
+          </a>
+        </div>
+
+      </div>
+
+      <!-- ── Historique des plans ── -->
+      <div class="sl-section" *ngIf="subscription.previousPlans && subscription.previousPlans.length > 0">
+        <p class="sl-section__title">Historique des plans</p>
+        <div class="sl-history-item" *ngFor="let p of subscription.previousPlans">
+          <div class="sl-history-item__dot"></div>
+          <div class="sl-history-item__info">
+            <span class="sl-history-item__name">{{ p }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Actions ── -->
+      <div class="sl-actions">
+
+        <app-custom-button *ngIf="isCanceling" fill="solid" expand="block" [disabled]="reactivateLoading"
+          (clicked)="onReactivate()">
+          {{ reactivateLoading ? 'Chargement…' : 'Réactiver l\'abonnement' }}
+        </app-custom-button>
+
+        <app-custom-button *ngIf="!isCanceling && subscription.status === 'active'" fill="outline" expand="block"
+          [disabled]="cancelLoading" (clicked)="onCancelSubscription()">
+          {{ cancelLoading ? 'Chargement…' : 'Annuler l\'abonnement' }}
+        </app-custom-button>
+
+        <app-custom-button fill="solid" expand="block" (clicked)="goToSubscribe()">
+          {{ isExpiredOrCanceled ? 'Se réabonner' : (isCanceling ? 'Changer de plan' : 'Changer de plan') }}
+        </app-custom-button>
+
+      </div>
+
+    </div>
+
+  </div>
 </ion-content>

@@ -1,0 +1,140 @@
+<ion-content [fullscreen]="true" class="sp-content">
+  <div class="sp-wrapper">
+
+    <!-- Header -->
+    <app-page-header title="Abonnement"></app-page-header>
+
+    <!-- ══════════════════════════════════════════════
+         VUE 1 — Choix du plan
+    ══════════════════════════════════════════════ -->
+    <div class="sp-view" *ngIf="currentView === 'plans'">
+
+      <p class="sp-intro">
+        Débloquez tout le potentiel de l'application, des tontines illimitées ainsi que des fonctionnalités exclusives.
+      </p>
+
+      <!-- Liste des plans -->
+      <div class="sp-plan-list">
+        <div class="sp-plan-card" *ngFor="let plan of plans"
+          [class.sp-plan-card--selected]="selectedPlan?.id === plan.id" (click)="selectPlan(plan)">
+
+          <div class="sp-plan-card__left">
+            <div class="sp-radio" [class.sp-radio--on]="selectedPlan?.id === plan.id"></div>
+            <div class="sp-plan-card__info">
+              <div class="sp-plan-card__head">
+                <span class="sp-plan-card__name">{{ plan.name }}</span>
+                <span class="sp-plan-card__badge" *ngIf="plan.badge">{{ plan.badge }}</span>
+              </div>
+              <span class="sp-plan-card__sub">{{ plan.subtitle }}</span>
+              <span class="sp-plan-card__price">{{ plan.priceLabel }}</span>
+            </div>
+          </div>
+
+          <!-- Bouton "Voir les détails" -->
+          <button class="sp-plan-card__detail-btn" (click)="$event.stopPropagation(); openFeatures(plan)">
+            <ion-icon name="information-circle-outline"></ion-icon>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Footer sticky -->
+      <div class="sp-footer">
+        <app-custom-button fill="solid" expand="block" [disabled]="!selectedPlan" (clicked)="goToPayment()">
+          S'abonner maintenant
+        </app-custom-button>
+        <p class="sp-legal">
+          En passant cette commande, vous acceptez nos
+          <strong class="sp-legal__link">Conditions d'utilisation</strong> et notre
+          <strong class="sp-legal__link">Politique de confidentialité</strong>.
+          L'abonnement se renouvelle automatiquement sauf désactivation 24h avant la fin de la période.
+        </p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         VUE 2 — Paiement
+    ══════════════════════════════════════════════ -->
+    <div class="sp-view" *ngIf="currentView === 'payment'">
+
+      <!-- Récap plan choisi -->
+      <div class="sp-payment-recap">
+        <div class="sp-payment-recap__info">
+          <span class="sp-payment-recap__label">Abonnement {{ selectedPlan?.name }}</span>
+          <span class="sp-payment-recap__price">{{ selectedPlan?.priceLabel }}</span>
+        </div>
+        <button class="sp-payment-recap__change" (click)="currentView = 'plans'">Modifier</button>
+      </div>
+
+      <!-- Features résumées -->
+      <div class="sp-features-summary">
+        <p class="sp-features-summary__title">{{ selectedPlan?.name }}</p>
+        <div class="sp-feature-row" *ngFor="let f of selectedPlanIncludedFeatures">
+          <ion-icon name="checkmark-circle" class="sp-feature-row__icon sp-feature-row__icon--ok"></ion-icon>
+          <span class="sp-feature-row__text">{{ f }}</span>
+        </div>
+      </div>
+
+      <!-- Méthodes de paiement -->
+      <p class="sp-payment-section-label">Choisir un moyen de paiement</p>
+      <div class="sp-payment-methods">
+        <div class="sp-method-card" *ngFor="let m of paymentMethods"
+          [class.sp-method-card--selected]="selectedMethod?.id === m.id" (click)="selectMethod(m)">
+          <div class="sp-method-card__logo">
+            <img [src]="m.logo" [alt]="m.name" />
+          </div>
+          <span class="sp-method-card__name">Payer avec {{ m.name }}</span>
+          <div class="sp-radio sp-radio--sm" [class.sp-radio--on]="selectedMethod?.id === m.id"></div>
+        </div>
+      </div>
+
+      <!-- Footer sticky -->
+      <div class="sp-footer">
+        <app-custom-button fill="solid" expand="block" [disabled]="!selectedMethod || !selectedPlan" [loading]="isSubmitting"
+          (clicked)="simulateSubscription(selectedPlan!.id)">
+          S'abonner maintenant
+        </app-custom-button>
+        <p class="sp-legal">
+          En passant cette commande, vous acceptez nos
+          <strong class="sp-legal__link">Conditions d'utilisation</strong> et notre
+          <strong class="sp-legal__link">Politique de confidentialité</strong>.
+          L'abonnement se renouvelle automatiquement sauf désactivation 24h avant la fin de la période.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       BOTTOM SHEET — Détail des features
+  ══════════════════════════════════════════════ -->
+  <div class="sp-overlay" *ngIf="showFeaturesSheet" (click)="closeFeaturesSheet()">
+    <div class="sp-sheet" (click)="$event.stopPropagation()">
+
+      <!-- Handle -->
+      <div class="sp-sheet__handle"></div>
+
+      <div class="sp-sheet__header">
+        <button class="sp-sheet__close" (click)="closeFeaturesSheet()">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+        <span class="sp-sheet__title">Abonnement {{ featuredPlan?.name }}</span>
+      </div>
+
+      <div class="sp-feature-row" *ngFor="let f of featuredPlan?.features">
+        <ion-icon [name]="f.included ? 'checkmark-circle' : 'close-circle'"
+          [class]="'sp-feature-row__icon sp-feature-row__icon--' + (f.included ? 'ok' : 'no')">
+        </ion-icon>
+        <span class="sp-feature-row__text">{{ f.label }}</span>
+      </div>
+
+      <div class="sp-sheet__footer">
+        <app-custom-button fill="solid" expand="block" (clicked)="selectFromSheet()">
+          Choisir ce plan
+        </app-custom-button>
+      </div>
+
+    </div>
+  </div>
+
+</ion-content>

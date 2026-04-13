@@ -15,8 +15,8 @@
 
       <div class="cr-type-list">
         <app-selection-card *ngFor="let t of typeOptions" [title]="t.label" [description]="t.description"
-          [note]="t.example" [premium]="t.premium" [locked]="t.premium"
-          [selected]="selectedType === t.value && !t.premium" (cardClick)="!t.premium && selectType(t.value)"
+          [note]="t.example" [premium]="t.premium" [locked]="t.locked"
+          [selected]="selectedType === t.value && !t.locked" (cardClick)="selectType(t.value)"
           (premiumClick)="openPremiumModal(t.label, t.description)">
         </app-selection-card>
       </div>
@@ -133,8 +133,8 @@
 
       <div class="cr-rotation-list">
         <app-selection-card *ngFor="let r of rotationOptions" [title]="r.label" [description]="r.description"
-          [note]="r.info ?? r.badge" [premium]="r.premium" [locked]="r.premium"
-          [selected]="selectedRotation === r.value && !r.premium" (cardClick)="!r.premium && selectRotation(r.value)"
+          [note]="r.info ?? r.badge" [premium]="r.premium" [locked]="r.locked"
+          [selected]="selectedRotation === r.value && !r.locked" (cardClick)="selectRotation(r.value)"
           (premiumClick)="openPremiumModal(r.label, r.description)">
         </app-selection-card>
       </div>
@@ -255,8 +255,8 @@
 
       <div class="cr-security-list">
         <app-selection-card *ngFor="let s of securityOptions" [title]="s.label" [description]="s.description"
-          [note]="s.note" [recommended]="s.recommended" [premium]="s.premium" [locked]="s.premium"
-          [selected]="selectedSecurity === s.value && !s.premium" (cardClick)="!s.premium && selectSecurity(s.value)"
+          [note]="s.note" [recommended]="s.recommended" [premium]="s.premium" [locked]="s.locked"
+          [selected]="selectedSecurity === s.value && !s.locked" (cardClick)="selectSecurity(s.value)"
           (premiumClick)="openPremiumModal(s.label, s.description)">
 
           <!-- Champ caution — affiché uniquement pour solidarity_guarantee -->

@@ -159,6 +159,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/subscription/premium/premium.page').then(m => m.PremiumPage)
   },
   {
+    path: 'plan',
+    loadComponent: () => import('./features/subscription/plan/plan.page').then(m => m.PlanPage)
+  },
+  {
     path: 'notification-page',
     loadComponent: () => import('./features/notifications/notification-page/notification-page.page').then(m => m.NotificationPagePage)
   },

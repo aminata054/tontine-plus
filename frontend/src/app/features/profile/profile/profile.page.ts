@@ -6,11 +6,23 @@ import { takeUntil } from 'rxjs/operators';
 import {
   IonContent, IonIcon, IonSkeletonText, ToastController, AlertController, ModalController
 } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import {
+  personAddOutline, cardOutline, helpCircleOutline,
+  informationCircleOutline, sendOutline, headsetOutline,
+  personOutline, lockClosedOutline, logOutOutline,
+  chevronForwardOutline, closeOutline, logoWhatsapp,
+  callOutline, alertCircleOutline, checkmarkCircle,
+  timeOutline, sparkles
+} from 'ionicons/icons';
 
 import { UserProfile } from 'src/app/core/models/auth.model';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { SubscriptionService } from 'src/app/core/services/subscription.service';
+import { Subscription } from 'src/app/core/models/subscription.model';
 import { PageHeaderComponent } from 'src/app/shared/ui/page-header/page-header.component';
 import { SharePanelComponent } from 'src/app/shared/ui/share-panel/share-panel.component';
+import { ReferralStatsModalComponent } from 'src/app/shared/modals/referral-stats-modal/referral-stats-modal.component';
 
 type PageStatus = 'loading' | 'success' | 'error';
 
@@ -29,21 +41,38 @@ export class ProfilePage implements OnInit, OnDestroy {
 
   status: PageStatus = 'loading';
   user: UserProfile | null = null;
+  referralStats: any = null;
+  referralStatsLoading = true;
+
+  // ── Abonnement ──────────────────────────────────────────────
+  subscription: Subscription | null = null;
+  subscriptionLoading = true;
 
   showContactSheet = false;
-
   private destroy$ = new Subject<void>();
 
   constructor(
     private router: Router,
     private authService: AuthService,
+    private subscriptionService: SubscriptionService,
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
     private modalCtrl: ModalController,
-  ) { }
+  ) {
+    addIcons({
+      personAddOutline, cardOutline, helpCircleOutline,
+      informationCircleOutline, sendOutline, headsetOutline,
+      personOutline, lockClosedOutline, logOutOutline,
+      chevronForwardOutline, closeOutline, logoWhatsapp,
+      callOutline, alertCircleOutline, checkmarkCircle,
+      timeOutline, sparkles
+    });
+  }
 
   ngOnInit(): void {
     this.load();
+    this.loadSubscription();
+    this.loadReferralStats();
   }
 
   ngOnDestroy(): void {
@@ -51,11 +80,10 @@ export class ProfilePage implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // ── Chargement ──────────────────────────────────────────────────────────────
+  // ── Chargement profil ────────────────────────────────────────
 
   load(): void {
     this.status = 'loading';
-
     this.authService.currentUser$
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -64,7 +92,6 @@ export class ProfilePage implements OnInit, OnDestroy {
             this.user = user;
             this.status = 'success';
           } else {
-            // Pas encore chargé depuis le storage — on attend un tick
             if (this.status === 'loading') {
               setTimeout(() => {
                 const current = this.authService.currentUser;
@@ -82,43 +109,105 @@ export class ProfilePage implements OnInit, OnDestroy {
       });
   }
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
+  // ── Chargement abonnement ────────────────────────────────────
 
-  getInitials(name: string | null | undefined): string {
-    return (name ?? '')
-      .split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+  loadSubscription(): void {
+    this.subscriptionLoading = true;
+    this.subscriptionService.getMySubscription()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.subscription = res.success ? res.data : null;
+          this.subscriptionLoading = false;
+        },
+        error: () => {
+          this.subscription = null;
+          this.subscriptionLoading = false;
+        },
+      });
   }
 
-  // ── Navigation ──────────────────────────────────────────────────────────────
-
-  goToMyAccount(): void {
-    this.router.navigate(['/profile/account']);
+  loadReferralStats(): void {
+    this.referralStatsLoading = true;
+    this.authService.getReferralStats()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.referralStats = res.success ? res.data : null;
+          this.referralStatsLoading = false;
+        },
+        error: () => {
+          this.referralStats = null;
+          this.referralStatsLoading = false;
+        },
+      });
   }
 
-  goToChangePin(): void {
-    this.router.navigate(['/profile/change-pin']);
+  async openReferralModal(): Promise<void> {
+    const modal = await this.modalCtrl.create({
+      component: ReferralStatsModalComponent,
+      componentProps: {
+        referralStats: this.referralStats,
+        referralStatsLoading: this.referralStatsLoading,
+      },
+      breakpoints: [0, 0.75, 1],
+      initialBreakpoint: 0.75,
+      backdropDismiss: true,
+      cssClass: 'panel-modal',
+    });
+
+    modal.onDidDismiss().then(({ data }) => {
+      // Si l'utilisateur clique "Inviter" depuis le modal
+      if (data?.action === 'invite') {
+        this.inviteFriend();
+      }
+    });
+
+    await modal.present();
   }
 
-  goToSubscription(): void {
-    this.router.navigate(['/profile/subscription']);
+  // Texte du slot restant pour le template
+  get referralSlotsLabel(): string {
+    if (!this.referralStats) return '';
+    const r = this.referralStats.remainingSlots;
+    if (r === 0) return 'Limite atteinte';
+    return `${r} invitation${r > 1 ? 's' : ''} restante${r > 1 ? 's' : ''}`;
   }
 
-  goToHelpCenter(): void {
-    this.router.navigate(['/profile/help-center']);
+  // ── Computed : état de l'abonnement ─────────────────────────
+
+  get isActiveSubscriber(): boolean {
+    if (!this.subscription) return false;
+    const s = this.subscription as any;
+    return s.effectiveStatus === 'active' || s.hasAccess === true;
   }
 
-  goToAbout(): void {
-    this.router.navigate(['/profile/about']);
+  get isTrial(): boolean {
+    const s = this.subscription as any;
+    return s?.effectiveStatus === 'trialing';
   }
 
-  goToFeedback(): void {
-    this.router.navigate(['/profile/feedback']);
+  get planLabel(): string {
+    if (!this.subscription) return '';
+    return this.subscriptionService.planLabel((this.subscription as any).plan);
   }
+
+  get daysRemaining(): number | null {
+    return (this.subscription as any)?.daysRemaining ?? null;
+  }
+
+  get periodEndFormatted(): string {
+    const end = (this.subscription as any)?.currentPeriodEnd;
+    if (!end) return '';
+    const date = end?.toDate ? end.toDate() : new Date(end);
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  // ── Reste des méthodes (inchangées) ──────────────────────────
 
   async inviteFriend(): Promise<void> {
     let shareText: string;
     let shareUrl: string;
-
     try {
       const response = await this.authService.getReferralLink();
       shareText = response.data.shareText;
@@ -128,46 +217,29 @@ export class ProfilePage implements OnInit, OnDestroy {
       shareUrl = `https://tontineplus.app/register?ref=${code}`;
       shareText = `Rejoins Tontine Plus avec mon code ${code}`;
     }
-
     const modal = await this.modalCtrl.create({
       component: SharePanelComponent,
-      componentProps: {
-        link: shareUrl,
-        title: 'Inviter un ami',
-        shareText: shareText,
-      },
+      componentProps: { link: shareUrl, title: 'Inviter un ami', shareText },
       breakpoints: [0, 0.5, 0.8],
       initialBreakpoint: 0.5,
       backdropDismiss: true,
       cssClass: 'panel-modal',
     });
-
     await modal.present();
   }
 
-  // ── Contact sheet ────────────────────────────────────────────────────────────
-
-  contactSupport(): void {
-    this.showContactSheet = true;
-  }
-
-  closeContactSheet(): void {
-    this.showContactSheet = false;
-  }
+  contactSupport(): void { this.showContactSheet = true; }
+  closeContactSheet(): void { this.showContactSheet = false; }
 
   contactViaWhatsapp(): void {
     this.closeContactSheet();
-    const phone = '+221XXXXXXXXX'; // TODO : remplacer par le vrai numéro
-    window.open(`https://wa.me/${phone}`, '_blank');
+    window.open(`https://wa.me/+221XXXXXXXXX`, '_blank');
   }
 
   contactViaCall(): void {
     this.closeContactSheet();
-    const phone = 'tel:+221XXXXXXXXX'; // TODO : remplacer par le vrai numéro
-    window.open(phone);
+    window.open('tel:+221XXXXXXXXX');
   }
-
-  // ── Déconnexion ──────────────────────────────────────────────────────────────
 
   async logout(): Promise<void> {
     const alert = await this.alertCtrl.create({
@@ -176,11 +248,10 @@ export class ProfilePage implements OnInit, OnDestroy {
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {
-          text: 'Déconnexion',
-          role: 'destructive',
+          text: 'Déconnexion', role: 'destructive',
           handler: async () => {
             await this.authService.logout();
-            this.router.navigate(['/auth/login'], { replaceUrl: true });
+            this.router.navigate(['/register'], { replaceUrl: true });
           },
         },
       ],
@@ -188,15 +259,14 @@ export class ProfilePage implements OnInit, OnDestroy {
     await alert.present();
   }
 
-  // ── Toast helper ─────────────────────────────────────────────────────────────
-
-  private async showToast(message: string, color: string = 'primary'): Promise<void> {
-    const toast = await this.toastCtrl.create({
-      message,
-      duration: 2500,
-      color,
-      position: 'top',
-    });
-    await toast.present();
+  getInitials(name: string | null | undefined): string {
+    return (name ?? '').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
   }
+
+  goToMyAccount(): void { this.router.navigate(['/profile/account']); }
+  goToChangePin(): void { this.router.navigate(['/profile/change-pin']); }
+  goToSubscription(): void { this.router.navigate(['/subscription-list']); }
+  goToHelpCenter(): void { this.router.navigate(['/profile/help-center']); }
+  goToAbout(): void { this.router.navigate(['/profile/about']); }
+  goToFeedback(): void { this.router.navigate(['/profile/feedback']); }
 }

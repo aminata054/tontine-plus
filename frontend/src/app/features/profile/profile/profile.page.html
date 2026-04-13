@@ -54,7 +54,7 @@
       <!-- HEADER -->
       <div class="profile-header">
         <div class="profile-avatar">
-          <img *ngIf="user.photoUrl" [src]="user.photoUrl" [alt]="user.fullName"  class="avatar-img"/>
+          <img *ngIf="user.photoUrl" [src]="user.photoUrl" [alt]="user.fullName" class="avatar-img" />
           <div class="profile-avatar-placeholder" *ngIf="!user.photoUrl">
             {{ getInitials(user.fullName) }}
           </div>
@@ -62,10 +62,55 @@
 
         <h1 class="profile-name">{{ user.fullName }}</h1>
 
-        <button class="subscribe-btn" (click)="goToSubscription()">
-          S'abonner maintenant
-          <ion-icon src="/assets/icon/premium.svg" class="crown"></ion-icon>
+        <!-- ── Skeleton abonnement ── -->
+        <div class="sub-card sub-card--skeleton" *ngIf="subscriptionLoading">
+          <ion-skeleton-text animated
+            style="width:60%;height:14px;border-radius:4px;margin-bottom:6px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width:40%;height:12px;border-radius:4px;"></ion-skeleton-text>
+        </div>
+
+        <!-- ── Abonné actif ── -->
+        <div class="sub-card sub-card--active" *ngIf="!subscriptionLoading && isActiveSubscriber && !isTrial"
+          (click)="goToSubscription()">
+          <div class="sub-card__left">
+            <div class="sub-card__icon">
+              <ion-icon name="checkmark-circle"></ion-icon>
+            </div>
+            <div class="sub-card__info">
+              <span class="sub-card__plan">Plan {{ planLabel }}</span>
+              <span class="sub-card__date">Expire le {{ periodEndFormatted }}</span>
+            </div>
+          </div>
+          <span class="sub-card__manage">Gérer</span>
+        </div>
+
+        <!-- ── Trial en cours ── -->
+        <div class="sub-card sub-card--trial" *ngIf="!subscriptionLoading && isTrial" (click)="goToSubscription()">
+          <div class="sub-card__left">
+            <div class="sub-card__icon">
+              <ion-icon name="time-outline"></ion-icon>
+            </div>
+            <div class="sub-card__info">
+              <span class="sub-card__plan">Période d'essai</span>
+              <span class="sub-card__date">
+                {{ daysRemaining !== null ? daysRemaining + ' jours restants' : 'En cours' }}
+              </span>
+            </div>
+          </div>
+          <span class="sub-card__cta">S'abonner</span>
+        </div>
+
+        <!-- ── Pas d'abonnement ── -->
+        <button class="sub-card sub-card--upsell" *ngIf="!subscriptionLoading && !isActiveSubscriber && !isTrial"
+          (click)="goToSubscription()">
+          <ion-icon name="sparkles" class="sub-card__sparkle"></ion-icon>
+          <div class="sub-card__upsell-text">
+            <span class="sub-card__upsell-title">Passez à Premium</span>
+            <span class="sub-card__upsell-sub">Tontines illimitées & fonctions avancées</span>
+          </div>
+          <ion-icon name="chevron-forward-outline"></ion-icon>
         </button>
+
       </div>
 
       <!-- MENU -->
@@ -80,6 +125,14 @@
               <ion-icon name="person-add-outline"></ion-icon>
             </div>
             <span class="menu-item__label">Inviter un ami</span>
+            <ion-icon name="chevron-forward-outline" class="menu-item__arrow"></ion-icon>
+          </button>
+
+          <button class="menu-item" (click)="openReferralModal()">
+            <div class="menu-item__icon">
+              <ion-icon name="people-outline"></ion-icon>
+            </div>
+            <span class="menu-item__label">Mes parrainages</span>
             <ion-icon name="chevron-forward-outline" class="menu-item__arrow"></ion-icon>
           </button>
 

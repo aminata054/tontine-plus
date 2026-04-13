@@ -174,4 +174,8 @@ export class AuthService {
   async getSavedPhoneNumber(): Promise<string | null> {
     return this.storage.getPhoneNumber();
   }
+
+  getReferralStats(): Observable<any> {
+    return this.http.get(`${this.API}/referral-stats`);
+  }
 }

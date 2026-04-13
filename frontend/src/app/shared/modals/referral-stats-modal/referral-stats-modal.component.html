@@ -1,0 +1,81 @@
+<ion-header class="page-header">
+  <ion-title class="header-title">Parrainage</ion-title>
+  <div class="header-spacer"></div>
+  <ion-buttons slot="end">
+    <ion-button (click)="dismiss()">
+      <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+    </ion-button>
+  </ion-buttons>
+</ion-header>
+
+<ion-content class="referral-modal-content">
+
+  <!-- Skeleton pendant le chargement -->
+  <div class="modal-body" *ngIf="referralStatsLoading">
+    <ion-skeleton-text animated style="width: 40%; height: 16px;"></ion-skeleton-text>
+    <ion-skeleton-text animated style="width: 100%; height: 64px; margin-top: 12px;"></ion-skeleton-text>
+  </div>
+
+  <!-- Contenu chargé -->
+  <div class="modal-body" *ngIf="!referralStatsLoading && referralStats">
+
+    <!-- Compteurs -->
+    <div class="referral-counters">
+      <div class="counter-item">
+        <span class="counter-value">{{ referralStats.referralCount }}</span>
+        <span class="counter-label">Inscrits</span>
+      </div>
+      <div class="counter-divider"></div>
+      <div class="counter-item">
+        <span class="counter-value">{{ referralStats.rewardedCount }}</span>
+        <span class="counter-label">Actifs</span>
+      </div>
+      <div class="counter-divider"></div>
+      <div class="counter-item">
+        <span class="counter-value counter-green">+{{ referralStats.totalDaysEarned }}j</span>
+        <span class="counter-label">Gagnés</span>
+      </div>
+    </div>
+
+    <!-- Progression -->
+    <div class="referral-progress">
+      <div class="progress-header">
+        <span>Filleuls actifs</span>
+        <span class="slots-label" [class.limit-reached]="referralStats.remainingSlots === 0">
+          {{ referralSlotsLabel }}
+        </span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill"
+          [style.width.%]="(referralStats.rewardedCount / referralStats.maxReferrals) * 100">
+        </div>
+      </div>
+      <div class="progress-steps">
+        <span *ngFor="let step of [1,2,3,4,5]" class="step-dot" [class.step-done]="step <= referralStats.rewardedCount">
+          {{ step <= referralStats.rewardedCount ? '✓' : step }} </span>
+      </div>
+    </div>
+
+    <!-- Liste des filleuls -->
+    <div class="referee-list" *ngIf="referralStats.referees?.length > 0">
+      <div class="referee-item" *ngFor="let r of referralStats.referees">
+        <div class="referee-avatar">{{ r.fullName[0] }}</div>
+        <div class="referee-info">
+          <span class="referee-name">{{ r.fullName }}</span>
+          <span class="referee-status" *ngIf="r.isPending">En attente d'activation</span>
+          <span class="referee-status referee-active" *ngIf="r.rewardClaimed">
+            Abonnement actif · +{{ referralStats.rewardPerReferral }}j crédités
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bouton inviter -->
+    <div class="invite-row" (click)="inviteFriend()" [class.invite-disabled]="referralStats.remainingSlots === 0">
+      <ion-icon name="person-add-outline"></ion-icon>
+      <span>{{ referralStats.remainingSlots > 0 ? 'Inviter un ami' : 'Limite de 5 filleuls atteinte' }}</span>
+      <ion-icon name="chevron-forward-outline" *ngIf="referralStats.remainingSlots > 0"></ion-icon>
+    </div>
+
+  </div>
+</ion-content>

@@ -27,6 +27,7 @@ import { SelectionCardComponent } from 'src/app/shared/ui/selection-card/selecti
 import { CustomButtonComponent } from 'src/app/shared/ui/custom-button/custom-button.component';
 import { CustomInputComponent } from 'src/app/shared/ui/custom-input/custom-input.component';
 import { PremiumModalComponent } from 'src/app/shared/modals/premium-modal/premium-modal.component';
+import { SubscriptionService } from 'src/app/core/services/subscription.service';
 
 // ─── Types locaux ──────────────────────────────────────────────────────────────
 
@@ -38,6 +39,7 @@ interface TypeOption {
   description: string;
   example: string;
   premium: boolean;
+  locked: boolean;
 }
 
 interface RotationOption {
@@ -47,6 +49,7 @@ interface RotationOption {
   badge: string;
   info?: string;
   premium: boolean;
+  locked: boolean;
 }
 
 interface SecurityOption {
@@ -57,6 +60,7 @@ interface SecurityOption {
   note: string;
   recommended: boolean;
   premium: boolean;
+  locked: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -80,6 +84,8 @@ interface SecurityOption {
   ],
 })
 export class CreatePage implements OnInit {
+
+  isPremium = false;
 
   // ── Navigation ──────────────────────────────────────────────────────────────
   currentStep = 1;
@@ -150,36 +156,43 @@ export class CreatePage implements OnInit {
 
   // ── Options statiques ───────────────────────────────────────────────────────
 
-  typeOptions: TypeOption[] = [
-    {
-      value: 'rotative',
-      label: 'Rotative classique',
-      description: 'Chacun reçoit le pot à tour de rôle',
-      example: '12 personnes × 10 000 FCFA = 120 000 FCFA/tour',
-      premium: false,
-    },
-    {
-      value: 'crescendo',
-      label: 'Crescendo',
-      description: 'Les montants augmentent progressivement',
-      example: '1er tour : 50k, 2e tour : 60k...',
-      premium: false,
-    },
-    {
-      value: 'solidarity',
-      label: 'Solidarité',
-      description: 'Pot commun pour projets collectifs',
-      example: '',
-      premium: true,
-    },
-    {
-      value: 'savings_goal',
-      label: 'Épargne objectif',
-      description: 'Économiser ensemble pour un objectif',
-      example: '',
-      premium: true,
-    },
-  ];
+  get typeOptions(): TypeOption[] {
+    return [
+      {
+        value: 'rotative',
+        label: 'Rotative classique',
+        description: 'Chacun reçoit le pot à tour de rôle',
+        example: '12 personnes × 10 000 FCFA = 120 000 FCFA/tour',
+        premium: false,
+        locked: false,
+      },
+      {
+        value: 'crescendo',
+        label: 'Crescendo',
+        description: 'Les montants augmentent progressivement',
+        example: '1er tour : 50k, 2e tour : 60k...',
+        premium: false,
+        locked: false,
+      },
+      {
+        value: 'solidarity',
+        label: 'Solidarité',
+        description: 'Pot commun pour projets collectifs',
+        example: '',
+        premium: true,
+        locked: !this.isPremium, // ← relit isPremium à chaque fois
+      },
+      {
+        value: 'savings_goal',
+        label: 'Épargne objectif',
+        description: 'Économiser ensemble pour un objectif',
+        example: '',
+        premium: true,
+        locked: !this.isPremium,
+      },
+    ];
+  }
+
 
   visibilityOptions: { value: TontineVisibility; label: string; description: string }[] = [
     { value: 'private', label: 'Privée', description: 'Sur invitation uniquement' },
@@ -206,38 +219,45 @@ export class CreatePage implements OnInit {
     { label: 'Dim', value: 0 },
   ];
 
-  rotationOptions: RotationOption[] = [
-    {
-      value: 'random',
-      label: 'Aléatoire',
-      description: 'Tirage au sort équitable à la validation de tous les membres',
-      badge: '100 % Transparent',
-      premium: false,
-    },
-    {
-      value: 'seniority',
-      label: 'Ancienneté',
-      description: "Ordre d'arrivée dans la tontine",
-      badge: '100 % Transparent',
-      info: 'Le créateur en premier, puis selon les inscriptions',
-      premium: false,
-    },
-    {
-      value: 'consensual',
-      label: 'Consensuel',
-      description: "L'ordre sera décidé par vote",
-      badge: '100 % Transparent',
-      info: "Nécessite 75% d'approbation",
-      premium: true,
-    },
-    {
-      value: 'manual',
-      label: 'Prédéfini par moi',
-      description: "Je définis l'ordre manuellement",
-      badge: '100 % Transparent',
-      premium: true,
-    },
-  ];
+  get rotationOptions(): RotationOption[] {
+    return [
+      {
+        value: 'random',
+        label: 'Aléatoire',
+        description: 'Tirage au sort équitable à la validation de tous les membres',
+        badge: '100 % Transparent',
+        premium: false,
+        locked: false,
+      },
+      {
+        value: 'seniority',
+        label: 'Ancienneté',
+        description: "Ordre d'arrivée dans la tontine",
+        badge: '100 % Transparent',
+        info: 'Le créateur en premier, puis selon les inscriptions',
+        premium: false,
+        locked: false,
+      },
+      {
+        value: 'consensual',
+        label: 'Consensuel',
+        description: "L'ordre sera décidé par vote",
+        badge: '100 % Transparent',
+        info: "Nécessite 75% d'approbation",
+        premium: true,
+        locked: !this.isPremium,
+      },
+      {
+        value: 'manual',
+        label: 'Prédéfini par moi',
+        description: "Je définis l'ordre manuellement",
+        badge: '100 % Transparent',
+        premium: true,
+        locked: !this.isPremium,
+      },
+    ];
+  }
+
 
   // Délai de grâce — valeurs exactes acceptées par le backend
   gracePeriodOptions: (0 | 2 | 3 | 5 | 7)[] = [0, 2, 3, 5, 7];
@@ -258,44 +278,49 @@ export class CreatePage implements OnInit {
     { value: 'paid_contributions', label: 'Perte des cotisations déjà payées' },
   ];
 
-  securityOptions: SecurityOption[] = [
-    {
-      value: 'escrow',
-      label: 'Escrow collectif',
-      description: 'Vos cotisations vont dans un wallet sécurisé partagé',
-      features: [
-        'Distribution automatique impossible à bloquer',
-        "Aucun humain ne peut toucher l'argent avant la date",
-      ],
-      note: 'Sécurité maximale',
-      recommended: true,
-      premium: false,
-    },
-    {
-      value: 'direct',
-      label: 'Virement direct tour par tour',
-      description: 'Chaque membre paie directement le bénéficiaire du tour',
-      features: [
-        "L'application ne touche jamais l'argent",
-        'Notifications et rappels automatiques',
-      ],
-      note: 'Nécessite la confiance entre membres',
-      recommended: false,
-      premium: false,
-    },
-    {
-      value: 'solidarity_guarantee',
-      label: 'Garantie solidaire + pénalités',
-      description: 'Chaque membre bloque une caution remboursable en fin de cycle',
-      features: [
-        'Pénalités automatiques en cas de retard',
-        'Caution récupérée en fin de cycle',
-      ],
-      note: 'Caution requise',
-      recommended: false,
-      premium: true,
-    },
-  ];
+  get securityOptions(): SecurityOption[] {
+    return [
+      {
+        value: 'escrow',
+        label: 'Escrow collectif',
+        description: 'Vos cotisations vont dans un wallet sécurisé partagé',
+        features: [
+          'Distribution automatique impossible à bloquer',
+          "Aucun humain ne peut toucher l'argent avant la date",
+        ],
+        note: 'Sécurité maximale',
+        recommended: true,
+        premium: false,
+        locked: false,
+      },
+      {
+        value: 'direct',
+        label: 'Virement direct tour par tour',
+        description: 'Chaque membre paie directement le bénéficiaire du tour',
+        features: [
+          "L'application ne touche jamais l'argent",
+          'Notifications et rappels automatiques',
+        ],
+        note: 'Nécessite la confiance entre membres',
+        recommended: false,
+        premium: false,
+        locked: false,
+      },
+      {
+        value: 'solidarity_guarantee',
+        label: 'Garantie solidaire + pénalités',
+        description: 'Chaque membre bloque une caution remboursable en fin de cycle',
+        features: [
+          'Pénalités automatiques en cas de retard',
+          'Caution récupérée en fin de cycle',
+        ],
+        note: 'Caution requise',
+        recommended: false,
+        premium: true,
+        locked: !this.isPremium,
+      },
+    ];
+  }
 
   // ── Constructeur ────────────────────────────────────────────────────────────
 
@@ -303,11 +328,24 @@ export class CreatePage implements OnInit {
     private fb: FormBuilder,
     private router: Router,
     private tontineService: TontineService,
+    private subscriptionService: SubscriptionService,
     private toastCtrl: ToastController,
     private modalCtrl: ModalController,
   ) { }
 
   ngOnInit(): void {
+    this.isPremium = this.subscriptionService.currentHasAccess;
+
+    // Se tenir à jour si ça change
+    this.subscriptionService.hasAccess$.subscribe(hasAccess => {
+      this.isPremium = hasAccess;
+    });
+    
+    // Si le cache est vide (premier chargement), charger depuis l'API
+    if (!this.subscriptionService['subscriptionSubject'].getValue()) {
+      this.subscriptionService.getMySubscription().subscribe();
+    }
+
     this.step2Form = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       description: [''],
@@ -346,7 +384,11 @@ export class CreatePage implements OnInit {
 
   canProceed(): boolean {
     switch (this.currentStep) {
-      case 1: return !!this.selectedType;
+      case 1: {
+        if (!this.selectedType) return false;
+        // Bloquer si le type sélectionné est locked
+        return !this.typeOptions.find(t => t.value === this.selectedType)?.locked;
+      }
       case 2: return this.step2Form.valid;
       case 3:
         return (
@@ -354,17 +396,23 @@ export class CreatePage implements OnInit {
           !!this.selectedFrequency &&
           (this.selectedFrequency !== 'weekly' || this.selectedPaymentDay !== null)
         );
-      case 4: return !!this.selectedRotation;
+      case 4: {
+        if (!this.selectedRotation) return false;
+        return !this.rotationOptions.find(r => r.value === this.selectedRotation)?.locked;
+      }
+
       case 5:
         // Si sortie avec pénalité, le type de pénalité doit être choisi
         if (this.selectedEarlyExit === 'penalty' && !this.selectedEarlyExitPenalty) return false;
         // Si pénalité fixe, le montant doit être > 0
         if (this.selectedPenaltyType === 'fixed' && this.selectedPenaltyValue <= 0) return false;
         return true;
-      case 6:
-        // Caution obligatoire pour solidarity_guarantee
+      case 6: {
+        if (!this.selectedSecurity) return false;
+        if (this.securityOptions.find(s => s.value === this.selectedSecurity)?.locked) return false;
         if (this.selectedSecurity === 'solidarity_guarantee' && this.guaranteeAmount <= 0) return false;
-        return !!this.selectedSecurity;
+        return true;
+      }
       case 7: return this.confirmedRules && this.confirmedPayment;
       default: return true;
     }
@@ -373,9 +421,13 @@ export class CreatePage implements OnInit {
   // ── Étape 1 — Type ──────────────────────────────────────────────────────────
 
   selectType(type: TontineType): void {
+    const option = this.typeOptions.find(t => t.value === type);
+    if (option?.locked) {
+      this.openPremiumModal(option.label, option.description);
+      return;
+    }
     this.selectedType = type;
   }
-
   // ── Étape 2 — Infos de base ─────────────────────────────────────────────────
 
   onIconPick(): void {
@@ -429,6 +481,11 @@ export class CreatePage implements OnInit {
   // ── Étape 4 — Rotation ──────────────────────────────────────────────────────
 
   selectRotation(r: RotationMethod): void {
+    const option = this.rotationOptions.find(o => o.value === r);
+    if (option?.locked) {
+      this.openPremiumModal(option.label, option.description);
+      return;
+    }
     this.selectedRotation = r;
   }
 
@@ -463,6 +520,11 @@ export class CreatePage implements OnInit {
   // ── Étape 6 — Sécurité ──────────────────────────────────────────────────────
 
   selectSecurity(s: SecurityModel): void {
+    const option = this.securityOptions.find(o => o.value === s);
+    if (option?.locked) {
+      this.openPremiumModal(option.label, option.description);
+      return;
+    }
     this.selectedSecurity = s;
     if (s !== 'solidarity_guarantee') this.guaranteeAmount = 0;
   }
