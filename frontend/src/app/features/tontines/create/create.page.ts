@@ -334,13 +334,15 @@ export class CreatePage implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.isPremium = this.subscriptionService.currentHasAccess;
+    if (!this.subscriptionService['subscriptionSubject'].getValue()) {
+      this.subscriptionService.getMySubscription().subscribe();
+    }
 
-    // Se tenir à jour si ça change
+    // 2. S'abonner UNE SEULE FOIS, source de vérité unique
     this.subscriptionService.hasAccess$.subscribe(hasAccess => {
       this.isPremium = hasAccess;
     });
-    
+
     // Si le cache est vide (premier chargement), charger depuis l'API
     if (!this.subscriptionService['subscriptionSubject'].getValue()) {
       this.subscriptionService.getMySubscription().subscribe();
@@ -526,6 +528,9 @@ export class CreatePage implements OnInit {
       return;
     }
     this.selectedSecurity = s;
+    if (s === 'solidarity_guarantee' && this.guaranteeAmount <= 0) {
+      this.guaranteeAmount = 5000; // valeur par défaut modifiable
+    }
     if (s !== 'solidarity_guarantee') this.guaranteeAmount = 0;
   }
 

@@ -23,6 +23,6 @@
   <!-- Badge Premium / Locked -->
   <div *ngIf="premium || locked" class="premium-badge">
     <ion-icon src="assets/icon/premium.svg" *ngIf="locked"></ion-icon>
-    <span *ngIf="premium && !locked">Premium</span>
+    <span *ngIf="premium && !locked"><ion-icon src="assets/icon/premium.svg"></ion-icon></span>
   </div>
 </ion-card>

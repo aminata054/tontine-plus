@@ -6,8 +6,6 @@ import { takeUntil, finalize } from 'rxjs/operators';
 import {
   IonContent, IonIcon, IonSkeletonText, ToastController,
 } from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import { flagOutline, alertCircleOutline } from 'ionicons/icons';
 
 import { TontineMember } from 'src/app/core/models/tontine.model';
 import { TontineService } from 'src/app/core/services/tontine.service';
@@ -41,9 +39,7 @@ export class MemberProfilePage implements OnInit, OnDestroy {
     private router: Router,
     private tontineService: TontineService,
     private toastCtrl: ToastController,
-  ) {
-    addIcons({ flagOutline, alertCircleOutline });
-  }
+  ) { }
 
   ngOnInit(): void {
     this.tontineId = this.route.snapshot.paramMap.get('id');

@@ -139,9 +139,9 @@
 
     /* ====================== UPSELL PREMIUM ====================== */
     .sub-card--upsell {
-        background: linear-gradient(135deg, #7C3AED, #C026D3);
+        background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-light));
         color: white;
-        box-shadow: 0 15px 40px rgba(124, 58, 237, 0.28);
+        box-shadow: 0 15px 40px rgba(121, 149, 195, 0.28);
 
         .sub-card__sparkle {
             font-size: 34px;

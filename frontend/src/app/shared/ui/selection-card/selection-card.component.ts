@@ -19,13 +19,13 @@ export class SelectionCardComponent {
   @Input() locked: boolean = false;
   @Input() premium: boolean = false;
 
-  @Output() cardClick = new EventEmitter<void>();           
-  @Output() selectedChange = new EventEmitter<boolean>();   
+  @Output() cardClick = new EventEmitter<void>();
+  @Output() selectedChange = new EventEmitter<boolean>();
   @Output() premiumClick = new EventEmitter<void>();
 
   onCardClick() {
     if (this.locked) {
-      this.premiumClick.emit();     
+      this.premiumClick.emit();
       return;
     }
     this.cardClick.emit();

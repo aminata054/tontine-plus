@@ -57,6 +57,10 @@ import {
     infiniteOutline,
     trendingUpOutline,
     sparkles,
+    closeCircle,
+    linkOutline,
+    informationCircle,
+    rocket,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -93,9 +97,8 @@ export function registerIcons() {
         sendOutline, headsetOutline, logOutOutline,
         callOutline,
         rocketOutline, openOutline,
-        infiniteOutline,
+        infiniteOutline, rocket,
         trendingUpOutline, starOutline, flashOutline,
-        sparkles
-
+        sparkles, closeCircle, linkOutline, informationCircle
     });
 }

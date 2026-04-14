@@ -1,45 +1,62 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonContent, IonIcon, ModalController } from '@ionic/angular/standalone';
+import {
+  IonContent, IonIcon, IonSelect, IonSelectOption,
+  ModalController
+} from '@ionic/angular/standalone';
 
 export type AlertType = 'success' | 'error' | 'warning' | 'info' | 'launch';
+export interface SelectableMember { uid: string; name: string; }
 
 @Component({
   selector: 'app-alert-modal',
   templateUrl: './alert-modal.component.html',
   styleUrls: ['./alert-modal.component.scss'],
   standalone: true,
-  imports: [IonContent, IonIcon, CommonModule]
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  imports: [CommonModule, IonContent, IonIcon, IonSelect, IonSelectOption]
 })
 export class AlertModalComponent {
 
   @Input() type: AlertType = 'info';
-  @Input() title: string = '';
-  @Input() message: string = '';
-  @Input() confirmText: string = 'Confirmer';
-  @Input() cancelText: string = 'Annuler';
-  @Input() confirmColor: string = 'primary';   // 'danger', 'success', 'primary'
-
-  // Pour le cas "Lancer la tontine"
+  @Input() title = '';
+  @Input() message = '';
+  @Input() confirmText = 'Confirmer';
+  @Input() cancelText = 'Annuler';
+  @Input() confirmColor = 'primary';
   @Input() extraData: { label: string; value: string }[] = [];
+  @Input() selectableMembers: SelectableMember[] = [];
+
+  selectedMemberUid: string | null = null;
 
   constructor(private modalCtrl: ModalController) { }
 
   get iconName(): string {
-    switch (this.type) {
-      case 'success': return 'checkmark-circle';
-      case 'error': return 'close-circle';
-      case 'warning': return 'alert-circle';
-      case 'launch': return 'checkmark-circle';
-      default: return 'information-circle';
-    }
+    const map: Record<AlertType, string> = {
+      success: 'checkmark-circle',
+      error: 'close-circle',
+      warning: 'alert-circle',
+      launch: 'rocket',           
+      info: 'information-circle',
+    };
+    return map[this.type] ?? 'information-circle';
   }
 
-  onConfirm() {
-    this.modalCtrl.dismiss({ confirmed: true });
+  get canConfirm(): boolean {
+    return this.selectableMembers.length > 0 ? !!this.selectedMemberUid : true;
   }
 
-  dismiss() {
+  // Appelé par (ionChange) sur ion-select
+  onMemberChange(event: CustomEvent): void {
+    this.selectedMemberUid = event.detail.value ?? null;
+  }
+
+  onConfirm(): void {
+    if (!this.canConfirm) return;
+    this.modalCtrl.dismiss({ confirmed: true, selectedMemberUid: this.selectedMemberUid ?? undefined });
+  }
+
+  dismiss(): void {
     this.modalCtrl.dismiss({ confirmed: false });
   }
 }

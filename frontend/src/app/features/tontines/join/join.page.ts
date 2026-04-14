@@ -5,8 +5,7 @@ import { Router } from '@angular/router';
 import {
   IonContent, IonButton, IonIcon, IonSpinner, AlertController, ToastController,
 } from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import { qrCodeOutline, linkOutline, closeCircleOutline } from 'ionicons/icons';
+
 import { PageHeaderComponent } from "src/app/shared/ui/page-header/page-header.component";
 import { CustomButtonComponent } from "src/app/shared/ui/custom-button/custom-button.component";
 import { CustomInputComponent } from "src/app/shared/ui/custom-input/custom-input.component";
@@ -25,7 +24,7 @@ import { CustomInputComponent } from "src/app/shared/ui/custom-input/custom-inpu
     PageHeaderComponent,
     CustomButtonComponent,
     CustomInputComponent
-],
+  ],
 })
 export class JoinPage implements OnInit, OnDestroy {
 
@@ -45,9 +44,7 @@ export class JoinPage implements OnInit, OnDestroy {
     private router: Router,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
-  ) {
-    addIcons({ qrCodeOutline, linkOutline, closeCircleOutline });
-  }
+  ) { }
 
   ngOnInit(): void {
     if (this.activeTab === 'scan') {

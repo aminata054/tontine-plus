@@ -195,7 +195,7 @@ export class OverviewPage implements OnInit, OnDestroy {
 
     // random / seniority
     this.isLaunching = true;
-    this.tontineService.launchTontine(this.tontineId)   
+    this.tontineService.launchTontine(this.tontineId)
       .pipe(finalize(() => this.isLaunching = false))
       .subscribe({
         next: (res) => {
@@ -212,18 +212,31 @@ export class OverviewPage implements OnInit, OnDestroy {
 
   // ── Lancement avec sélection manuelle du bénéficiaire ────────────────────────
   private async showManualTurnPicker(): Promise<void> {
-    // Filtrer les membres éligibles (sans tour déjà reçu)
     const completedTurns: string[] = (this.tontine as any)?.completedTurns ?? [];
-    const eligible = this.members.filter(m => !completedTurns.includes(m.userId));
+
+    // this.members est déjà chargé — on filtre les éligibles
+    const selectableMembers = this.members
+      .filter(m => !completedTurns.includes(m.userId))
+      .map(m => ({
+        uid: m.userId,
+        name: m.userName ?? m.userId,
+      }));
+
+    if (selectableMembers.length === 0) {
+      this.showToast('Aucun membre éligible trouvé');
+      return;
+    }
 
     const modal = await this.modalCtrl.create({
       component: AlertModalComponent,
       componentProps: {
-        type: 'manual_turn',
-        title: 'Choisir le bénéficiaire du tour 1',
-        members: eligible,
+        type: 'launch',
+        title: 'Choisir le 1er bénéficiaire',
+        message: 'Sélectionnez le membre qui recevra le pot en premier.',
+        selectableMembers,          // ← nom correct attendu par AlertModalComponent
         confirmText: 'Confirmer',
         cancelText: 'Annuler',
+        confirmColor: 'primary',
       },
       cssClass: 'alert-modal',
       backdropDismiss: true,
@@ -232,22 +245,23 @@ export class OverviewPage implements OnInit, OnDestroy {
     await modal.present();
     const { data } = await modal.onWillDismiss();
 
-    if (data?.confirmed && data?.selectedUid) {
+    if (data?.confirmed && data?.selectedMemberUid) {   // ← selectedMemberUid (pas selectedUid)
       this.isLaunching = true;
-      this.tontineService.processNextTurn(this.tontineId!, data.selectedUid)
+      this.tontineService.launchTontine(this.tontineId!, data.selectedMemberUid)
         .pipe(finalize(() => this.isLaunching = false))
         .subscribe({
           next: (res) => {
             if (res.success) {
-              this.showToast(`Tour 1 attribué à ${res.data.beneficiaryName}`);
+              this.showToast(`Tour 1 attribué à ${res.data.firstBeneficiary.name} !`);
               this.load();
+            } else {
+              this.showToast(res.error ?? 'Erreur lors du lancement');
             }
           },
           error: () => this.showToast('Erreur réseau'),
         });
     }
   }
-
   // ── Lancement du vote consensuel pour le tour 1 ───────────────────────────────
   private openFirstVote(): void {
     if (!this.tontineId) return;
@@ -271,13 +285,16 @@ export class OverviewPage implements OnInit, OnDestroy {
   async showLaunchConfirm(): Promise<void> {
     if (!this.canLaunch || !this.tontine) return;
 
-    const rotationMethod = this.tontine.rotationMethod;
+    // Mode manual → on ouvre directement le sélecteur, pas de modal de confirmation
+    if (this.tontine.rotationMethod === 'manual') {
+      await this.showManualTurnPicker();
+      return;
+    }
 
-    // Message contextuel selon le mode de rotation
+    // Tous les autres modes modal de confirmation classique
     const rotationMessages: Record<string, string> = {
       random: 'L\'ordre de passage sera tiré au sort automatiquement.',
       seniority: 'L\'ordre sera défini par ancienneté d\'adhésion.',
-      manual: 'Vous choisirez manuellement le bénéficiaire à chaque tour.',
       consensual: 'Les membres voteront pour désigner le bénéficiaire à chaque tour.',
     };
 
@@ -286,27 +303,26 @@ export class OverviewPage implements OnInit, OnDestroy {
       componentProps: {
         type: 'launch',
         title: 'Lancer la tontine',
-        message: rotationMessages[rotationMethod] ?? '',
+        message: rotationMessages[this.tontine.rotationMethod] ?? '',
         extraData: [
           { label: 'Membres', value: `${this.tontine.currentMembers}` },
           { label: 'Cotisation', value: `${this.formatAmount(this.tontine.amount)} FCFA` },
-          { label: 'Gain par tour', value: `${this.formatAmount(this.tontine.potPerTurn)} FCFA` },
-          { label: 'Rotation', value: this.tontineService.rotationLabel(rotationMethod) },
+          { label: 'Gain/tour', value: `${this.formatAmount(this.tontine.potPerTurn)} FCFA` },
+          { label: 'Rotation', value: this.tontineService.rotationLabel(this.tontine.rotationMethod) },
         ],
-        confirmText: rotationMethod === 'consensual' ? 'Ouvrir le vote' : 'Lancer',
+        confirmText: this.tontine.rotationMethod === 'consensual' ? 'Ouvrir le vote' : 'Lancer',
         cancelText: 'Annuler',
         confirmColor: 'primary',
       },
       cssClass: 'alert-modal',
       backdropDismiss: true,
-      showBackdrop: true,
     });
 
     await modal.present();
     const { data } = await modal.onWillDismiss();
 
     if (data?.confirmed) {
-      this.launchTontine();
+      this.launchTontine();   // random / seniority / consensual
     }
   }
 

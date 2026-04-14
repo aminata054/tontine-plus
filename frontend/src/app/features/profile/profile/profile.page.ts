@@ -6,15 +6,6 @@ import { takeUntil } from 'rxjs/operators';
 import {
   IonContent, IonIcon, IonSkeletonText, ToastController, AlertController, ModalController
 } from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  personAddOutline, cardOutline, helpCircleOutline,
-  informationCircleOutline, sendOutline, headsetOutline,
-  personOutline, lockClosedOutline, logOutOutline,
-  chevronForwardOutline, closeOutline, logoWhatsapp,
-  callOutline, alertCircleOutline, checkmarkCircle,
-  timeOutline, sparkles
-} from 'ionicons/icons';
 
 import { UserProfile } from 'src/app/core/models/auth.model';
 import { AuthService } from 'src/app/core/services/auth.service';
@@ -58,16 +49,7 @@ export class ProfilePage implements OnInit, OnDestroy {
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
     private modalCtrl: ModalController,
-  ) {
-    addIcons({
-      personAddOutline, cardOutline, helpCircleOutline,
-      informationCircleOutline, sendOutline, headsetOutline,
-      personOutline, lockClosedOutline, logOutOutline,
-      chevronForwardOutline, closeOutline, logoWhatsapp,
-      callOutline, alertCircleOutline, checkmarkCircle,
-      timeOutline, sparkles
-    });
-  }
+  ) { }
 
   ngOnInit(): void {
     this.load();

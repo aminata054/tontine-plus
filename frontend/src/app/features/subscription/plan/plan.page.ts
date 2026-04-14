@@ -5,12 +5,6 @@ import {
   IonContent, IonIcon,
   ToastController, AlertController,
 } from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import {
-  closeOutline, checkmarkCircle, closeCircle,
-  informationCircleOutline,
-} from 'ionicons/icons';
-
 import { PageHeaderComponent } from 'src/app/shared/ui/page-header/page-header.component';
 import { CustomButtonComponent } from 'src/app/shared/ui/custom-button/custom-button.component';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
@@ -153,9 +147,7 @@ export class PlanPage implements OnInit {
     private subscriptionService: SubscriptionService,
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
-  ) {
-    addIcons({ closeOutline, checkmarkCircle, closeCircle, informationCircleOutline });
-  }
+  ) { }
 
   ngOnInit(): void {
     this.selectedPlan = this.plans[0];
