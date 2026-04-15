@@ -329,7 +329,9 @@ export interface TurnItem {
 export interface MyContribution {
     status: 'paid' | 'due' | 'late';
     paidAt?: any;
+    paymentId?: string; 
     receiptRef?: string;
+    receiptUrl?: string; 
     dueDate?: any;
     timeLeft?: string;
     penalty?: number;

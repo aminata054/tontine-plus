@@ -1,0 +1,72 @@
+<ion-header class="page-header">
+  <ion-title class="header-title">Reçu</ion-title>
+  <div class="header-spacer"></div>
+  <ion-buttons slot="end">
+    <ion-button (click)="dismiss()">
+      <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+    </ion-button>
+  </ion-buttons>
+</ion-header>
+
+<ion-content >
+
+  <div class="receipt-container">
+
+    <div class="receipt-header">
+      <div class="success-icon">
+        <ion-icon src="/assets/icon/successmark.svg"></ion-icon>
+      </div>
+      <h2>Reçu de paiement</h2>
+      <p class="receipt-subtitle">Paiement confirmé avec succès</p>
+    </div>
+
+    <div class="receipt-body">
+
+      <div class="row">
+        <span>Tontine</span>
+        <strong>{{ payment.metadata?.tontineName || '—' }}</strong>
+      </div>
+
+      <div class="row">
+        <span>Montant</span>
+        <strong class="amount">{{ formatAmount(payment.totalAmount) }} FCFA</strong>
+      </div>
+
+      <div class="row">
+        <span>Méthode</span>
+        <strong>{{ payment.paymentMethod }}</strong>
+      </div>
+
+      <div class="row">
+        <span>Date</span>
+        <strong>{{ formatDate(payment.paidAt) }}</strong>
+      </div>
+
+      <div class="row">
+        <span>Transaction</span>
+        <strong class="mono">{{ payment.transactionId }}</strong>
+      </div>
+
+      <div class="row">
+        <span>Tour</span>
+        <strong>{{ payment.turnNumber }}</strong>
+      </div>
+
+      <div class="row status">
+        <span>Statut</span>
+        <strong class="status-text">Confirmé</strong>
+      </div>
+
+    </div>
+
+    <div class="receipt-divider"></div>
+
+    <div class="receipt-actions">
+      <ion-button expand="block" fill="outline" (click)="dismiss()">
+        Fermer
+      </ion-button>
+    </div>
+
+  </div>
+
+</ion-content>

@@ -8,7 +8,8 @@ import authRoutes from './routes/auth.route';
 import tontineRoutes from './routes/tontines.route';
 import notificationRoutes from './routes/notification.route';
 import subscriptionRoutes from './routes/subscription.route';
-import chatRoutes from './routes/chat.routes';
+import chatRoutes from './routes/chat.route';
+import paymentRoutes from './routes/payment.route';
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/tontines/:id/chat', chatRoutes);
 app.use('/api/chat', chatRoutes);  
+app.use('/api/payments', paymentRoutes);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {

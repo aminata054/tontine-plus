@@ -63,6 +63,8 @@ import {
     rocket,
     chatbubbleOutline,
     statsChartOutline,
+    ellipseOutline,
+    receiptOutline,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -95,9 +97,9 @@ export function registerIcons() {
         repeatOutline, flagOutline, playCircleOutline, personAddOutline, lockClosedOutline,
         homeOutline, closeCircleOutline, informationCircleOutline, thumbsUpOutline,
         handLeftOutline, cameraOutline,
-        cardOutline,
+        cardOutline, receiptOutline,
         sendOutline, headsetOutline, logOutOutline,
-        callOutline,
+        callOutline, ellipseOutline,
         rocketOutline, openOutline,
         infiniteOutline, rocket, statsChartOutline,
         trendingUpOutline, starOutline, flashOutline,

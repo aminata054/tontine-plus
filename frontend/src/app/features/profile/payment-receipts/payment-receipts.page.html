@@ -1,0 +1,146 @@
+<ion-content [fullscreen]="true" class="receipts-content">
+
+  <app-page-header title="Mes reçus"></app-page-header>
+
+  <!-- ══════════════ LOADING ══════════════ -->
+  <ng-container *ngIf="status === 'loading'">
+    <div class="receipts-skeleton">
+      <!-- Filtre skeleton -->
+      <div class="filter-skeleton">
+        <ion-skeleton-text animated style="width:70px;height:32px;border-radius:20px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width:90px;height:32px;border-radius:20px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width:80px;height:32px;border-radius:20px;"></ion-skeleton-text>
+      </div>
+      <!-- Cards skeleton -->
+      <div class="receipt-skeleton-card" *ngFor="let _ of [1,2,3,4]">
+        <div class="rsk-left">
+          <ion-skeleton-text animated style="width:40px;height:40px;border-radius:12px;"></ion-skeleton-text>
+        </div>
+        <div class="rsk-body">
+          <ion-skeleton-text animated
+            style="width:55%;height:14px;border-radius:4px;margin-bottom:6px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width:40%;height:12px;border-radius:4px;"></ion-skeleton-text>
+        </div>
+        <div class="rsk-right">
+          <ion-skeleton-text animated
+            style="width:64px;height:18px;border-radius:4px;margin-bottom:6px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width:48px;height:12px;border-radius:4px;"></ion-skeleton-text>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ ERREUR ══════════════ -->
+  <ng-container *ngIf="status === 'error'">
+    <div class="receipts-state">
+      <div class="state-icon state-icon--danger">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+      </div>
+      <h2>Impossible de charger</h2>
+      <p>Vérifiez votre connexion et réessayez.</p>
+      <app-custom-button fill="outline" (clicked)="load()">Réessayer</app-custom-button>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ CONTENU ══════════════ -->
+  <ng-container *ngIf="status === 'success'">
+    <div class="receipts-body">
+
+      <!-- ── Résumé global ── -->
+      <div class="summary-banner">
+        <div class="summary-banner__item">
+          <span class="summary-banner__value">{{ formatAmount(totalPaid) }}</span>
+          <span class="summary-banner__label">FCFA versés</span>
+        </div>
+        <div class="summary-banner__divider"></div>
+        <div class="summary-banner__item">
+          <span class="summary-banner__value">{{ confirmedCount }}</span>
+          <span class="summary-banner__label">Paiement{{ confirmedCount > 1 ? 's' : '' }}</span>
+        </div>
+        <div class="summary-banner__divider"></div>
+        <div class="summary-banner__item">
+          <span class="summary-banner__value">{{ tontineCount }}</span>
+          <span class="summary-banner__label">Tontine{{ tontineCount > 1 ? 's' : '' }}</span>
+        </div>
+      </div>
+
+      <!-- ── Filtres ── -->
+      <div class="filter-bar">
+        <button class="filter-chip" [class.filter-chip--active]="activeFilter === 'all'" (click)="setFilter('all')">
+          Tous
+        </button>
+        <button class="filter-chip" [class.filter-chip--active]="activeFilter === 'confirmed'"
+          (click)="setFilter('confirmed')">
+          Confirmés
+        </button>
+        <button class="filter-chip" [class.filter-chip--active]="activeFilter === 'pending'"
+          (click)="setFilter('pending')">
+          En attente
+        </button>
+        <button class="filter-chip" [class.filter-chip--active]="activeFilter === 'failed'"
+          (click)="setFilter('failed')">
+          Échoués
+        </button>
+      </div>
+
+      <!-- ── Liste vide ── -->
+      <ng-container *ngIf="filteredPayments.length === 0">
+        <div class="empty-state">
+          <div class="empty-state__icon">
+            <ion-icon name="receipt-outline"></ion-icon>
+          </div>
+          <p class="empty-state__title">Aucun reçu trouvé</p>
+          <p class="empty-state__sub">
+            {{ activeFilter === 'all'
+            ? 'Vos cotisations apparaîtront ici une fois payées.'
+            : 'Aucun paiement dans cette catégorie.' }}
+          </p>
+        </div>
+      </ng-container>
+
+      <!-- ── Groupe par mois ── -->
+      <ng-container *ngFor="let group of groupedPayments">
+        <div class="month-group">
+          <p class="month-label">{{ group.month }}</p>
+
+          <div class="receipt-list">
+            <div class="receipt-card" *ngFor="let payment of group.items" (click)="openReceipt(payment)">
+
+              <!-- Icône méthode -->
+              <div class="receipt-card__icon" [style.background]="getMethodColor(payment.paymentMethod) + '18'">
+                <ng-container [ngSwitch]="payment.paymentMethod">
+                  <img *ngSwitchCase="'wave'" src="assets/images/wave-logo.png" alt="Wave" class="method-img" />
+                  <img *ngSwitchCase="'orange'" src="assets/images/orange-money-logo.png" alt="Orange"
+                    class="method-img" />
+                  <img *ngSwitchCase="'kpay'" src="assets/images/kpay-logo.png" alt="Kpay" class="method-img" />
+                  <span *ngSwitchDefault class="method-emoji">📋</span>
+                </ng-container>
+              </div>
+
+              <!-- Corps -->
+              <div class="receipt-card__body">
+                <span class="receipt-card__tontine">{{ payment.metadata?.tontineName ?? 'Tontine' }}</span>
+                <span class="receipt-card__meta">
+                  Tour {{ payment.turnNumber }} &nbsp;·&nbsp; {{ formatDate(payment.confirmedAt ?? payment.paidAt) }}
+                </span>
+              </div>
+
+              <!-- Droite -->
+              <div class="receipt-card__right">
+                <span class="receipt-card__amount">{{ formatAmount(payment.totalAmount) }} <small>FCFA</small></span>
+                <span class="receipt-card__badge" [ngClass]="'receipt-card__badge--' + payment.status">
+                  {{ statusLabel(payment.status) }}
+                </span>
+              </div>
+
+              <!-- Chevron -->
+              <ion-icon name="chevron-forward-outline" class="receipt-card__chevron"></ion-icon>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+    </div>
+  </ng-container>
+
+</ion-content>

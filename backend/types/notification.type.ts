@@ -20,6 +20,8 @@ export type NotificationType =
     | 'join_rejected'
     | 'vote_open'
     | 'vote_next_turn'
+    | 'payment_confirmed'
+    | 'payment_failed'
     | 'system';                 // Message système
 
 export interface NotificationPayload {

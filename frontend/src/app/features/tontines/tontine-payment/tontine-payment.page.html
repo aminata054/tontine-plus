@@ -1,0 +1,334 @@
+<ion-content [fullscreen]="true" class="payment-content">
+
+  <app-page-header [title]="pageTitle" (backClicked)="goBack()"></app-page-header>
+
+  <!-- ══════════════ LOADING ══════════════ -->
+  <ng-container *ngIf="step === 'loading'">
+    <div class="payment-skeleton">
+      <ion-skeleton-text animated
+        style="width:80%;height:18px;border-radius:6px;margin-bottom:12px;"></ion-skeleton-text>
+      <ion-skeleton-text animated
+        style="width:100%;height:110px;border-radius:12px;margin-bottom:16px;"></ion-skeleton-text>
+      <ion-skeleton-text animated
+        style="width:100%;height:64px;border-radius:12px;margin-bottom:10px;"></ion-skeleton-text>
+      <ion-skeleton-text animated
+        style="width:100%;height:64px;border-radius:12px;margin-bottom:10px;"></ion-skeleton-text>
+      <ion-skeleton-text animated style="width:100%;height:64px;border-radius:12px;"></ion-skeleton-text>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ ERREUR ══════════════ -->
+  <ng-container *ngIf="step === 'error'">
+    <div class="payment-state">
+      <div class="state-icon state-icon--danger">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+      </div>
+      <h2>Impossible de charger</h2>
+      <p>Une erreur est survenue. Vérifiez votre connexion et réessayez.</p>
+      <app-custom-button fill="outline" (clicked)="loadTontine()">Réessayer</app-custom-button>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ STEP 1 : CHOIX DE LA MÉTHODE ══════════════ -->
+  <ng-container *ngIf="step === 'select_method' && tontine">
+    <div class="payment-body">
+
+      <!-- Carte info tontine + détails paiement -->
+      <div class="payment-summary-card">
+        <!-- Header tontine -->
+        <div class="summary-tontine-row">
+          <div class="summary-tontine-avatar">
+            <ion-icon name="people-outline"></ion-icon>
+          </div>
+          <span class="summary-tontine-name">
+            {{ tontine.name }} &nbsp;—&nbsp; Tour {{ tontine.currentTurn }}
+          </span>
+        </div>
+
+        <div class="summary-divider"></div>
+
+        <!-- Détails paiement -->
+        <p class="summary-section-title">Détails du paiement</p>
+        <div class="summary-row">
+          <span class="summary-label">Cotisation</span>
+          <span class="summary-value">{{ formatAmount(baseAmount) }} FCFA</span>
+        </div>
+        <div class="summary-row" [class.summary-row--late]="isLate">
+          <span class="summary-label">Pénalité (si retard)</span>
+          <span class="summary-value summary-value--penalty">{{ formatAmount(penaltyAmount) }} FCFA</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-row summary-row--total">
+          <span class="summary-label--total">Total à payer</span>
+          <span class="summary-value--total">{{ formatAmount(totalAmount) }} FCFA</span>
+        </div>
+      </div>
+
+      <!-- Méthodes de paiement -->
+      <p class="section-title">Méthode de paiement</p>
+
+      <div class="methods-list">
+        <button class="method-card" *ngFor="let method of methods" (click)="selectMethod(method)">
+          <div class="method-card__logo" [style.background]="method.color + '18'">
+            <ng-container [ngSwitch]="method.id">
+              <img *ngSwitchCase="'wave'" src="assets/images/wave-logo.png" alt="Wave" class="method-card__img" />
+              <img *ngSwitchCase="'orange'" src="assets/images/orange-money-logo.png" alt="Orange Money"
+                class="method-card__img" />
+              <img *ngSwitchCase="'free'" src="assets/images/kpay-logo.png" alt="Free Money" class="method-card__img" />
+             <!-- Fallback emoji pour les méthodes sans image -->
+              <span *ngSwitchCase="'manual'" class="method-card__emoji">📋</span>
+              <span *ngSwitchDefault class="method-card__emoji">💳</span>
+            </ng-container>
+          </div>
+          <span class="method-card__name">Payer avec {{ method.label }}</span>
+        </button>
+      </div>
+
+      <!-- CTA principal -->
+      <div class="pay-cta-wrapper">
+        <app-custom-button expand="block" (clicked)="openDefaultMethod()">
+          Payer maintenant
+        </app-custom-button>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ STEP 2 : SAISIE DU NUMÉRO ══════════════ -->
+  <ng-container *ngIf="step === 'enter_number' && selectedMethod">
+    <div class="payment-body">
+
+      <div class="selected-method-header">
+        <div class="selected-method-header__icon" [style.background]="selectedMethod.color + '18'">
+          <ng-container [ngSwitch]="selectedMethod.id">
+            <img *ngSwitchCase="'wave'" src="assets/images/wave-logo.png" alt="Wave" class="method-header__img" />
+            <img *ngSwitchCase="'orange'" src="assets/images/orange-money-logo.png" alt="Orange"
+              class="method-header__img" />
+            <img *ngSwitchCase="'free'" src="assets/images/kpay-logo.png" alt="Kpay" class="method-header__img" />
+            <span *ngSwitchDefault style="font-size:32px">📋</span>
+          </ng-container>
+        </div>
+        <div>
+          <p class="selected-method-header__name">{{ selectedMethod.label }}</p>
+          <p class="selected-method-header__amount">{{ formatAmount(totalAmount) }} FCFA</p>
+        </div>
+      </div>
+
+      <div class="input-block">
+        <label class="input-block__label">
+          {{ isManual ? 'Référence du paiement' : 'Numéro de téléphone' }}
+        </label>
+        <div class="input-block__field">
+          <ion-input [(ngModel)]="phoneNumber" [placeholder]="selectedMethod.placeholder"
+            [type]="isManual ? 'text' : 'tel'" inputmode="numeric" fill="outline" [clearInput]="true"
+            class="phone-input">
+          </ion-input>
+        </div>
+        <p class="input-block__hint" *ngIf="!isManual">Ex : {{ selectedMethod.placeholder }}</p>
+        <p class="input-block__hint" *ngIf="isManual">
+          Entrez la référence de votre virement ou un commentaire pour identifier votre paiement
+        </p>
+      </div>
+
+      <app-custom-button expand="block" (clicked)="proceedToConfirm()">Continuer</app-custom-button>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ STEP 3 : RÉCAPITULATIF ══════════════ -->
+  <ng-container *ngIf="step === 'confirm' && tontine && selectedMethod">
+    <div class="payment-body">
+
+      <h3 class="section-title">Récapitulatif</h3>
+
+      <div class="recap-card">
+        <div class="recap-row">
+          <span class="recap-label">Tontine</span>
+          <span class="recap-value">{{ tontine.name }}</span>
+        </div>
+        <div class="recap-row">
+          <span class="recap-label">Tour</span>
+          <span class="recap-value">{{ currentTurnLabel }}</span>
+        </div>
+        <div class="recap-row">
+          <span class="recap-label">Date limite</span>
+          <span class="recap-value">{{ formatDate(tontine.nextPaymentDate) }}</span>
+        </div>
+      </div>
+
+      <div class="recap-card">
+        <div class="recap-row">
+          <span class="recap-label">Cotisation</span>
+          <span class="recap-value">{{ formatAmount(baseAmount) }} FCFA</span>
+        </div>
+        <div class="recap-row" *ngIf="isLate">
+          <span class="recap-label recap-label--danger">Pénalité ({{ daysLate }}j de retard)</span>
+          <span class="recap-value recap-value--danger">+ {{ formatAmount(penaltyAmount) }} FCFA</span>
+        </div>
+        <div class="recap-row recap-row--total">
+          <span class="recap-label">Total</span>
+          <span class="recap-value recap-value--primary">{{ formatAmount(totalAmount) }} FCFA</span>
+        </div>
+      </div>
+
+      <div class="recap-card">
+        <div class="recap-row">
+          <span class="recap-label">Nom</span>
+          <span class="recap-value">{{ fullName }}</span>
+        </div>
+        <div class="recap-row">
+          <span class="recap-label">Méthode</span>
+          <span class="recap-value">{{ selectedMethod.label }}</span>
+        </div>
+        <div class="recap-row">
+          <span class="recap-label">{{ isManual ? 'Référence' : 'Numéro' }}</span>
+          <span class="recap-value recap-value--mono">{{ phoneNumber }}</span>
+        </div>
+      </div>
+
+      <div class="manual-notice" *ngIf="isManual">
+        <ion-icon name="information-circle-outline"></ion-icon>
+        <p>Votre paiement sera vérifié manuellement par le créateur de la tontine.</p>
+      </div>
+
+      <app-custom-button expand="block" [loading]="isSubmitting" (clicked)="pay()">
+        Payer {{ formatAmount(totalAmount) }} FCFA
+      </app-custom-button>
+
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ STEP 4 : TRAITEMENT ══════════════ -->
+  <ng-container *ngIf="step === 'processing'">
+    <div class="payment-state">
+      <div class="state-icon state-icon--processing">
+        <div class="spinner"></div>
+      </div>
+      <h2>{{ processingMessage }}</h2>
+      <p>Veuillez patienter, ne fermez pas l'application</p>
+      <div class="processing-steps">
+        <div class="processing-step processing-step--done">
+          <ion-icon name="checkmark-circle"></ion-icon>
+          <span>Paiement initié</span>
+        </div>
+        <div class="processing-step processing-step--active">
+          <div class="mini-spinner"></div>
+          <span>Confirmation en cours…</span>
+        </div>
+        <div class="processing-step">
+          <ion-icon name="ellipse-outline"></ion-icon>
+          <span>Validation finale</span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ STEP 5 : SUCCÈS ══════════════ -->
+  <ng-container *ngIf="step === 'success' && confirmedPayment">
+    <div class="receipt-page">
+
+      <!-- Icône succès -->
+      <div class="receipt-check-wrapper">
+        <div class="receipt-check" [class.receipt-check--pending]="isManual">
+          <ion-icon [src]="isManual ? '/assets/icon/waiting.svg' : '/assets/icon/successmark.svg'"></ion-icon>
+        </div>
+        <p class="receipt-check__label">
+          {{ isManual ? 'Paiement en attente de validation' : 'Cotisation versée avec succès' }}
+        </p>
+      </div>
+
+      <!-- Numéro de reçu -->
+      <div class="receipt-number-row" *ngIf="confirmedPayment.transactionId && !isManual">
+        <span class="receipt-number-label">Reçu</span>
+        <span class="receipt-number-value">#{{ confirmedPayment.transactionId }}</span>
+      </div>
+
+      <!-- Détails tontine -->
+      <div class="receipt-section" *ngIf="tontine">
+        <p class="receipt-section__title">Détails de la tontine</p>
+        <div class="receipt-row">
+          <span class="receipt-row__label">Nom de la tontine</span>
+          <span class="receipt-row__value">{{ tontine.name }}</span>
+        </div>
+        <div class="receipt-row" *ngIf="currentUserName">
+          <span class="receipt-row__label">Payeur</span>
+          <span class="receipt-row__value">{{ currentUserName }}</span>
+        </div>
+        <div class="receipt-row" *ngIf="phoneNumber">
+          <span class="receipt-row__label">Téléphone</span>
+          <span class="receipt-row__value">{{ phoneNumber }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-row__label">Tour</span>
+          <span class="receipt-row__value">{{ tontine.currentTurn }}/{{ tontine.totalTurns }}</span>
+        </div>
+      </div>
+
+      <!-- Détails paiement -->
+      <div class="receipt-section">
+        <p class="receipt-section__title">Détails du paiement</p>
+        <div class="receipt-row">
+          <span class="receipt-row__label">Montant</span>
+          <span class="receipt-row__value">{{ formatAmount(confirmedPayment.totalAmount) }} FCFA</span>
+        </div>
+        <div class="receipt-row" *ngIf="selectedMethod">
+          <span class="receipt-row__label">Méthode</span>
+          <span class="receipt-row__value">{{ selectedMethod.label }}</span>
+        </div>
+        <div class="receipt-row" *ngIf="confirmedPayment.transactionId">
+          <span class="receipt-row__label">Transaction</span>
+          <span class="receipt-row__value receipt-row__value--mono">{{ confirmedPayment.transactionId }}</span>
+        </div>
+      </div>
+
+      <!-- Date -->
+      <div class="receipt-date-row" *ngIf="confirmedPayment.confirmedAt">
+        <span class="receipt-date-label">Date</span>
+        <span class="receipt-date-value">{{ formatDateTime(confirmedPayment.confirmedAt) }}</span>
+      </div>
+
+      <!-- Certification -->
+      <div class="receipt-certified">
+        <p>Ce reçu est certifié par Tontine Plus</p>
+        <p *ngIf="confirmedPayment.paymentId" class="receipt-certified__id">
+          ID unique : {{ confirmedPayment.paymentId }}
+        </p>
+      </div>
+
+      <!-- Actions -->
+      <div class="receipt-actions">
+        <app-custom-button expand="block" *ngIf="confirmedPayment.receiptUrl && !isManual"
+          (clicked)="downloadReceipt()">
+          Télécharger
+        </app-custom-button>
+        <app-custom-button expand="block" fill="outline" (clicked)="goToTontine()">
+          Retour à la tontine
+        </app-custom-button>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ STEP 6 : ÉCHEC ══════════════ -->
+  <ng-container *ngIf="step === 'failed'">
+    <div class="payment-state">
+      <div class="state-icon state-icon--danger">
+        <ion-icon name="close-circle-outline"></ion-icon>
+      </div>
+      <h2>Paiement échoué</h2>
+      <p>
+        Le paiement n'a pas pu être traité. Vérifiez que votre compte
+        {{ selectedMethod?.label }} dispose de fonds suffisants et réessayez.
+      </p>
+      <div class="failed-actions">
+        <app-custom-button expand="block" (clicked)="retryPayment()">
+          <ion-icon name="refresh-outline" slot="start"></ion-icon>
+          Réessayer
+        </app-custom-button>
+        <app-custom-button expand="block" fill="outline" (clicked)="goToTontine()">
+          Retour à la tontine
+        </app-custom-button>
+      </div>
+    </div>
+  </ng-container>
+
+</ion-content>

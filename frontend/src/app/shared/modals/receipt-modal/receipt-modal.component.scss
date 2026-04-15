@@ -1,0 +1,126 @@
+.page-header {
+    display: flex;
+    align-items: center;
+    padding: 20px 16px 12px;
+    background: white;
+
+    ion-title {
+        font-size: 20px;
+        font-weight: 700;
+        font-family: var(--font-urbanist);
+        color: #1E293B;
+    }
+}
+
+.header-spacer {
+    width: 40px;
+}
+
+.receipt-container {
+    background: #fff;
+    border-radius: var(--radius); 
+    margin: 40px 16px 80px;
+    padding: 24px 20px 28px;
+    box-shadow: var(--shadow);
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.receipt-header {
+    text-align: center;
+    margin-bottom: 28px;
+
+    .success-icon {
+        width: 64px;
+        height: 64px;
+        background: #DCFCE7;
+        color: var(--green);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 36px;
+    }
+
+    h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1E293B;
+        margin: 0 0 4px;
+        font-family: var(--font-urbanist);
+    }
+
+    .receipt-subtitle {
+        font-size: 13.5px;
+        color: var(--text-muted);
+        margin: 0;
+    }
+}
+
+.receipt-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14.5px;
+    color: #334155;
+
+    span {
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    strong {
+        font-weight: 600;
+        color: #1E293B;
+        text-align: right;
+    }
+
+    &.amount strong {
+        font-size: 18px;
+        color: var(--ion-color-primary);
+        font-weight: 800;
+        font-family: var(--font-urbanist);
+    }
+
+    &.mono strong {
+        font-family: monospace;
+        font-size: 13.2px;
+        letter-spacing: 0.5px;
+        color: #64748B;
+    }
+
+    &.status {
+        .status-text {
+            color: var(--green);
+            background: #F0FDF4;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+    }
+}
+
+.receipt-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, #E2E8F0, transparent);
+    margin: 20px 0;
+}
+
+.receipt-actions {
+    margin-top: 12px;
+
+    ion-button {
+        --border-radius: 12px;
+        height: 50px;
+        font-weight: 600;
+    }
+}

@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil, finalize } from 'rxjs/operators';
 import {
-  IonContent, IonIcon, IonSkeletonText, ToastController,
+  IonContent, IonIcon, IonSkeletonText, ToastController, ModalController
 } from '@ionic/angular/standalone';
 
 import { HistoryEntry, MyContribution, PageStats, Tontine, TontineMember, TurnItem } from 'src/app/core/models/tontine.model';
@@ -12,6 +12,8 @@ import { TontineService } from 'src/app/core/services/tontine.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { PageHeaderComponent } from 'src/app/shared/ui/page-header/page-header.component';
 import { CustomButtonComponent } from 'src/app/shared/ui/custom-button/custom-button.component';
+import { PaymentService } from 'src/app/core/services/payment.service';
+import { ReceiptModalComponent } from 'src/app/shared/modals/receipt-modal/receipt-modal.component';
 
 type PageStatus = 'loading' | 'success' | 'error';
 type TabKey = 'flux' | 'tour' | 'historiques' | 'parametres';
@@ -33,7 +35,7 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
   status: PageStatus = 'loading';
   tontine: Tontine | null = null;
   tontineId: string | null = null;
-
+  myPayments: any[] = [];
   activeTab: TabKey = 'flux';
   private donutDrawn = false;
 
@@ -68,8 +70,10 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
     private route: ActivatedRoute,
     private router: Router,
     private tontineService: TontineService,
+    private paymentService: PaymentService,
     private authService: AuthService,
     private toastCtrl: ToastController,
+    private modalCtrl: ModalController
   ) { }
 
   ngOnInit(): void {
@@ -140,6 +144,7 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
           this.buildTimeline();
           this.buildStats();
           this.buildMyContribution();
+          this.loadMyPayments();
         },
       });
   }
@@ -284,6 +289,7 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
         status: 'paid',
         paidAt: this.tontine.nextPaymentDate, // approximation — endpoint paiements requis
         receiptRef: null as any,
+        paymentId: null as any,
       };
     } else {
       // À payer
@@ -293,6 +299,58 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
         timeLeft: this.computeTimeLeft(this.tontine.nextPaymentDate),
       };
     }
+  }
+
+  loadMyPayments(): void {
+    if (!this.tontineId) return;
+
+    this.paymentService.getMyPayments(this.tontineId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(res => {
+        if (res.success) {
+          this.myPayments = res.data;
+
+          // prendre le dernier paiement
+          const lastPayment = this.myPayments[this.myPayments.length - 1];
+
+          if (lastPayment) {
+            this.myContribution = {
+              status: 'paid',
+              paidAt: lastPayment.createdAt,
+              receiptRef: lastPayment.paymentId,
+              receiptUrl: lastPayment.receiptUrl, 
+            };
+          }
+        }
+      });
+  }
+
+  async openReceipt() {
+    if (!this.myContribution || this.myContribution.status !== 'paid') return;
+
+    const payment = {
+      totalAmount: this.tontine?.amount,
+      paymentMethod: this.myPayments[this.myPayments.length - 1]?.paymentMethod ?? '—',
+      confirmedAt: this.myContribution.paidAt,
+      transactionId: this.myPayments[this.myPayments.length - 1]?.transactionId,
+      turnNumber: this.tontine?.currentTurn,
+      paidAt: this.toDate(this.myPayments[this.myPayments.length - 1]?.paidAt),
+      status: 'confirmé',
+      metadata: {
+        tontineName: this.tontine?.name
+      }
+    };
+
+    const modal = await this.modalCtrl.create({
+      component: ReceiptModalComponent,
+      componentProps: { payment },
+      breakpoints: [0, 0.5, 0.8],
+      initialBreakpoint: 0.5,
+      backdropDismiss: true,
+      cssClass: 'panel-modal',
+    });
+
+    await modal.present();
   }
 
   // ════════════════════════════════════════════════════════
@@ -500,15 +558,7 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
       position: 'bottom',
     });
     await t.present();
-  }
-
-  async openReceipt(): Promise<void> {
-    const t = await this.toastCtrl.create({
-      message: 'Chargement du reçu…',
-      duration: 2000,
-      position: 'bottom',
-    });
-    await t.present();
+    this.router.navigate(['/tontines', this.tontineId, 'pay']);
   }
 
   setTab(tab: TabKey): void {

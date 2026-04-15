@@ -251,4 +251,6 @@ export class ProfilePage implements OnInit, OnDestroy {
   goToHelpCenter(): void { this.router.navigate(['/profile/help-center']); }
   goToAbout(): void { this.router.navigate(['/profile/about']); }
   goToFeedback(): void { this.router.navigate(['/profile/feedback']); }
+  goToMyReceipts(): void { this.router.navigate(['/profile/receipts']); }
+
 }

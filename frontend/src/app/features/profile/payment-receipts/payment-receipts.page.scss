@@ -1,0 +1,356 @@
+:host {
+    --radius: 14px;
+    --radius-sm: 10px;
+    --shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+    --text-muted: #8A94A6;
+    --text-dark: #1A1D23;
+    --border: #EAEDF2;
+    --blue-primary: #1B3FA0;
+    --green: #16A34A;
+    --orange: #D97706;
+    --red: #DC2626;
+}
+
+.receipts-content {
+    --background: #F5F6FA;
+    --ion-font-family: var(--font-urbanist);
+}
+
+// ─── Skeleton ──────────────────────────────────────────────
+.receipts-skeleton {
+    padding: 16px;
+}
+
+.filter-skeleton {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.receipt-skeleton-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+
+    .rsk-body {
+        flex: 1;
+    }
+
+    .rsk-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+    }
+}
+
+// ─── Layout principal ──────────────────────────────────────
+.receipts-body {
+    padding: 16px 16px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+// ─── Bannière résumé ───────────────────────────────────────
+.summary-banner {
+    background: var(--blue-primary);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+
+    &__item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+    }
+
+    &__value {
+        font-size: 18px;
+        font-weight: 800;
+        color: #fff;
+        font-family: var(--font-urbanist, inherit);
+        line-height: 1.2;
+    }
+
+    &__label {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.65);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    &__divider {
+        width: 1px;
+        height: 36px;
+        background: rgba(255, 255, 255, 0.2);
+    }
+}
+
+// ─── Filtres ───────────────────────────────────────────────
+.filter-bar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.filter-chip {
+    flex-shrink: 0;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-family: var(--font-urbanist, inherit);
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &--active {
+        background: var(--blue-primary);
+        border-color: var(--blue-primary);
+        color: #fff;
+        font-weight: 700;
+    }
+}
+
+// ─── Groupe mensuel ────────────────────────────────────────
+.month-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.month-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: capitalize;
+    letter-spacing: 0.3px;
+    margin: 0 0 2px 4px;
+}
+
+// ─── Liste des reçus ───────────────────────────────────────
+.receipt-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.receipt-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 13px 14px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+
+    &:active {
+        transform: scale(0.985);
+        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    }
+
+    &__icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    &__body {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    &__tontine {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-dark);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-family: var(--font-urbanist, inherit);
+    }
+
+    &__meta {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    &__right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+
+    &__amount {
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--text-dark);
+        font-family: var(--font-urbanist, inherit);
+
+        small {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+    }
+
+    &__badge {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+
+        &--confirmed {
+            background: #DCFCE7;
+            color: var(--green);
+        }
+
+        &--pending {
+            background: #FEF9C3;
+            color: var(--orange);
+        }
+
+        &--failed {
+            background: #FEE2E2;
+            color: var(--red);
+        }
+    }
+
+    &__chevron {
+        font-size: 16px;
+        color: var(--border);
+        flex-shrink: 0;
+    }
+}
+
+.method-img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+.method-emoji {
+    font-size: 20px;
+    line-height: 1;
+}
+
+// ─── État vide ─────────────────────────────────────────────
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 48px 24px;
+    text-align: center;
+
+    &__icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: #EFF2F9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 4px;
+
+        ion-icon {
+            font-size: 32px;
+            color: var(--blue-primary);
+        }
+    }
+
+    &__title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+        font-family: var(--font-urbanist, inherit);
+    }
+
+    &__sub {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin: 0;
+        max-width: 240px;
+        line-height: 1.5;
+    }
+}
+
+// ─── État d'erreur ────────────────────────────────────────
+.receipts-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 48px 24px;
+    text-align: center;
+
+    h2 {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin: 0;
+        font-family: var(--font-urbanist, inherit);
+    }
+
+    p {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin: 0;
+        max-width: 260px;
+    }
+}
+
+.state-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    ion-icon {
+        font-size: 40px;
+    }
+
+    &--danger {
+        background: #FEE2E2;
+
+        ion-icon {
+            color: var(--red);
+        }
+    }
+}

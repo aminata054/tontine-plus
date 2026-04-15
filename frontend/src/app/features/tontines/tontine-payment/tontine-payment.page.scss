@@ -1,0 +1,678 @@
+:host {
+    --radius: 14px;
+    --radius-sm: 10px;
+    --shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+    --text-muted: #8A94A6;
+    --text-dark: #1A1D23;
+    --text-medium: #4A5568;
+    --border: #EAEDF2;
+    --blue-primary: #1B3FA0;
+    --green: #16A34A;
+    --orange: #D97706;
+    --red: #DC2626;
+}
+
+.payment-content {
+    --background: #F5F6FA;
+    --ion-font-family: var(--font-urbanist);
+}
+
+// ─── Skeleton ─────────────────────────────────────────
+.payment-skeleton {
+    padding: 20px 16px;
+
+    ion-skeleton-text {
+        display: block;
+    }
+}
+
+// ─── Layout général ───────────────────────────────────
+.payment-body {
+    padding: 16px 16px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 4px 0 2px;
+    font-family: var(--font-urbanist, inherit);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+// ─── Carte résumé paiement (Step 1) ───────────────────
+.payment-summary-card {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+}
+
+.summary-tontine-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.summary-tontine-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #EFF2F9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    ion-icon {
+        font-size: 20px;
+        color: var(--blue-primary);
+    }
+}
+
+.summary-tontine-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+    font-family: var(--font-urbanist, inherit);
+}
+
+.summary-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 12px 0;
+}
+
+.summary-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0 0 10px;
+    font-family: var(--font-urbanist, inherit);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+
+    &--late .summary-value--penalty {
+        color: var(--red);
+    }
+
+    &--total {
+        padding-top: 10px;
+    }
+}
+
+.summary-label {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.summary-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dark);
+
+    &--penalty {
+        color: var(--text-muted);
+    }
+}
+
+.summary-label--total {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-dark);
+    font-family: var(--font-urbanist, inherit);
+}
+
+.summary-value--total {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-dark);
+    font-family: var(--font-urbanist, inherit);
+}
+
+// ─── Liste des méthodes ───────────────────────────────
+.methods-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.method-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s, transform 0.12s;
+    font-family: var(--font-urbanist, inherit);
+    width: 100%;
+
+    &:active {
+        transform: scale(0.985);
+        border-color: var(--blue-primary);
+    }
+
+    &__logo {
+        width: 46px;
+        height: 46px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    &__img {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+    }
+
+    &__emoji {
+        font-size: 24px;
+        line-height: 1;
+    }
+
+    &__name {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-dark);
+        flex: 1;
+    }
+}
+
+// ─── Bouton CTA payer maintenant ──────────────────────
+.pay-cta-wrapper {
+    margin-top: 4px;
+}
+
+// ─── Méthode sélectionnée (step 2) ────────────────────
+.selected-method-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow);
+
+    &__icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    p {
+        margin: 0;
+    }
+
+    &__name {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    &__amount {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--blue-primary);
+        font-family: var(--font-urbanist, inherit);
+    }
+}
+
+.method-header__img {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+}
+
+// ─── Saisie numéro ────────────────────────────────────
+.input-block {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow);
+
+    &__label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 10px;
+    }
+
+    &__field ion-input {
+        --border-radius: 10px;
+        --padding-start: 14px;
+        --padding-end: 14px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    &__hint {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin: 8px 0 0;
+    }
+}
+
+// ─── Récapitulatif (step 3) ───────────────────────────
+.recap-card {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 4px 16px;
+    box-shadow: var(--shadow);
+}
+
+.recap-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &--total {
+        border-top: 1.5px solid var(--border);
+        margin-top: 4px;
+
+        .recap-label,
+        .recap-value {
+            font-weight: 800;
+            font-size: 15px;
+        }
+    }
+}
+
+.recap-label {
+    font-size: 13.5px;
+    color: var(--text-muted);
+
+    &--danger {
+        color: var(--red);
+    }
+}
+
+.recap-value {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-dark);
+    text-align: right;
+
+    &--primary {
+        color: var(--blue-primary);
+    }
+
+    &--danger {
+        color: var(--red);
+    }
+
+    &--mono {
+        font-family: monospace;
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+}
+
+// ─── Notice manuelle ──────────────────────────────────
+.manual-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+    border-radius: var(--radius-sm);
+    padding: 14px;
+
+    ion-icon {
+        font-size: 20px;
+        color: var(--orange);
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    p {
+        font-size: 13px;
+        color: #92400E;
+        margin: 0;
+        line-height: 1.5;
+    }
+}
+
+// ─── États généraux (processing, error, failed) ───────
+.payment-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 48px 24px 40px;
+    text-align: center;
+
+    h2 {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin: 0;
+        font-family: var(--font-urbanist, inherit);
+    }
+
+    p {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin: 0;
+        line-height: 1.6;
+        max-width: 280px;
+    }
+}
+
+.state-icon {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+
+    ion-icon {
+        font-size: 48px;
+    }
+
+    &--success {
+        background: #DCFCE7;
+
+        ion-icon {
+            color: #DCFCE7;
+        }
+    }
+
+    &--danger {
+        background: #FEE2E2;
+
+        ion-icon {
+            color: var(--red);
+        }
+    }
+
+    &--pending {
+        background: #FEF9C3;
+
+        ion-icon {
+            color: var(--orange);
+        }
+    }
+
+    &--processing {
+        background: #DBEAFE;
+        border: 3px solid #BFDBFE;
+    }
+}
+
+// ─── Spinner ──────────────────────────────────────────
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #BFDBFE;
+    border-top-color: var(--blue-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.mini-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #BFDBFE;
+    border-top-color: var(--blue-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.processing-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 240px;
+    margin-top: 8px;
+}
+
+.processing-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #CBD5E1;
+
+    ion-icon {
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    &--done {
+        color: var(--green);
+
+        ion-icon {
+            color: var(--green);
+        }
+    }
+
+    &--active {
+        color: var(--blue-primary);
+        font-weight: 600;
+    }
+}
+
+// ─── Actions ──────────────────────────────────────────
+.failed-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 320px;
+}
+
+// ══════════════════════════════════════════════════════
+// PAGE DE REÇU (Step 5 : success)
+// ══════════════════════════════════════════════════════
+
+.receipt-page {
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px 60px;
+    gap: 0;
+    background: #F5F6FA;
+    min-height: 100%;
+}
+
+// ── Check / succès ────────────────────────────────────
+.receipt-check-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.receipt-check {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, 0.25);
+
+    ion-icon {
+        font-size: 32px;
+        color: #fff;
+    }
+
+    &--pending {
+        background: var(--orange);
+        box-shadow: 0 4px 16px rgba(217, 119, 6, 0.25);
+    }
+}
+
+.receipt-check__label {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+    text-align: center;
+    font-family: var(--font-urbanist, inherit);
+}
+
+// ── Numéro de reçu ────────────────────────────────────
+.receipt-number-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+}
+
+.receipt-number-label {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.receipt-number-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dark);
+    font-family: monospace;
+    letter-spacing: 0.5px;
+}
+
+// ── Sections reçu ─────────────────────────────────────
+.receipt-section {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 4px 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+}
+
+.receipt-section__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 14px 0 2px;
+    font-family: var(--font-urbanist, inherit);
+}
+
+.receipt-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &__label {
+        font-size: 13px;
+        color: var(--text-muted);
+        flex-shrink: 0;
+    }
+
+    &__value {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-dark);
+        text-align: right;
+
+        &--mono {
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+    }
+}
+
+// ── Date ──────────────────────────────────────────────
+.receipt-date-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+}
+
+.receipt-date-label {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.receipt-date-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+// ── Certification ─────────────────────────────────────
+.receipt-certified {
+    padding: 0 4px 16px;
+    text-align: center;
+
+    p {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin: 2px 0;
+        line-height: 1.5;
+    }
+
+    &__id {
+        font-family: monospace;
+        font-size: 10px;
+        word-break: break-all;
+    }
+}
+
+// ── Actions reçu ──────────────────────────────────────
+.receipt-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}

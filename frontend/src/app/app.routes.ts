@@ -99,6 +99,15 @@ export const routes: Routes = [
             path: ':id/member-profile/:memberId',
             loadComponent: () => import('./features/tontines/member-profile/member-profile.page').then(m => m.MemberProfilePage)
           },
+          {
+            path: ':tontineId/pay',
+            loadComponent: () => import('./features/tontines/tontine-payment/tontine-payment.page').then(m => m.TontinePaymentPage)
+          },
+          {
+            path: ':tontineId/payments/:paymentId',
+            loadComponent: () => import('./features/tontines/tontine-payment/tontine-payment.page').then(m => m.TontinePaymentPage)
+          },
+
         ]
       },
       {
@@ -143,6 +152,11 @@ export const routes: Routes = [
             path: 'change-pin',
             loadComponent: () => import('./features/profile/change-pin/change-pin.page').then(m => m.ChangePinPage)
           },
+          {
+            path: 'receipts',
+            loadComponent: () => import('./features/profile/payment-receipts/payment-receipts.page').then(m => m.PaymentReceiptsPage)
+          },
+
         ]
       },
 
@@ -170,5 +184,4 @@ export const routes: Routes = [
     path: 'notification-page',
     loadComponent: () => import('./features/notifications/notification-page/notification-page.page').then(m => m.NotificationPagePage)
   },
-
 ];
