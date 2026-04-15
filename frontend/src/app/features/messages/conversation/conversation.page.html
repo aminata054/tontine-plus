@@ -1,13 +1,82 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>conversation</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content [fullscreen]="true" class="conversations-content">
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">conversation</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <app-page-header title="Messages"></app-page-header>
+
+  <!-- ── Barre de recherche ── -->
+
+  <div class="conv-search">
+      <app-custom-input placeholder="Rechercher une tontine..." [value]="searchQuery" (valueChange)="onSearch()"
+        fill="outline">
+      </app-custom-input>
+  </div>
+
+
+  <!-- ── État chargement ── -->
+  <div class="conv-loading" *ngIf="isLoading">
+    <div class="conv-skeleton" *ngFor="let i of [1,2,3,4,5]">
+      <div class="conv-skeleton__avatar"></div>
+      <div class="conv-skeleton__body">
+        <div class="conv-skeleton__line conv-skeleton__line--title"></div>
+        <div class="conv-skeleton__line conv-skeleton__line--sub"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── État vide ── -->
+  <div class="conv-empty" *ngIf="!isLoading && filtered.length === 0">
+    <ion-icon name="chatbubbles-outline" class="conv-empty__icon"></ion-icon>
+    <p class="conv-empty__title">Aucune conversation</p>
+    <p class="conv-empty__sub">
+      {{ searchQuery ? 'Aucune tontine ne correspond à votre recherche.' : 'Vous n\'avez aucune conversation pour le moment.' }}
+    </p>
+  </div>
+
+  <!-- ── Liste des conversations ── -->
+  <div class="conv-list" *ngIf="!isLoading && filtered.length > 0">
+    <div class="conv-item" *ngFor="let conv of filtered; trackBy: trackByTontineId" (click)="openChat(conv)">
+      <!-- Avatar tontine -->
+      <div class="conv-item__avatar">
+        <img *ngIf="conv.tontineIcon" [src]="conv.tontineIcon" [alt]="conv.tontineName" />
+        <div *ngIf="!conv.tontineIcon" class="conv-item__avatar-placeholder">
+          {{ getInitials(conv.tontineName) }}
+        </div>
+        <!-- Badge statut actif -->
+        <div class="conv-item__status-dot" [class.conv-item__status-dot--active]="conv.tontineStatus === 'active'"
+          [class.conv-item__status-dot--pending]="conv.tontineStatus === 'pending'"></div>
+      </div>
+
+      <!-- Contenu -->
+      <div class="conv-item__body">
+        <div class="conv-item__row conv-item__row--top">
+          <span class="conv-item__name">{{ conv.tontineName }}</span>
+          <span class="conv-item__time">{{ formatTime(conv.lastMessageAt) }}</span>
+        </div>
+        <div class="conv-item__row conv-item__row--bottom">
+          <p class="conv-item__preview" [class.conv-item__preview--unread]="conv.unreadCount > 0">
+            <span *ngIf="conv.lastMessageSender" class="conv-item__preview-sender">
+              {{ conv.lastMessageSender }} :
+            </span>
+            {{ conv.lastMessage ?? 'Aucun message' }}
+          </p>
+          <div class="conv-item__meta">
+            <!-- Badge non lus -->
+            <span class="conv-item__badge" *ngIf="conv.unreadCount > 0">
+              {{ conv.unreadCount > 99 ? '99+' : conv.unreadCount }}
+            </span>
+          </div>
+        </div>
+        <!-- Membres -->
+        <div class="conv-item__members">
+          <ion-icon name="people-outline"></ion-icon>
+          <span>{{ conv.membersCount }} membre{{ conv.membersCount > 1 ? 's' : '' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Pull to refresh ── -->
+  <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
 </ion-content>

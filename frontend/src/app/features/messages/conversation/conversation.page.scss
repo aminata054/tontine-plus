@@ -1,0 +1,291 @@
+:host {
+    --primary: var(--ion-color-primary, #1A3A8F);
+    --text-dark: #0D1B2A;
+    --text-mid: #4A5568;
+    --text-light: #9AA5B4;
+    --border: #E2E8F0;
+    --bg: #F7F9FC;
+    --card-bg: #FFFFFF;
+    --unread-badge: #1A3A8F;
+    --tab-bar-height: 68px;
+}
+
+.conversations-content {
+    --background: var(--ion-background-color);
+}
+
+// ── Recherche ─────────────────────────────────────────────────
+.conv-search {
+    padding: 12px 16px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+
+    &__wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--bg);
+        border-radius: 12px;
+        padding: 10px 14px;
+    }
+
+    &__icon {
+        font-size: 18px;
+        color: var(--text-light);
+        flex-shrink: 0;
+    }
+
+    &__input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: 14px;
+        color: var(--text-dark);
+
+        &::placeholder {
+            color: var(--text-light);
+        }
+    }
+}
+
+// ── Liste ────────────────────────────────────────────────────
+.conv-list {
+    background: var(--card-bg);
+}
+
+.conv-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:active {
+        background: var(--bg);
+    }
+
+    // ── Avatar ──
+    &__avatar {
+        position: relative;
+        width: 52px;
+        height: 52px;
+        flex-shrink: 0;
+
+        img {
+            width: 100%;
+            height: 100%;
+            border-radius: 14px;
+            object-fit: cover;
+        }
+    }
+
+    &__avatar-placeholder {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: #EEF2FF;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--primary);
+        font-family: var(--ion-font-poppins, 'Poppins', sans-serif);
+    }
+
+    &__status-dot {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        background: var(--text-light);
+        border: 2px solid var(--card-bg);
+
+        &--active {
+            background: #22C55E;
+        }
+
+        &--pending {
+            background: #F59E0B;
+        }
+    }
+
+    // ── Body ──
+    &__body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+
+        &--top {
+            margin-bottom: 3px;
+        }
+
+        &--bottom {
+            align-items: flex-start;
+        }
+    }
+
+    &__name {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-dark);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+        font-family: var(--ion-font-poppins, 'Poppins', sans-serif);
+    }
+
+    &__time {
+        font-size: 11px;
+        color: var(--text-light);
+        flex-shrink: 0;
+    }
+
+    &__preview {
+        font-size: 13px;
+        color: var(--text-light);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+        margin: 0;
+
+        &--unread {
+            color: var(--text-mid);
+            font-weight: 600;
+        }
+    }
+
+    &__preview-sender {
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    &__meta {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    &__badge {
+        background: var(--unread-badge);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        min-width: 20px;
+        height: 20px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 5px;
+    }
+
+    &__members {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        color: var(--text-light);
+        margin-top: 4px;
+
+        ion-icon {
+            font-size: 12px;
+        }
+    }
+}
+
+// ── Skeleton loading ─────────────────────────────────────────
+.conv-skeleton {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+
+    &__avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        flex-shrink: 0;
+    }
+
+    &__body {
+        flex: 1;
+    }
+
+    &__line {
+        height: 12px;
+        border-radius: 6px;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        margin-bottom: 8px;
+
+        &--title {
+            width: 60%;
+        }
+
+        &--sub {
+            width: 80%;
+            height: 10px;
+        }
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+// ── Vide ─────────────────────────────────────────────────────
+.conv-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 32px;
+    text-align: center;
+
+    &__icon {
+        font-size: 64px;
+        color: var(--text-light);
+        margin-bottom: 20px;
+    }
+
+    &__title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0 0 8px;
+        font-family: var(--ion-font-poppins, 'Poppins', sans-serif);
+    }
+
+    &__sub {
+        font-size: 13px;
+        color: var(--text-light);
+        line-height: 1.6;
+        margin: 0;
+    }
+}

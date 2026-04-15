@@ -1,13 +1,245 @@
-<ion-header [translucent]="true">
+<ion-header class="chat-header" [translucent]="false">
+  <app-page-header title="Message"></app-page-header>
   <ion-toolbar>
-    <ion-title>message</ion-title>
+    <div class="chat-header__info" (click)="openTontineDetail()">
+      <div class="chat-header__avatar">
+        <img *ngIf="tontineIcon" [src]="tontineIcon" [alt]="tontineName" />
+        <div *ngIf="!tontineIcon" class="chat-header__avatar-placeholder">
+          {{ getInitials(tontineName) }}
+        </div>
+      </div>
+      <div class="chat-header__text">
+        <p class="chat-header__name">{{ tontineName }}</p>
+        <p class="chat-header__members">{{ membersCount }} membres</p>
+      </div>
+    </div>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">message</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content #scrollContent [fullscreen]="false" class="chat-content" (ionScroll)="onScroll($event)">
+
+  <div class="chat-load-more" *ngIf="hasMore && !loadingMore">
+    <button class="chat-load-btn" (click)="loadMoreMessages()">
+      Charger les messages précédents
+    </button>
+  </div>
+
+  <div class="chat-messages" #messagesContainer>
+    <ng-container *ngFor="let msg of messages; let i = index; trackBy: trackById">
+
+      <!-- Séparateur de date -->
+      <div class="chat-date-sep" *ngIf="showDateSeparator(i)">
+        {{ formatDate(msg.createdAt) }}
+      </div>
+
+      <!-- Message système -->
+      <div class="chat-sys-msg" *ngIf="msg.type === 'system'">
+        {{ msg.text }}
+      </div>
+
+      <!-- ────────────────────────────────────────────────────────
+           FIX : [class.chat-msg--own]="isOwn(msg)"
+           au lieu de [class.chat-msg--own]="msg.senderId === currentUid"
+           isOwn() vérifie que currentUid est bien défini avant de comparer.
+      ──────────────────────────────────────────────────────────── -->
+      <div *ngIf="msg.type !== 'system'" class="chat-msg" [class.chat-msg--own]="isOwn(msg)"
+        [class.chat-msg--deleted]="!!msg.deletedAt" (press)="onLongPress(msg)">
+
+        <!-- Avatar — uniquement pour les messages des autres -->
+        <div class="chat-msg__avatar" *ngIf="!isOwn(msg)">
+          <img *ngIf="msg.senderPhotoUrl" [src]="msg.senderPhotoUrl" />
+          <div *ngIf="!msg.senderPhotoUrl" class="chat-msg__avatar-placeholder">
+            {{ chatService.getInitials(msg.senderName) }}
+          </div>
+        </div>
+
+        <div class="chat-msg__body">
+
+          <!-- Nom — uniquement pour les messages des autres -->
+          <p class="chat-msg__sender" *ngIf="!isOwn(msg) && showSenderName(i)">
+            {{ msg.senderName }}
+            <span *ngIf="msg.senderRole === 'creator' || msg.senderRole === 'admin'" class="chat-msg__admin-badge">
+              Admin
+            </span>
+          </p>
+
+          <!-- Réponse à -->
+          <div class="chat-msg__reply" *ngIf="msg.replyTo">
+            <span class="chat-msg__reply-name">{{ msg.replyTo.senderName }}</span>
+            <span class="chat-msg__reply-text">{{ msg.replyTo.preview }}</span>
+          </div>
+
+          <!-- Bulle texte -->
+          <div class="chat-msg__bubble" *ngIf="msg.type === 'text' && !msg.deletedAt">
+            <p class="chat-msg__text">{{ msg.text }}</p>
+            <div class="chat-msg__meta">
+              <span class="chat-msg__time">{{ chatService.formatMessageTime(msg.createdAt) }}</span>
+              <!-- Icône lu — uniquement pour ses propres messages -->
+              <ion-icon *ngIf="isOwn(msg)" name="checkmark-done-outline" class="chat-msg__read-icon"
+                [class.chat-msg__read-icon--read]="isReadByAll(msg)"></ion-icon>
+            </div>
+          </div>
+
+          <!-- Message supprimé -->
+          <div class="chat-msg__bubble chat-msg__bubble--deleted" *ngIf="msg.deletedAt">
+            <ion-icon name="ban-outline"></ion-icon>
+            <span>Message supprimé</span>
+          </div>
+
+          <!-- Carte vote -->
+          <div class="chat-vote" *ngIf="msg.type === 'vote' && !msg.deletedAt">
+            <div class="chat-vote__header">
+              <span class="chat-vote__badge">
+                {{ msg.vote?.status === 'open' ? 'Vote en cours' : 'Vote clôturé' }}
+              </span>
+              <button *ngIf="msg.vote?.status === 'open' && isAdmin" class="chat-vote__close-btn"
+                (click)="closeVote(msg)">
+                Clôturer
+              </button>
+            </div>
+
+            <p class="chat-vote__question">{{ msg.vote?.question }}</p>
+
+            <div class="chat-vote__options">
+              <div *ngFor="let opt of getVoteResults(msg)" class="chat-vote__option"
+                [class.chat-vote__option--voted]="getUserVote(msg) === opt.id"
+                [class.chat-vote__option--closed]="msg.vote?.status === 'closed'" (click)="castVote(msg, opt.id)">
+                <div class="chat-vote__option-top">
+                  <span class="chat-vote__option-label">{{ opt.label }}</span>
+                  <span class="chat-vote__option-pct">{{ opt.percent }}%</span>
+                </div>
+                <div class="chat-vote__bar-wrap">
+                  <div class="chat-vote__bar" [style.width.%]="opt.percent"
+                    [class.chat-vote__bar--voted]="getUserVote(msg) === opt.id"></div>
+                </div>
+                <span class="chat-vote__option-count">
+                  {{ opt.count }} vote{{ opt.count > 1 ? 's' : '' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="chat-vote__footer">
+              <span>{{ getTotalVotes(msg) }} vote{{ getTotalVotes(msg) > 1 ? 's' : '' }}</span>
+              <span *ngIf="msg.vote?.expiresAt">
+                · expire le {{ formatDate(msg.vote?.expiresAt) }}
+              </span>
+            </div>
+
+            <div class="chat-msg__meta">
+              <span class="chat-msg__time">{{ chatService.formatMessageTime(msg.createdAt) }}</span>
+            </div>
+          </div>
+
+          <!-- Réactions -->
+          <div class="chat-reactions" *ngIf="hasReactions(msg)">
+            <div *ngFor="let r of getReactionList(msg)" class="chat-reaction"
+              [class.chat-reaction--own]="r.includes.includes(currentUid)" (click)="react(msg, r.emoji)">
+              {{ r.emoji }} {{ r.count }}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Indicateur de frappe -->
+    <div class="chat-typing" *ngIf="someoneTyping">
+      <div class="chat-typing__dot"></div>
+      <div class="chat-typing__dot"></div>
+      <div class="chat-typing__dot"></div>
+    </div>
+  </div>
 </ion-content>
+
+<!-- Barre d'actions (long press) -->
+<div class="chat-action-bar" *ngIf="selectedMessage" (click)="clearSelection()">
+  <div class="chat-action-bar__inner" (click)="$event.stopPropagation()">
+    <div class="chat-action-bar__emojis">
+      <button *ngFor="let e of quickEmojis" (click)="react(selectedMessage!, e)">{{ e }}</button>
+    </div>
+    <button class="chat-action-bar__btn" (click)="replyTo(selectedMessage!)">
+      <ion-icon name="return-up-back-outline"></ion-icon>
+      Répondre
+    </button>
+    <!-- FIX : isOwn() au lieu de selectedMessage?.senderId === currentUid -->
+    <button class="chat-action-bar__btn chat-action-bar__btn--danger" *ngIf="isOwn(selectedMessage!) || isAdmin"
+      (click)="deleteMessage(selectedMessage!)">
+      <ion-icon name="trash-outline"></ion-icon>
+      Supprimer
+    </button>
+  </div>
+</div>
+
+<!-- Zone de réponse -->
+<div class="chat-reply-preview" *ngIf="replyingTo">
+  <div class="chat-reply-preview__inner">
+    <div class="chat-reply-preview__bar"></div>
+    <div class="chat-reply-preview__content">
+      <span class="chat-reply-preview__name">{{ replyingTo.senderName }}</span>
+      <span class="chat-reply-preview__text">{{ replyingTo.text }}</span>
+    </div>
+    <button class="chat-reply-preview__close" (click)="cancelReply()">
+      <ion-icon name="close-outline"></ion-icon>
+    </button>
+  </div>
+</div>
+
+<!-- Input -->
+<div class="chat-input-bar">
+  <button class="chat-input-bar__action" *ngIf="isAdmin" (click)="openVoteModal()" title="Lancer un vote">
+    <ion-icon name="stats-chart-outline"></ion-icon>
+  </button>
+
+  <button class="chat-input-bar__action" (click)="openAttachment()">
+    <ion-icon name="add-outline"></ion-icon>
+  </button>
+
+  <div class="chat-input-bar__field">
+    <textarea #msgInput class="chat-input-bar__textarea" placeholder="Écrire un message..." [(ngModel)]="messageText"
+      (keydown)="onKeydown($event)" (input)="onTyping()" rows="1" [style.height]="inputHeight"></textarea>
+  </div>
+
+  <button class="chat-input-bar__send" [class.chat-input-bar__send--active]="messageText.trim().length > 0"
+    [disabled]="messageText.trim().length === 0 || isSending" (click)="sendMessage()">
+    <ion-icon name="send-outline"></ion-icon>
+  </button>
+</div>
+
+<!-- Modal Vote -->
+<div class="vote-modal-overlay" *ngIf="showVoteModal" (click)="closeVoteModal()">
+  <div class="vote-modal" (click)="$event.stopPropagation()">
+    <div class="vote-modal__handle"></div>
+    <p class="vote-modal__title">Lancer un vote</p>
+
+    <div class="vote-modal__field">
+      <input class="vote-modal__input" type="text" placeholder="Question du vote..." [(ngModel)]="voteQuestion" />
+    </div>
+
+    <div class="vote-modal__options">
+      <div *ngFor="let opt of voteOptions; let i = index" class="vote-modal__option-row">
+        <input class="vote-modal__input vote-modal__input--sm" type="text" [placeholder]="'Option ' + (i + 1)"
+          [(ngModel)]="voteOptions[i]" />
+        <button *ngIf="voteOptions.length > 2" class="vote-modal__remove" (click)="removeVoteOption(i)">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </div>
+    </div>
+
+    <button *ngIf="voteOptions.length < 6" class="vote-modal__add-opt" (click)="addVoteOption()">
+      + Ajouter une option
+    </button>
+
+    <div class="vote-modal__expiry">
+      <label class="vote-modal__label">Expiration (heures, optionnel)</label>
+      <input class="vote-modal__input" type="number" placeholder="48" [(ngModel)]="voteExpiresHours" min="1"
+        max="168" />
+    </div>
+
+    <div class="vote-modal__actions">
+      <button class="vote-modal__cancel" (click)="closeVoteModal()">Annuler</button>
+      <button class="vote-modal__submit" [disabled]="!canSubmitVote()" (click)="submitVote()">
+        Lancer le vote
+      </button>
+    </div>
+  </div>
+</div>

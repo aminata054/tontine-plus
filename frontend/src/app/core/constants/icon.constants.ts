@@ -61,6 +61,8 @@ import {
     linkOutline,
     informationCircle,
     rocket,
+    chatbubbleOutline,
+    statsChartOutline,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -97,8 +99,8 @@ export function registerIcons() {
         sendOutline, headsetOutline, logOutOutline,
         callOutline,
         rocketOutline, openOutline,
-        infiniteOutline, rocket,
+        infiniteOutline, rocket, statsChartOutline,
         trendingUpOutline, starOutline, flashOutline,
-        sparkles, closeCircle, linkOutline, informationCircle
+        sparkles, closeCircle, linkOutline, informationCircle, chatbubbleOutline
     });
 }

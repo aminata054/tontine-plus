@@ -103,11 +103,15 @@ export const routes: Routes = [
       },
       {
         path: 'messages',
-        loadComponent: () => import('./features/messages/message/message.page').then(m => m.MessagePage),
+        loadComponent: () => import('./features/messages/layout/layout.page').then(m => m.LayoutPage),
         children: [
           {
-            path: 'conversation',
+            path: '',
             loadComponent: () => import('./features/messages/conversation/conversation.page').then(m => m.ConversationPage)
+          },
+          {
+            path: 'conversation/:id',
+            loadComponent: () => import('./features/messages/message/message.page').then(m => m.MessagePage),
           },
         ]
       },
@@ -166,4 +170,5 @@ export const routes: Routes = [
     path: 'notification-page',
     loadComponent: () => import('./features/notifications/notification-page/notification-page.page').then(m => m.NotificationPagePage)
   },
+
 ];

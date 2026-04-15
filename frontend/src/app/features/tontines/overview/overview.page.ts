@@ -327,7 +327,7 @@ export class OverviewPage implements OnInit, OnDestroy {
   }
 
   openChat(): void {
-    this.router.navigate(['/tontines', this.tontineId, 'chat']);
+    this.router.navigate(['/messages/conversation', this.tontineId]);
   }
 
   openTontineDetail(): void {
