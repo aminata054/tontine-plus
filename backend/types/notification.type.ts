@@ -12,6 +12,7 @@ export type NotificationType =
     | 'member_excluded'         // Membre exclu
     | 'tontine_started'         // Tontine démarrée
     | 'tontine_ended'           // Tontine terminée
+    | 'tontine_completed'           // Tontine terminée
     | 'payout_sent'             // Paiement envoyé
     | 'vote_opened'             // Vote ouvert
     | 'vote_closed'             // Vote clôturé
@@ -22,6 +23,11 @@ export type NotificationType =
     | 'vote_next_turn'
     | 'payment_confirmed'
     | 'payment_failed'
+    | 'distribution_sent_to_you'
+    | 'distribution_sent'
+    | 'distribution_received'
+    | 'next_beneficiary'
+    | 'collection_complete'
     | 'system';                 // Message système
 
 export interface NotificationPayload {
@@ -48,5 +54,5 @@ export interface StoredNotification {
     data: Record<string, any>;
     createdAt: FirebaseFirestore.Timestamp;
     readAt: FirebaseFirestore.Timestamp | null;
-    deletedAt: FirebaseFirestore.Timestamp | null;   
+    deletedAt: FirebaseFirestore.Timestamp | null;
 }

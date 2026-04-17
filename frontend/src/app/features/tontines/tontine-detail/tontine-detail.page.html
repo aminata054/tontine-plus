@@ -35,6 +35,20 @@
     <ng-container *ngIf="activeTab === 'flux'">
       <div class="tab-content">
 
+        <ng-container *ngIf="isAdminOrCreator && tontine.status === 'active'">
+          <app-custom-button expand="block" color="primary" (clicked)="goToDistribution()">
+            <ion-icon name="paper-plane-outline" slot="start"></ion-icon>
+            Distribuer le pot du tour {{ tontine.currentTurn }}
+          </app-custom-button>
+        </ng-container>
+
+        <ng-container *ngIf="isBeneficiary && tontine.currentDistributionId">
+          <app-custom-button expand="block" color="success" (clicked)="goToConfirmReception()">
+            <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+            Confirmer la réception de mon pot 🎉
+          </app-custom-button>
+        </ng-container>
+        
         <div class="timeline">
           <div class="timeline__item" *ngFor="let turn of turns; let last = last"
             [class.timeline__item--current]="turn.isCurrent" [class.timeline__item--done]="turn.isDone"

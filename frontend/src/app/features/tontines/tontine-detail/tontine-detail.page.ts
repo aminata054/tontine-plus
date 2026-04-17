@@ -7,13 +7,17 @@ import {
   IonContent, IonIcon, IonSkeletonText, ToastController, ModalController
 } from '@ionic/angular/standalone';
 
-import { HistoryEntry, MyContribution, PageStats, Tontine, TontineMember, TurnItem } from 'src/app/core/models/tontine.model';
+import {
+  HistoryEntry, MyContribution, PageStats,
+  Tontine, TontineMember, TurnItem
+} from 'src/app/core/models/tontine.model';
 import { TontineService } from 'src/app/core/services/tontine.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { PageHeaderComponent } from 'src/app/shared/ui/page-header/page-header.component';
 import { CustomButtonComponent } from 'src/app/shared/ui/custom-button/custom-button.component';
 import { PaymentService } from 'src/app/core/services/payment.service';
 import { ReceiptModalComponent } from 'src/app/shared/modals/receipt-modal/receipt-modal.component';
+import { DistributionService } from 'src/app/core/services/distribution.service';
 
 type PageStatus = 'loading' | 'success' | 'error';
 type TabKey = 'flux' | 'tour' | 'historiques' | 'parametres';
@@ -35,9 +39,19 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
   status: PageStatus = 'loading';
   tontine: Tontine | null = null;
   tontineId: string | null = null;
+
+  // ── Paiements du membre ────────────────────────────────
   myPayments: any[] = [];
+
+  // ── Paiement du tour courant spécifiquement ────────────
+  // FIX : on stocke séparément le paiement confirmé du tour EN COURS
+  // pour ne pas afficher le reçu du tour 1 au tour 2
+  currentTurnPayment: any | null = null;
+
   activeTab: TabKey = 'flux';
   private donutDrawn = false;
+  isAdminOrCreator = false;
+  isBeneficiary = false;
 
   tabs: { key: TabKey; label: string }[] = [
     { key: 'flux', label: 'Flux' },
@@ -46,7 +60,6 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
     { key: 'parametres', label: 'Paramètres' },
   ];
 
-  // ── Données chargées ──────────────────────────────────
   turns: TurnItem[] = [];
   myContribution: MyContribution | null = null;
   historyEntries: HistoryEntry[] = [];
@@ -72,6 +85,7 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
     private tontineService: TontineService,
     private paymentService: PaymentService,
     private authService: AuthService,
+    private distributionService: DistributionService,
     private toastCtrl: ToastController,
     private modalCtrl: ModalController
   ) { }
@@ -114,7 +128,6 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
           if (res.success) {
             this.tontine = res.data;
             this.status = 'success';
-            // On charge les membres puis on construit tout le reste
             this.loadMembersAndBuild();
           } else {
             this.status = 'error';
@@ -124,13 +137,6 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
       });
   }
 
-  /**
-   * Charge la liste des membres actifs puis :
-   * - construit la timeline (Flux)
-   * - détermine le bénéficiaire actuel (Historiques)
-   * - construit l'état de cotisation du membre connecté (Tour)
-   * - alimente les stats globales
-   */
   private loadMembersAndBuild(): void {
     if (!this.tontineId) return;
 
@@ -143,20 +149,195 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
           this.allMembers = res.data.filter(m => m.status === 'active');
           this.buildTimeline();
           this.buildStats();
-          this.buildMyContribution();
+
+          this.isAdminOrCreator =
+            this.tontine.myRole === 'creator' || this.tontine.myRole === 'admin';
+
+          const currentBeneficiaryUid = (this.tontine as any).currentBeneficiaryUid;
+          this.isBeneficiary =
+            !!currentBeneficiaryUid && this.uid === currentBeneficiaryUid;
+
+          // ── FIX : charger les paiements AVANT de construire myContribution
+          // On doit connaître le paiement du tour courant pour afficher
+          // le bon état (payé / à payer / en retard)
           this.loadMyPayments();
+
+          if (this.isAdminOrCreator) this.loadDistributionHistory();
         },
       });
   }
 
   // ════════════════════════════════════════════════════════
-  // CONSTRUCTION DE LA TIMELINE (FLUX)
+  // FIX — CHARGEMENT DES PAIEMENTS DU MEMBRE
+  //
+  // Problème précédent : loadMyPayments() prenait le DERNIER paiement
+  // de la liste sans vérifier le turnNumber, donc le reçu du tour 1
+  // s'affichait encore au tour 2.
+  //
+  // Correction : on filtre explicitement sur le turnNumber du tour courant.
+  // Si un paiement confirmé existe pour CE tour → status = 'paid'
+  // Sinon → on applique la logique due/late normale.
+  // ════════════════════════════════════════════════════════
+
+  loadMyPayments(): void {
+    if (!this.tontineId || !this.tontine) return;
+
+    this.paymentService.getMyPayments(this.tontineId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(res => {
+        if (!res.success) {
+          // Si l'appel échoue, construire myContribution sans les paiements
+          this.buildMyContribution(null);
+          return;
+        }
+
+        this.myPayments = res.data;
+
+        // ── FIX PRINCIPAL ──────────────────────────────────────────────────────
+        // Chercher un paiement CONFIRMÉ pour le tour COURANT spécifiquement
+        const currentTurn = this.tontine!.currentTurn;
+
+        this.currentTurnPayment = this.myPayments.find(
+          p => p.turnNumber === currentTurn && p.status === 'confirmed'
+        ) ?? null;
+
+        // Construire myContribution en passant le résultat
+        this.buildMyContribution(this.currentTurnPayment);
+      });
+  }
+
+  // ════════════════════════════════════════════════════════
+  // FIX — buildMyContribution avec paiement du tour courant
+  //
+  // Reçoit directement le paiement confirmé du tour courant
+  // (ou null si pas encore payé) au lieu de deviner via myStats.
+  // ════════════════════════════════════════════════════════
+
+  private buildMyContribution(currentTurnPmt: any | null): void {
+    if (!this.tontine) { this.myContribution = null; return; }
+
+    // Tontine non active → pas de cotisation à afficher
+    if (this.tontine.status !== 'active' || this.tontine.currentTurn === 0) {
+      this.myContribution = null;
+      return;
+    }
+
+    // ── CAS 1 : paiement confirmé trouvé pour CE tour ─────────────────────────
+    if (currentTurnPmt) {
+      this.myContribution = {
+        status: 'paid',
+        paidAt: currentTurnPmt.confirmedAt ?? currentTurnPmt.paidAt,
+        paymentId: currentTurnPmt.id,
+        receiptRef: currentTurnPmt.transactionId ?? null,
+        receiptUrl: currentTurnPmt.receiptUrl ?? null,
+      };
+      return;
+    }
+
+    // ── CAS 2 : paiement en cours (pending) pour ce tour ─────────────────────
+    const pendingPayment = this.myPayments.find(
+      p => p.turnNumber === this.tontine!.currentTurn && p.status === 'pending'
+    );
+    if (pendingPayment) {
+      // Traiter comme "à payer" — le paiement est en cours de vérification
+      this.myContribution = {
+        status: 'due',
+        dueDate: this.tontine.nextPaymentDate,
+        timeLeft: this.computeTimeLeft(this.tontine.nextPaymentDate),
+      };
+      return;
+    }
+
+    // ── CAS 3 : pas encore payé ce tour → vérifier retard ────────────────────
+    const daysLate = this.computeDaysLate();
+    const gracePeriod = this.tontine.rules?.gracePeriodDays ?? 0;
+    const effectiveDaysLate = Math.max(0, daysLate - gracePeriod);
+
+    if (effectiveDaysLate > 0) {
+      // En retard
+      const penaltyRate = this.tontine.rules?.penaltyValue ?? 0;
+      const penaltyType = this.tontine.rules?.penaltyType ?? 'percentage';
+      const base = this.tontine.amount;
+
+      let penalty = 0;
+      if (penaltyType === 'percentage') {
+        penalty = Math.round(base * (penaltyRate / 100) * effectiveDaysLate);
+      } else {
+        penalty = penaltyRate * effectiveDaysLate;
+      }
+
+      this.myContribution = {
+        status: 'late',
+        dueDate: this.tontine.nextPaymentDate,
+        penalty,
+        totalDue: base + penalty,
+        daysLate: effectiveDaysLate,
+      };
+    } else {
+      // À payer, dans les temps
+      this.myContribution = {
+        status: 'due',
+        dueDate: this.tontine.nextPaymentDate,
+        timeLeft: this.computeTimeLeft(this.tontine.nextPaymentDate),
+      };
+    }
+  }
+
+  // ════════════════════════════════════════════════════════
+  // DISTRIBUTION — REFRESH AUTOMATIQUE APRÈS CONFIRMATION
+  //
+  // Quand on revient sur cette page après qu'une distribution
+  // a été confirmée (tour suivant démarré), on recharge tout.
+  // En Ionic, ionViewWillEnter est déclenché à chaque retour
+  // de page (navigation back ou pop).
+  // ════════════════════════════════════════════════════════
+
+  ionViewWillEnter(): void {
+    // Recharger si la page est déjà initialisée (retour depuis distribution)
+    if (this.tontineId && this.status === 'success') {
+      this.load();
+    }
+  }
+
+  // ════════════════════════════════════════════════════════
+  // HISTORIQUE DISTRIBUTIONS
+  // ════════════════════════════════════════════════════════
+
+  private loadDistributionHistory(): void {
+    if (!this.tontineId) return;
+
+    this.distributionService.getByTontine(this.tontineId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          if (!res.success) return;
+
+          this.historyEntries = res.data.map(d => ({
+            date: d.distributedAt ?? d.createdAt,
+            description: `Distribution tour ${d.turnNumber}`,
+            turnNumber: d.turnNumber,
+            beneficiary: d.beneficiaryName,
+            amount: d.amount,
+            method: this.distributionService.getMethodConfig(d.distributionMethod)?.label
+              ?? d.distributionMethod,
+            transactionId: d.transactionId,
+            status: this.distributionService.statusLabel(d.status),
+            expanded: false,
+          }));
+        },
+      });
+  }
+
+  // ════════════════════════════════════════════════════════
+  // TIMELINE (FLUX)
   // ════════════════════════════════════════════════════════
 
   private buildTimeline(): void {
     if (!this.tontine) return;
 
-    const referenceDate = this.toDate(this.tontine.startedAt ?? this.tontine.nextPaymentDate);
+    const referenceDate = this.toDate(
+      this.tontine.startedAt ?? this.tontine.nextPaymentDate
+    );
 
     this.turns = this.allMembers
       .filter(m => m.turnNumber != null)
@@ -173,10 +354,8 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
           memberName: m.userName ?? 'Membre',
           dateLabel: estimatedDate
             ? estimatedDate.toLocaleDateString('fr-FR', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
+              weekday: 'long', day: 'numeric',
+              month: 'long', year: 'numeric',
             })
             : '—',
           estimatedDate,
@@ -187,54 +366,40 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
       });
   }
 
-  /**
-   * Calcule la date estimée d'un tour donné.
-   *
-   * Logique identique à getNextPaymentDate() du backend :
-   *   tour 1 = date de démarrage
-   *   tour N = date démarrage + (N-1) × fréquence
-   */
-  computeTurnDate(referenceDate: Date | null, turnNumber: number, frequency: string): Date | null {
+  computeTurnDate(
+    referenceDate: Date | null,
+    turnNumber: number,
+    frequency: string
+  ): Date | null {
     if (!referenceDate) return null;
-
     const d = new Date(referenceDate);
-    const offset = turnNumber - 1; // tour 1 = la date de départ elle-même
-
+    const offset = turnNumber - 1;
     switch (frequency) {
       case 'daily': d.setDate(d.getDate() + offset); break;
       case 'weekly': d.setDate(d.getDate() + offset * 7); break;
       case 'biweekly': d.setDate(d.getDate() + offset * 14); break;
       case 'monthly':
-      default:
-        // Même logique que le backend : ajouter N mois entiers
-        d.setMonth(d.getMonth() + offset);
-        break;
+      default: d.setMonth(d.getMonth() + offset); break;
     }
     return d;
   }
 
   // ════════════════════════════════════════════════════════
-  // STATS (HISTORIQUES)
+  // STATS
   // ════════════════════════════════════════════════════════
 
   private buildStats(): void {
     if (!this.tontine) return;
 
-    // Bénéficiaire du tour actuel = membre dont turnNumber === currentTurn
     const currentTurnMember = this.allMembers.find(
       m => m.turnNumber === this.tontine!.currentTurn
     );
-
-    // Comptage payé / non payé (approximation depuis myStats disponibles)
-    // Les stats globales (paid/unpaid par tour) nécessitent un endpoint dédié.
-    // On utilise ce qu'on a : tontine.stats + myStats du membre connecté.
-    const myMemberData = this.allMembers.find(m => m.userId === this.uid);
 
     this.stats = {
       totalCollected: this.tontine.stats?.totalCollected ?? 0,
       currentBeneficiary: currentTurnMember?.userName ?? '—',
       nextDate: this.tontine.nextPaymentDate,
-      paidCount: 0,    // endpoint dédié requis
+      paidCount: 0,
       unpaidCount: 0,
       punctualityRate: Math.round(this.tontine.stats?.onTimePaymentRate ?? 100),
       completedTurns: this.tontine.currentTurn,
@@ -243,102 +408,27 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   // ════════════════════════════════════════════════════════
-  // COTISATION DU MEMBRE CONNECTÉ (TOUR)
+  // ACTIONS
   // ════════════════════════════════════════════════════════
 
-  private buildMyContribution(): void {
-    if (!this.tontine?.myStats) {
-      // Tontine pending ou pas encore de données
-      this.myContribution = null;
-      return;
-    }
-
-    const { latePayments, missedPayments, onTimePayments } = this.tontine.myStats;
-    const totalPayments = onTimePayments + latePayments + missedPayments;
-
-    // Si des paiements en retard existent et que le total collecté par ce membre
-    // est inférieur à ce qu'il devrait avoir payé → retard en cours
-    const expectedPaid = this.tontine.amount * this.tontine.currentTurn;
-    const actualPaid = this.tontine.myStats.totalPaid;
-    const isCurrentlyLate = actualPaid < expectedPaid && this.tontine.currentTurn > 0;
-
-    if (isCurrentlyLate) {
-      const daysLate = this.computeDaysLate();
-      const penaltyRate = this.tontine.rules?.penaltyValue ?? 5;
-      const penaltyType = this.tontine.rules?.penaltyType ?? 'percentage';
-      const missing = expectedPaid - actualPaid;
-
-      let penalty = 0;
-      if (penaltyType === 'percentage') {
-        penalty = Math.round(missing * (penaltyRate / 100) * daysLate);
-      } else {
-        // fixed : pénalité forfaitaire par retard
-        penalty = penaltyRate * daysLate;
-      }
-
-      this.myContribution = {
-        status: 'late',
-        dueDate: this.tontine.nextPaymentDate,
-        penalty,
-        totalDue: missing + penalty,
-        daysLate,
-      };
-    } else if (actualPaid >= expectedPaid && this.tontine.currentTurn > 0) {
-      // Tour en cours déjà payé
-      this.myContribution = {
-        status: 'paid',
-        paidAt: this.tontine.nextPaymentDate, // approximation — endpoint paiements requis
-        receiptRef: null as any,
-        paymentId: null as any,
-      };
-    } else {
-      // À payer
-      this.myContribution = {
-        status: 'due',
-        dueDate: this.tontine.nextPaymentDate,
-        timeLeft: this.computeTimeLeft(this.tontine.nextPaymentDate),
-      };
-    }
+  async payNow(): Promise<void> {
+    this.router.navigate(['/tontines', this.tontineId, 'pay']);
   }
 
-  loadMyPayments(): void {
-    if (!this.tontineId) return;
-
-    this.paymentService.getMyPayments(this.tontineId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(res => {
-        if (res.success) {
-          this.myPayments = res.data;
-
-          // prendre le dernier paiement
-          const lastPayment = this.myPayments[this.myPayments.length - 1];
-
-          if (lastPayment) {
-            this.myContribution = {
-              status: 'paid',
-              paidAt: lastPayment.createdAt,
-              receiptRef: lastPayment.paymentId,
-              receiptUrl: lastPayment.receiptUrl, 
-            };
-          }
-        }
-      });
-  }
-
-  async openReceipt() {
+  async openReceipt(): Promise<void> {
     if (!this.myContribution || this.myContribution.status !== 'paid') return;
+    if (!this.currentTurnPayment) return;
 
     const payment = {
-      totalAmount: this.tontine?.amount,
-      paymentMethod: this.myPayments[this.myPayments.length - 1]?.paymentMethod ?? '—',
-      confirmedAt: this.myContribution.paidAt,
-      transactionId: this.myPayments[this.myPayments.length - 1]?.transactionId,
-      turnNumber: this.tontine?.currentTurn,
-      paidAt: this.toDate(this.myPayments[this.myPayments.length - 1]?.paidAt),
+      totalAmount: this.currentTurnPayment.totalAmount ?? this.tontine?.amount,
+      paymentMethod: this.currentTurnPayment.paymentMethod ?? '—',
+      confirmedAt: this.currentTurnPayment.confirmedAt,
+      transactionId: this.currentTurnPayment.transactionId,
+      // FIX : lire le turnNumber depuis le paiement, pas depuis tontine.currentTurn
+      turnNumber: this.currentTurnPayment.turnNumber,
+      paidAt: this.toDate(this.currentTurnPayment.paidAt),
       status: 'confirmé',
-      metadata: {
-        tontineName: this.tontine?.name
-      }
+      metadata: { tontineName: this.tontine?.name },
     };
 
     const modal = await this.modalCtrl.create({
@@ -349,15 +439,24 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
       backdropDismiss: true,
       cssClass: 'panel-modal',
     });
-
     await modal.present();
   }
 
+  goToDistribution(): void {
+    this.router.navigate(['/tontines', this.tontineId, 'distribute']);
+  }
+
+  goToConfirmReception(): void {
+    this.router.navigate([
+      '/tontines', this.tontineId, 'distribute',
+      (this.tontine as any)?.currentDistributionId,
+    ]);
+  }
+
   // ════════════════════════════════════════════════════════
-  // HELPERS — ONGLET TOUR
+  // HELPERS ONGLET TOUR
   // ════════════════════════════════════════════════════════
 
-  /** Icône dans le hero de l'onglet Tour */
   myTurnIconName(): string {
     const ct = this.tontine?.currentTurn ?? 0;
     const mt = this.tontine?.myTurnNumber ?? null;
@@ -367,13 +466,6 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
     return 'hand-left-outline';
   }
 
-  /**
-   * Texte principal de l'onglet Tour :
-   * - "C'est votre tour !"         → currentTurn === myTurnNumber
-   * - "Votre tour est passé"       → currentTurn > myTurnNumber
-   * - "Vous recevrez votre pot au tour N" → pas encore arrivé
-   * - "Tour non attribué"         → pas de turnNumber (rotation aléatoire en attente)
-   */
   myTurnHeadline(): string {
     const ct = this.tontine?.currentTurn ?? 0;
     const mt = this.tontine?.myTurnNumber ?? null;
@@ -383,10 +475,6 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
     return `Vous recevrez votre pot au tour ${mt}`;
   }
 
-  /**
-   * Date estimée où le membre connecté recevra son pot.
-   * Utilise computeTurnDate() avec startedAt comme référence.
-   */
   myTurnDateLabel(): string {
     const turnDate = this.getMyTurnDate();
     if (!turnDate) return '—';
@@ -395,33 +483,28 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
-  /**
-   * Compte à rebours jusqu'au tour du membre connecté.
-   * Exemples : "Dans 2 mois", "Dans 5 jours", "Aujourd'hui", "Passé"
-   */
   myTurnCountdown(): string {
     const ct = this.tontine?.currentTurn ?? 0;
     const mt = this.tontine?.myTurnNumber ?? null;
-
     if (mt == null) return '—';
     if (ct > mt) return 'Passé';
     if (ct === mt) return "Aujourd'hui";
 
     const turnDate = this.getMyTurnDate();
     if (!turnDate) return '—';
-
     const diffMs = turnDate.getTime() - Date.now();
     if (diffMs <= 0) return 'Passé';
-
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil(diffMs / 86400000);
     if (diffDays === 0) return "Aujourd'hui";
     if (diffDays < 7) return `Dans ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
-    if (diffDays < 30) return `Dans ${Math.floor(diffDays / 7)} semaine${Math.floor(diffDays / 7) > 1 ? 's' : ''}`;
+    if (diffDays < 30) {
+      const w = Math.floor(diffDays / 7);
+      return `Dans ${w} semaine${w > 1 ? 's' : ''}`;
+    }
     const months = Math.round(diffDays / 30);
     return `Dans ${months} mois`;
   }
 
-  /** Date estimée du tour du membre connecté (objet Date brut) */
   private getMyTurnDate(): Date | null {
     if (!this.tontine?.myTurnNumber) return null;
     const ref = this.toDate(this.tontine.startedAt ?? this.tontine.nextPaymentDate);
@@ -429,57 +512,31 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   // ════════════════════════════════════════════════════════
-  // HELPERS — DURÉE DU CYCLE (identique à join-preview)
+  // HELPERS PARAMÈTRES
   // ════════════════════════════════════════════════════════
 
-  /**
-   * Calcule la durée estimée du cycle en jours
-   * en utilisant la même logique que le backend :
-   *   estimatedDuration = totalTurns * frequencyInDays
-   */
   private getEstimatedDurationDays(): number | null {
     if (!this.tontine) return null;
     const freqDays = this.frequencyInDays(this.tontine.frequency);
-    if (!freqDays) return null;
-    return this.tontine.totalTurns * freqDays;
+    return freqDays ? this.tontine.totalTurns * freqDays : null;
   }
 
   private frequencyInDays(frequency: string): number {
-    switch (frequency) {
-      case 'daily': return 1;
-      case 'weekly': return 7;
-      case 'biweekly': return 14;
-      case 'monthly': return 30;
-      default: return 0;
-    }
+    const map: Record<string, number> = {
+      daily: 1, weekly: 7, biweekly: 14, monthly: 30,
+    };
+    return map[frequency] ?? 0;
   }
 
-  /**
-   * Label lisible de la durée du cycle — identique à formatDuration() de join-preview.
-   * Exemples : "10 mois", "2 semaines", "1 an"
-   */
   cycleDurationLabel(): string {
     const days = this.getEstimatedDurationDays();
     if (!days) return '—';
-
-    if (days < 7) {
-      return `${days} jour${days > 1 ? 's' : ''}`;
-    }
-    if (days < 30) {
-      const weeks = Math.ceil(days / 7);
-      return `${weeks} semaine${weeks > 1 ? 's' : ''}`;
-    }
-    if (days < 365) {
-      const months = Math.ceil(days / 30);
-      return `${months} mois`;
-    }
-    const years = Math.ceil(days / 365);
-    return `${years} an${years > 1 ? 's' : ''}`;
+    if (days < 7) return `${days} jour${days > 1 ? 's' : ''}`;
+    if (days < 30) { const w = Math.ceil(days / 7); return `${w} semaine${w > 1 ? 's' : ''}`; }
+    if (days < 365) { const m = Math.ceil(days / 30); return `${m} mois`; }
+    const y = Math.ceil(days / 365);
+    return `${y} an${y > 1 ? 's' : ''}`;
   }
-
-  // ════════════════════════════════════════════════════════
-  // HELPERS — PARAMÈTRES
-  // ════════════════════════════════════════════════════════
 
   frequencyLabel(): string {
     return this.tontineService.frequencyLabel(this.tontine?.frequency as any ?? 'monthly');
@@ -491,8 +548,7 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
 
   earlyExitLabel(): string {
     const mode = this.tontine?.rules?.earlyExit?.mode;
-    if (!mode) return '—';
-    return this.tontineService.earlyExitLabel(mode);
+    return mode ? this.tontineService.earlyExitLabel(mode) : '—';
   }
 
   penaltyLabel(): string {
@@ -505,13 +561,11 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
 
   exclusionLabel(): string {
     const days = this.tontine?.rules?.autoExclusionDays;
-    if (days == null) return 'Jamais (vote requis)';
-    return `${days} jours de retard`;
+    return days == null ? 'Jamais (vote requis)' : `${days} jours de retard`;
   }
 
   modificationLabel(): string {
-    const t = this.tontine?.rules?.modificationThreshold ?? 75;
-    return `${t}% d'approbation`;
+    return `${this.tontine?.rules?.modificationThreshold ?? 75}% d'approbation`;
   }
 
   // ════════════════════════════════════════════════════════
@@ -524,10 +578,8 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
     if (!d) return '—';
     const diffMs = d.getTime() - Date.now();
     if (diffMs <= 0) return 'Expiré';
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    if (hours < 24) return `Dans ${hours}h`;
-    const days = Math.floor(hours / 24);
-    return `Dans ${days}j`;
+    const hours = Math.floor(diffMs / 3600000);
+    return hours < 24 ? `Dans ${hours}h` : `Dans ${Math.floor(hours / 24)}j`;
   }
 
   private computeTimeLeft(value: any): string {
@@ -535,7 +587,7 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
     if (!d) return '—';
     const diffMs = d.getTime() - Date.now();
     if (diffMs <= 0) return 'Expiré';
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const hours = Math.floor(diffMs / 3600000);
     if (hours < 24) return `${hours} heure${hours > 1 ? 's' : ''}`;
     const days = Math.floor(hours / 24);
     return `${days} jour${days > 1 ? 's' : ''}`;
@@ -545,20 +597,7 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
     const d = this.toDate(this.tontine?.nextPaymentDate);
     if (!d) return 0;
     const diffMs = Date.now() - d.getTime();
-    if (diffMs <= 0) return 0;
-    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  }
-
-  // ── Actions ──────────────────────────────────────────────
-
-  async payNow(): Promise<void> {
-    const t = await this.toastCtrl.create({
-      message: 'Paiement en cours…',
-      duration: 2000,
-      position: 'bottom',
-    });
-    await t.present();
-    this.router.navigate(['/tontines', this.tontineId, 'pay']);
+    return diffMs <= 0 ? 0 : Math.floor(diffMs / 86400000);
   }
 
   setTab(tab: TabKey): void {
@@ -570,31 +609,27 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
     entry.expanded = !entry.expanded;
   }
 
-  // ── Donut ─────────────────────────────────────────────────
+  // ── Donut ──────────────────────────────────────────────
 
   private drawDonut(): void {
     const canvas = document.getElementById('donutCanvas') as HTMLCanvasElement;
     if (!canvas) return;
     this.donutDrawn = true;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const total = this.tontine?.totalTurns ?? 1;
     const done = this.stats.completedTurns;
     const ratio = total > 0 ? Math.min(done / total, 1) : 0;
-
     const cx = 65, cy = 65, r = 50, lw = 16;
-    ctx.clearRect(0, 0, 130, 130);
 
-    // Piste fond
+    ctx.clearRect(0, 0, 130, 130);
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.strokeStyle = '#E2E8F0';
     ctx.lineWidth = lw;
     ctx.stroke();
 
-    // Arc progression
     if (ratio > 0) {
       ctx.beginPath();
       ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ratio);
@@ -605,7 +640,7 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
-  // ── Utilitaires publics (utilisés dans le template) ───────
+  // ── Utilitaires publics ────────────────────────────────
 
   toDate(value: any): Date | null {
     if (!value) return null;

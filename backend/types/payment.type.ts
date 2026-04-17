@@ -2,7 +2,7 @@
 // ÉNUMÉRATIONS
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PaymentMethod = 'wave' | 'orange' | 'free' | 'mtn' | 'moov' | 'manual';
+export type PaymentMethod = 'wave' | 'orange' | 'kpay' | 'manual';
 export type PaymentStatus = 'pending' | 'confirmed' | 'failed' | 'refunded';
 export type VerificationStatus = 'pending' | 'verified' | 'rejected';
 

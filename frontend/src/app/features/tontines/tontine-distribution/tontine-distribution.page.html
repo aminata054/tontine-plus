@@ -1,0 +1,438 @@
+<ion-content [fullscreen]="true" class="dist-content">
+
+  <app-page-header [title]="pageTitle">
+  </app-page-header>
+
+  <!-- ══════════════ LOADING ══════════════ -->
+  <ng-container *ngIf="step === 'loading'">
+    <div class="dist-skeleton">
+      <ion-skeleton-text animated
+        style="width:100%;height:100px;border-radius:16px;margin-bottom:16px;"></ion-skeleton-text>
+      <ion-skeleton-text animated
+        style="width:100%;height:60px;border-radius:14px;margin-bottom:12px;"></ion-skeleton-text>
+      <ion-skeleton-text animated
+        style="width:100%;height:60px;border-radius:14px;margin-bottom:12px;"></ion-skeleton-text>
+      <ion-skeleton-text animated style="width:100%;height:60px;border-radius:14px;"></ion-skeleton-text>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ ERREUR ══════════════ -->
+  <ng-container *ngIf="step === 'error'">
+    <div class="dist-state">
+      <div class="state-icon state-icon--danger">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+      </div>
+      <h2>Impossible de charger</h2>
+      <p>Une erreur est survenue. Vérifiez votre connexion.</p>
+      <app-custom-button fill="outline" (clicked)="loadPage()">Réessayer</app-custom-button>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ ÉTAT DE COLLECTE ══════════════ -->
+  <ng-container *ngIf="step === 'collection_status'">
+    <div class="dist-body">
+
+      <!-- Banner tour actuel -->
+      <div class="tour-banner">
+        <div class="tour-banner__left">
+          <span class="tour-banner__label">Tour {{ collectionStatus?.turnNumber ?? tontine?.currentTurn }}</span>
+          <span class="tour-banner__amount">{{ formatAmount(collectionStatus?.expectedTotal ?? 0) }} FCFA</span>
+        </div>
+        <div class="tour-banner__right">
+          <span class="tour-banner__count">
+            {{ collectionStatus?.paidCount ?? 0 }}/{{ collectionStatus?.totalMembers ?? 0 }}
+          </span>
+          <span class="tour-banner__sub">ont payé</span>
+        </div>
+      </div>
+
+      <!-- Barre de progression -->
+      <div class="progress-block">
+        <div class="progress-bar">
+          <div class="progress-bar__fill" [style.width]="progressBarStyle"
+            [class.progress-bar__fill--complete]="collectionStatus?.isComplete">
+          </div>
+        </div>
+        <div class="progress-labels">
+          <span class="progress-labels__collected">
+            {{ formatAmount(collectionStatus?.totalCollected ?? 0) }} FCFA collectés
+          </span>
+          <span class="progress-labels__pct">{{ collectionPercent }}%</span>
+        </div>
+      </div>
+
+      <!-- Membres manquants -->
+      <ng-container *ngIf="(collectionStatus?.missingMembers?.length ?? 0) > 0">
+        <h3 class="section-title">En attente de paiement</h3>
+        <div class="missing-list">
+          <div class="missing-item" *ngFor="let m of collectionStatus?.missingMembers">
+            <div class="missing-item__avatar">
+              <ion-icon [name]="memberStatusIcon(m.status)" [style.color]="memberStatusColor(m.status)">
+              </ion-icon>
+            </div>
+            <div class="missing-item__info">
+              <span class="missing-item__name">{{ m.userName ?? 'Membre' }}</span>
+              <span class="missing-item__status" [class.missing-item__status--pending]="m.status === 'pending'"
+                [class.missing-item__status--unpaid]="m.status === 'unpaid'">
+                {{ m.status === 'pending' ? 'Paiement en cours…' : 'Pas encore payé' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="isAdminOrCreator">
+        <div class="admin-actions">
+          <app-custom-button expand="block" fill="outline" (clicked)="refreshStatus()">
+            <ion-icon name="refresh-outline" slot="start"></ion-icon>
+            Actualiser
+          </app-custom-button>
+          <app-custom-button expand="block" fill="outline" color="medium" (clicked)="showHistory()">
+            <ion-icon name="list-outline" slot="start"></ion-icon>
+            Voir l'historique
+          </app-custom-button>
+        </div>
+      </ng-container>
+
+      <div class="wait-notice" *ngIf="!isAdminOrCreator">
+        <ion-icon name="hourglass-outline"></ion-icon>
+        <p>Le pot sera distribué dès que tous les membres auront payé leur cotisation.</p>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ CHOIX MÉTHODE ══════════════ -->
+  <ng-container *ngIf="step === 'select_method' && tontine">
+    <div class="dist-body">
+
+      <div class="complete-banner">
+        <ion-icon name="checkmark-circle-outline" class="complete-banner__icon"></ion-icon>
+        <div>
+          <p class="complete-banner__title">Collecte complète ! 🎉</p>
+          <p class="complete-banner__sub">
+            Tous les membres ont payé — vous pouvez distribuer
+            <strong>{{ formatAmount(tontine.potPerTurn) }} FCFA</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- BUG #1 FIX — badge numéro détecté automatiquement -->
+      <div class="autofill-notice" *ngIf="phoneWasAutoFilled && beneficiaryPhone">
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+        <div>
+          <p class="autofill-notice__title">Numéro détecté automatiquement</p>
+          <p class="autofill-notice__number">{{ beneficiaryPhone }}</p>
+          <p class="autofill-notice__hint" *ngIf="autoFillBadge">{{ autoFillBadge }}</p>
+        </div>
+        <button class="autofill-notice__change" (click)="clearPhone()">Modifier</button>
+      </div>
+
+      <h3 class="section-title">Choisissez la méthode d'envoi</h3>
+
+      <div class="methods-list">
+        <button class="method-card" *ngFor="let method of methods"
+          [class.method-card--recommended]="selectedMethod?.id === method.id" (click)="selectMethod(method)">
+          <div class="method-card__logo" [style.background]="method.color + '18'">
+            <ng-container [ngSwitch]="method.id">
+              <span *ngSwitchCase="'wave'" style="font-size:26px">🌊</span>
+              <span *ngSwitchCase="'orange'" style="font-size:26px">🟠</span>
+              <span *ngSwitchCase="'free'" style="font-size:26px">🔴</span>
+              <span *ngSwitchCase="'manual'" style="font-size:26px">🤝</span>
+            </ng-container>
+          </div>
+          <div class="method-card__info">
+            <span class="method-card__name">{{ method.label }}</span>
+            <!-- Badge méthode préférée du bénéficiaire -->
+            <span class="method-card__preferred" *ngIf="selectedMethod?.id === method.id && phoneWasAutoFilled">
+              ✓ Méthode préférée du bénéficiaire
+            </span>
+          </div>
+          <ion-icon name="chevron-forward-outline" class="method-card__arrow"></ion-icon>
+        </button>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ SAISIE NUMÉRO ══════════════ -->
+  <ng-container *ngIf="step === 'enter_phone' && selectedMethod">
+    <div class="dist-body">
+
+      <div class="selected-method-header">
+        <div class="selected-method-header__icon" [style.background]="selectedMethod.color + '18'">
+          <ng-container [ngSwitch]="selectedMethod.id">
+            <span *ngSwitchCase="'wave'" style="font-size:30px">🌊</span>
+            <span *ngSwitchCase="'orange'" style="font-size:30px">🟠</span>
+            <span *ngSwitchCase="'free'" style="font-size:30px">🔴</span>
+            <span *ngSwitchCase="'manual'" style="font-size:30px">🤝</span>
+          </ng-container>
+        </div>
+        <div>
+          <p class="selected-method-header__name">{{ selectedMethod.label }}</p>
+          <p class="selected-method-header__amount">{{ formatAmount(tontine?.potPerTurn ?? 0) }} FCFA à envoyer</p>
+        </div>
+      </div>
+
+      <div class="input-block">
+        <label class="input-block__label">
+          {{ isManual ? 'Référence ou commentaire' : 'Numéro du bénéficiaire' }}
+        </label>
+        <div class="input-block__field">
+          <ion-input [(ngModel)]="beneficiaryPhone" [placeholder]="selectedMethod.placeholder"
+            [type]="isManual ? 'text' : 'tel'" inputmode="numeric" fill="outline" [clearInput]="true"
+            class="phone-input">
+          </ion-input>
+        </div>
+        <p class="input-block__hint" *ngIf="!isManual">
+          Numéro {{ selectedMethod.label }} du bénéficiaire
+        </p>
+      </div>
+
+      <app-custom-button expand="block" (clicked)="proceedToConfirm()">
+        Continuer
+      </app-custom-button>
+
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ RÉCAPITULATIF ══════════════ -->
+  <ng-container *ngIf="step === 'confirm' && tontine && selectedMethod">
+    <div class="dist-body">
+
+      <h3 class="section-title">Récapitulatif de la distribution</h3>
+
+      <div class="recap-card">
+        <div class="recap-row">
+          <span class="recap-label">Tontine</span>
+          <span class="recap-value">{{ tontine.name }}</span>
+        </div>
+        <!-- BUG #3 FIX — lire depuis collectionStatus.turnNumber, pas tontine.currentTurn -->
+        <div class="recap-row">
+          <span class="recap-label">Tour distribué</span>
+          <span class="recap-value">Tour {{ collectionStatus?.turnNumber ?? tontine.currentTurn }}</span>
+        </div>
+        <div class="recap-row" *ngIf="collectionStatus">
+          <span class="recap-label">Membres ayant payé</span>
+          <span class="recap-value">{{ collectionStatus.paidCount }}/{{ collectionStatus.totalMembers }}</span>
+        </div>
+      </div>
+
+      <div class="recap-card">
+        <div class="recap-row recap-row--total">
+          <span class="recap-label">Pot à distribuer</span>
+          <span class="recap-value recap-value--primary">{{ formatAmount(tontine.potPerTurn) }} FCFA</span>
+        </div>
+      </div>
+
+      <div class="recap-card">
+        <div class="recap-row">
+          <span class="recap-label">Méthode</span>
+          <span class="recap-value">{{ selectedMethod.label }}</span>
+        </div>
+        <div class="recap-row">
+          <span class="recap-label">{{ isManual ? 'Référence' : 'Numéro bénéficiaire' }}</span>
+          <div class="recap-phone-row">
+            <span class="recap-value recap-value--mono">{{ beneficiaryPhone }}</span>
+            <!-- BUG #1 FIX — badge pré-rempli + lien modifier -->
+            <span class="autofill-badge" *ngIf="phoneWasAutoFilled">
+              <ion-icon name="flash-outline"></ion-icon> Auto
+            </span>
+          </div>
+        </div>
+        <div class="recap-row" *ngIf="phoneWasAutoFilled">
+          <span class="recap-label"></span>
+          <button class="link-btn" (click)="clearPhone()">Modifier le numéro</button>
+        </div>
+      </div>
+
+      <app-custom-button expand="block" [loading]="isSubmitting" (clicked)="distribute()">
+        <ion-icon name="paper-plane-outline" slot="start"></ion-icon>
+        Envoyer {{ formatAmount(tontine.potPerTurn) }} FCFA
+      </app-custom-button>
+
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ PROCESSING ══════════════ -->
+  <ng-container *ngIf="step === 'processing'">
+    <div class="dist-state">
+      <div class="state-icon state-icon--processing">
+        <div class="spinner"></div>
+      </div>
+      <h2>{{ processingMessage }}</h2>
+      <p>Veuillez patienter, ne fermez pas l'application</p>
+      <div class="processing-steps">
+        <div class="processing-step processing-step--done">
+          <ion-icon name="checkmark-circle"></ion-icon>
+          <span>Distribution initiée</span>
+        </div>
+        <div class="processing-step processing-step--active">
+          <div class="mini-spinner"></div>
+          <span>Transfert en cours…</span>
+        </div>
+        <div class="processing-step">
+          <ion-icon name="ellipse-outline"></ion-icon>
+          <span>Confirmation bénéficiaire</span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ POT ENVOYÉ ══════════════ -->
+  <ng-container *ngIf="step === 'sent' && currentDistribution">
+    <div class="dist-body">
+
+      <div class="sent-header">
+        <div class="state-icon state-icon--sent">
+          <ion-icon name="paper-plane-outline"></ion-icon>
+        </div>
+        <h2>Pot envoyé !</h2>
+        <p>
+          <strong>{{ formatAmount(currentDistribution.amount) }} FCFA</strong>
+          envoyés via {{ currentDistribution.distributionMethod }}
+          à <strong>{{ currentDistribution.beneficiaryName }}</strong>
+        </p>
+      </div>
+
+      <div class="receipt-card">
+        <div class="receipt-row">
+          <span class="receipt-label">Bénéficiaire</span>
+          <span class="receipt-value">{{ currentDistribution.beneficiaryName }}</span>
+        </div>
+        <!-- BUG #3 FIX — lire le tour depuis la distribution, pas depuis tontine.currentTurn -->
+        <div class="receipt-row">
+          <span class="receipt-label">Tour</span>
+          <span class="receipt-value">Tour {{ currentDistribution.turnNumber }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">Montant</span>
+          <span class="receipt-value receipt-value--primary">{{ formatAmount(currentDistribution.amount) }} FCFA</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">Transaction</span>
+          <span class="receipt-value receipt-value--mono">{{ currentDistribution.transactionId }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">Statut</span>
+          <span class="receipt-value">{{ distStatusLabel(currentDistribution.status) }}</span>
+        </div>
+      </div>
+
+      <ng-container *ngIf="isBeneficiary || isAdminOrCreator">
+        <div class="confirm-notice">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          <p>
+            {{ isBeneficiary
+            ? 'Confirmez la réception pour démarrer le tour suivant'
+            : 'Vous pouvez confirmer la réception au nom du bénéficiaire' }}
+          </p>
+        </div>
+        <app-custom-button expand="block" color="success" [loading]="isSubmitting" (clicked)="confirmReception()">
+          <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+          {{ isBeneficiary ? "J'ai reçu mon pot ✅" : 'Confirmer la réception' }}
+        </app-custom-button>
+      </ng-container>
+
+      <div class="wait-notice" *ngIf="!isBeneficiary && !isAdminOrCreator">
+        <ion-icon name="hourglass-outline"></ion-icon>
+        <p>En attente de confirmation de réception par {{ currentDistribution.beneficiaryName }}</p>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ CONFIRMÉ → TOUR SUIVANT ══════════════ -->
+  <ng-container *ngIf="step === 'confirmed' && confirmResult">
+    <div class="dist-state">
+      <div class="state-icon state-icon--success">
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+      </div>
+      <h2>Réception confirmée !</h2>
+      <p>
+        Le tour {{ currentDistribution?.turnNumber }} est terminé.
+        <ng-container *ngIf="confirmResult.nextTurnNumber">
+          Le tour <strong>{{ confirmResult.nextTurnNumber }}</strong> a démarré.
+        </ng-container>
+      </p>
+
+      <div class="next-turn-card" *ngIf="confirmResult.nextTurnNumber">
+        <ion-icon name="arrow-forward-circle-outline" class="next-turn-card__icon"></ion-icon>
+        <p>Tour {{ confirmResult.nextTurnNumber }} en cours</p>
+        <p class="next-turn-card__sub">Les membres peuvent maintenant payer</p>
+      </div>
+
+      <app-custom-button expand="block" (clicked)="goToTontine()">
+        Retour à la tontine
+      </app-custom-button>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ TONTINE TERMINÉE ══════════════ -->
+  <ng-container *ngIf="step === 'tontine_completed'">
+    <div class="dist-state">
+      <div class="state-icon state-icon--gold">
+        <ion-icon name="trophy-outline"></ion-icon>
+      </div>
+      <h2>🏆 Tontine terminée !</h2>
+      <p>
+        Félicitations ! Tous les tours ont été complétés.
+        La tontine <strong>{{ tontine?.name }}</strong> est arrivée à son terme.
+      </p>
+      <div class="completed-stats" *ngIf="tontine">
+        <div class="completed-stat">
+          <span class="completed-stat__label">Tours complétés</span>
+          <span class="completed-stat__value">{{ tontine.totalTurns }}</span>
+        </div>
+        <div class="completed-stat">
+          <span class="completed-stat__label">Total distribué</span>
+          <span class="completed-stat__value">
+            {{ formatAmount(tontine.potPerTurn * tontine.totalTurns) }} FCFA
+          </span>
+        </div>
+      </div>
+      <app-custom-button expand="block" (clicked)="goToTontine()">
+        Retour aux détails de la tontine
+      </app-custom-button>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ HISTORIQUE ══════════════ -->
+  <ng-container *ngIf="step === 'history'">
+    <div class="dist-body">
+      <div class="history-list" *ngIf="distributions.length > 0; else emptyHistory">
+        <div class="history-item" *ngFor="let d of distributions">
+          <div class="history-item__left">
+            <div class="history-item__icon" [attr.data-status]="d.status">
+              <ion-icon [name]="distStatusIcon(d.status)"></ion-icon>
+            </div>
+          </div>
+          <div class="history-item__body">
+            <div class="history-item__top">
+              <!-- BUG #3 FIX — afficher d.turnNumber, pas tontine.currentTurn -->
+              <span class="history-item__turn">Tour {{ d.turnNumber }}</span>
+              <span class="history-item__amount">{{ formatAmount(d.amount) }} FCFA</span>
+            </div>
+            <div class="history-item__bottom">
+              <span class="history-item__beneficiary">→ {{ d.beneficiaryName }}</span>
+              <span class="history-item__status" [attr.data-status]="d.status">
+                {{ distStatusLabel(d.status) }}
+              </span>
+            </div>
+            <span class="history-item__date" *ngIf="d.distributedAt">
+              {{ formatDate(d.distributedAt) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #emptyHistory>
+        <div class="empty-state">
+          <ion-icon name="list-outline"></ion-icon>
+          <p>Aucune distribution pour l'instant</p>
+        </div>
+      </ng-template>
+    </div>
+  </ng-container>
+
+</ion-content>

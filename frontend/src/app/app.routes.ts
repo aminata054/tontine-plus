@@ -107,6 +107,15 @@ export const routes: Routes = [
             path: ':tontineId/payments/:paymentId',
             loadComponent: () => import('./features/tontines/tontine-payment/tontine-payment.page').then(m => m.TontinePaymentPage)
           },
+          {
+            path: ':tontineId/distribute',
+            loadComponent: () => import('./features/tontines/tontine-distribution/tontine-distribution.page').then(m => m.TontineDistributionPage)
+          },
+          {
+            path: ':tontineId/distribute/:distributionId',
+            loadComponent: () => import('./features/tontines/tontine-distribution/tontine-distribution.page').then(m => m.TontineDistributionPage)
+          },
+
 
         ]
       },

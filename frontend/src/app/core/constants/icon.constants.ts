@@ -65,6 +65,11 @@ import {
     statsChartOutline,
     ellipseOutline,
     receiptOutline,
+    card,
+    paperPlane,
+    paperPlaneOutline,
+    trophyOutline,
+    chevronDownOutline,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -87,11 +92,11 @@ export function registerIcons() {
         helpCircleOutline,
         searchOutline,
         walletOutline,
-        calendarOutline,
+        calendarOutline, trophyOutline, chevronDownOutline,
         chevronBackOutline, closeOutline,
         imageOutline, pencilOutline,
         shareOutline, qrCodeOutline, copyOutline, downloadOutline,
-        refreshOutline,
+        refreshOutline, paperPlaneOutline,
         shieldCheckmarkOutline,
         listOutline, shuffleOutline, logoWhatsapp, logoTwitter, logoSnapchat, syncOutline,
         repeatOutline, flagOutline, playCircleOutline, personAddOutline, lockClosedOutline,
@@ -100,7 +105,7 @@ export function registerIcons() {
         cardOutline, receiptOutline,
         sendOutline, headsetOutline, logOutOutline,
         callOutline, ellipseOutline,
-        rocketOutline, openOutline,
+        rocketOutline, openOutline, card,
         infiniteOutline, rocket, statsChartOutline,
         trendingUpOutline, starOutline, flashOutline,
         sparkles, closeCircle, linkOutline, informationCircle, chatbubbleOutline

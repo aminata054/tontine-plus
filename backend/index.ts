@@ -10,6 +10,7 @@ import notificationRoutes from './routes/notification.route';
 import subscriptionRoutes from './routes/subscription.route';
 import chatRoutes from './routes/chat.route';
 import paymentRoutes from './routes/payment.route';
+import distributionRoutes from './routes/distribution.route';
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/tontines/:id/chat', chatRoutes);
 app.use('/api/chat', chatRoutes);  
 app.use('/api/payments', paymentRoutes);
+app.use('/api/distributions', distributionRoutes);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {

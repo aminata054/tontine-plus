@@ -7,7 +7,7 @@ export type TontineVisibility = 'private' | 'semi_public' | 'public';
 export type TontineStatus = 'pending' | 'active' | 'completed' | 'cancelled';
 export type Frequency = 'daily' | 'weekly' | 'biweekly' | 'monthly';
 export type RotationMethod = 'random' | 'seniority' | 'consensual' | 'manual';
-export type SecurityModel = 'escrow' | 'direct' | 'solidarity_guarantee';  
+export type SecurityModel = 'escrow' | 'direct' | 'solidarity_guarantee';
 export type PenaltyType = 'percentage' | 'fixed';
 export type EarlyExitMode = 'penalty' | 'vote' | 'locked';
 export type EarlyExitPenalty = 'guarantee' | 'paid_contributions';
@@ -83,6 +83,9 @@ export interface Tontine {
 
     rules: TontineRules;
     stats: TontineStats;
+
+    currentDistributionId?: string;
+    currentBeneficiaryUid?: string;
 
     createdBy: string;
     createdAt: any;
@@ -228,6 +231,7 @@ export interface TontineMember {
     tontineId: string;
     userId: string;
     userName: string | null;
+    phoneNumber: string ;
     userPhotoUrl: string | null;
     role: MemberRole;
     status: MemberStatus;
@@ -329,9 +333,9 @@ export interface TurnItem {
 export interface MyContribution {
     status: 'paid' | 'due' | 'late';
     paidAt?: any;
-    paymentId?: string; 
+    paymentId?: string;
     receiptRef?: string;
-    receiptUrl?: string; 
+    receiptUrl?: string;
     dueDate?: any;
     timeLeft?: string;
     penalty?: number;

@@ -15,11 +15,12 @@ import {
 } from '../services/payment.service';
 import { buildNotificationDoc, sendNotificationToUser } from '../services/notification.service';
 import { InitiatePaymentPayload, PaymentMethod, VerifyPaymentPayload } from '../types/payment.type';
+import { checkAndTriggerDistribution, saveMemberPaymentPhone } from '../services/distribution.service';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VALIDATION — méthodes de paiement acceptées
 // ─────────────────────────────────────────────────────────────────────────────
-const VALID_METHODS: PaymentMethod[] = ['wave', 'orange', 'free', 'mtn', 'moov', 'manual'];
+const VALID_METHODS: PaymentMethod[] = ['wave', 'orange', 'kpay', 'manual'];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/v1/payments/initiate
@@ -191,7 +192,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
     const uid = (req as any).user.uid;
     const { paymentId } = req.body as VerifyPaymentPayload;
 
-    if (!paymentId || typeof paymentId !== 'string')
+    if (!paymentId)
         return res.status(400).json({ success: false, error: 'paymentId requis' });
 
     try {
@@ -203,11 +204,9 @@ export const verifyPayment = async (req: Request, res: Response) => {
 
         const payment = paymentDoc.data()!;
 
-        // ── Vérifier l'appartenance ────────────────────────────────────────────
         if (payment.userId !== uid)
             return res.status(403).json({ success: false, error: 'Accès refusé' });
 
-        // ── Vérifier le statut courant ─────────────────────────────────────────
         if (payment.status !== 'pending')
             return res.status(400).json({
                 success: false,
@@ -225,11 +224,12 @@ export const verifyPayment = async (req: Request, res: Response) => {
                     status: 'pending',
                     verificationStatus: 'pending',
                     memberStatsUpdated: false,
+                    collectionStatus: null,
                 },
             });
         }
 
-        // ── Simulation : appel à l'opérateur mobile money ─────────────────────
+        // ── Simulation opérateur ──────────────────────────────────────────────
         const simulatedStatus = simulateOperatorVerification(payment.paymentMethod);
         const isLate = (payment.metadata?.daysLate ?? 0) > (payment.metadata?.gracePeriod ?? 0);
         const tontineId = payment.tontineId;
@@ -240,7 +240,6 @@ export const verifyPayment = async (req: Request, res: Response) => {
             if (simulatedStatus === 'confirmed') {
                 receiptUrl = generateReceiptUrl(paymentId);
 
-                // 1. Confirmer le paiement
                 transaction.update(paymentRef, {
                     status: 'confirmed',
                     confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -248,18 +247,27 @@ export const verifyPayment = async (req: Request, res: Response) => {
                     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 });
 
-                // 2. Mettre à jour les stats du membre
                 const memberRef = db
                     .collection('tontines').doc(tontineId)
                     .collection('members').doc(uid);
-
                 transaction.update(memberRef, {
                     'stats.totalPaid': admin.firestore.FieldValue.increment(payment.totalAmount),
                     [`stats.${isLate ? 'latePayments' : 'onTimePayments'}`]:
                         admin.firestore.FieldValue.increment(1),
                 });
 
-                // 3. Mettre à jour les stats de la tontine
+                // Mémoriser le numéro de paiement pour pré-remplir la distribution
+                if (payment.paymentMethodNumber && payment.paymentMethod !== 'manual') {
+                    const memberPhoneRef = db
+                        .collection('tontines').doc(tontineId)
+                        .collection('members').doc(uid);
+
+                    transaction.update(memberPhoneRef, {
+                        paymentPhone: payment.paymentMethodNumber,
+                        preferredPaymentMethod: payment.paymentMethod,
+                    });
+                }
+
                 const tontineRef = db.collection('tontines').doc(tontineId);
                 transaction.update(tontineRef, {
                     'stats.totalCollected': admin.firestore.FieldValue.increment(payment.totalAmount),
@@ -267,9 +275,8 @@ export const verifyPayment = async (req: Request, res: Response) => {
 
                 memberStatsUpdated = true;
 
-                // 4. Notification de confirmation au membre
                 const notif = buildNotificationDoc(uid, {
-                    title: 'Paiement confirmé ✅',
+                    title: 'Paiement confirmé ',
                     body: `Votre cotisation de ${payment.totalAmount} FCFA a été confirmée pour ${payment.metadata?.tontineName}`,
                     type: 'payment_confirmed',
                     tontineId,
@@ -277,35 +284,71 @@ export const verifyPayment = async (req: Request, res: Response) => {
                     paymentId,
                     amount: payment.totalAmount,
                 });
-
                 transaction.set(notif.ref, notif.data);
 
             } else {
-                // Échec du paiement
                 transaction.update(paymentRef, {
                     status: 'failed',
                     failedAt: admin.firestore.FieldValue.serverTimestamp(),
                     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 });
 
-                // Notification d'échec
                 const notif = buildNotificationDoc(uid, {
-                    title: 'Paiement échoué ❌',
+                    title: 'Paiement échoué',
                     body: `Votre paiement de ${payment.totalAmount} FCFA a échoué. Veuillez réessayer.`,
                     type: 'payment_failed',
                     tontineId,
                     tontineName: payment.metadata?.tontineName,
                     paymentId,
                 });
-
                 transaction.set(notif.ref, notif.data);
             }
         });
 
-        // Notif push hors transaction
+        // ── HOOK POST-CONFIRMATION : vérifier si la collecte est complète ──────
+        // Exécuté hors transaction pour ne pas bloquer la réponse au client
+        let collectionStatus = null;
+        let distributionReady = false;
+
+        if (simulatedStatus === 'confirmed') {
+            try {
+                const { shouldDistribute, collectionStatus: cs } =
+                    await checkAndTriggerDistribution(tontineId, payment.turnNumber);
+
+                collectionStatus = cs;
+                distributionReady = shouldDistribute;
+
+                // Si la collecte est complète, notifier le créateur qu'il peut distribuer
+                if (shouldDistribute) {
+                    const tontineDoc = await db.collection('tontines').doc(tontineId).get();
+                    const tontine = tontineDoc.data()!;
+
+                    const creatorNotif = buildNotificationDoc(tontine.createdBy, {
+                        title: '💰 Collecte complète !',
+                        body: `Tous les membres ont payé le tour ${payment.turnNumber} de ${tontine.name}. Vous pouvez distribuer le pot.`,
+                        type: 'collection_complete',
+                        tontineId,
+                        tontineName: tontine.name,
+                        turnNumber: payment.turnNumber,
+                        amount: tontine.potPerTurn,
+                    });
+
+                    await db.runTransaction(async (t) => {
+                        t.set(creatorNotif.ref, creatorNotif.data);
+                    });
+
+                    await sendNotificationToUser(tontine.createdBy, creatorNotif.data);
+                }
+            } catch (hookErr) {
+                // Le hook ne doit jamais faire échouer la réponse principale
+                console.error('[verifyPayment] Hook post-confirmation error:', hookErr);
+            }
+        }
+
+        // Push notification
         if (simulatedStatus === 'confirmed') {
             await sendNotificationToUser(uid, {
-                title: 'Paiement confirmé ✅',
+                title: 'Paiement confirmé',
                 body: `Votre cotisation de ${payment.totalAmount} FCFA a été confirmée`,
                 type: 'payment_confirmed',
                 tontineId,
@@ -324,6 +367,9 @@ export const verifyPayment = async (req: Request, res: Response) => {
                 confirmedAt: simulatedStatus === 'confirmed' ? new Date().toISOString() : null,
                 receiptUrl,
                 memberStatsUpdated,
+                // ── Nouveaux champs pour le front ──────────────────────────────
+                collectionStatus,         // état de collecte après ce paiement
+                distributionReady,        // true = tous ont payé, créateur peut distribuer
             },
         });
 
@@ -331,7 +377,6 @@ export const verifyPayment = async (req: Request, res: Response) => {
         return res.status(500).json({ success: false, error: err.message });
     }
 };
-
 // ─────────────────────────────────────────────────────────────────────────────
 // PATCH /api/v1/payments/:paymentId/manual-verify
 //

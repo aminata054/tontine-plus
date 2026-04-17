@@ -88,9 +88,7 @@ interface SimulationConfig {
 export const SIMULATION_CONFIG: Record<PaymentMethod, SimulationConfig> = {
     wave: { delayMs: 3000, successRate: 0.95, pendingMessage: 'En attente de confirmation Wave...' },
     orange: { delayMs: 4000, successRate: 0.92, pendingMessage: 'En attente de confirmation Orange Money...' },
-    free: { delayMs: 3500, successRate: 0.90, pendingMessage: 'En attente de confirmation Free Money...' },
-    mtn: { delayMs: 5000, successRate: 0.88, pendingMessage: 'En attente de confirmation MTN MoMo...' },
-    moov: { delayMs: 4500, successRate: 0.87, pendingMessage: 'En attente de confirmation Moov Money...' },
+    kpay: { delayMs: 3500, successRate: 0.90, pendingMessage: 'En attente de confirmation Kpay Money...' },
     manual: { delayMs: 0, successRate: 1.00, pendingMessage: 'Paiement manuel — en attente de vérification' },
 };
 
