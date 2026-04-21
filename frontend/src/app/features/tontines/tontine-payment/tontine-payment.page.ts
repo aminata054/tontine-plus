@@ -337,7 +337,8 @@ export class TontinePaymentPage implements OnInit, OnDestroy {
   }
 
   goToTontine(): void {
-    this.router.navigate(['/tontines', this.tontineId]);
+    this.router.navigate(['/tontines', this.tontineId, 'tontine-detail'], { replaceUrl: true });
+
   }
 
   /** Télécharge le reçu PDF si l'URL est disponible */

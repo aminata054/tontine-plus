@@ -111,7 +111,7 @@
         <div>
           <p class="complete-banner__title">Collecte complète ! 🎉</p>
           <p class="complete-banner__sub">
-            Tous les membres ont payé — vous pouvez distribuer
+            Tous les membres ont payé, vous pouvez distribuer
             <strong>{{ formatAmount(tontine.potPerTurn) }} FCFA</strong>
           </p>
         </div>
@@ -135,10 +135,10 @@
           [class.method-card--recommended]="selectedMethod?.id === method.id" (click)="selectMethod(method)">
           <div class="method-card__logo" [style.background]="method.color + '18'">
             <ng-container [ngSwitch]="method.id">
-              <span *ngSwitchCase="'wave'" style="font-size:26px">🌊</span>
-              <span *ngSwitchCase="'orange'" style="font-size:26px">🟠</span>
-              <span *ngSwitchCase="'free'" style="font-size:26px">🔴</span>
-              <span *ngSwitchCase="'manual'" style="font-size:26px">🤝</span>
+              <span *ngSwitchCase="'wave'" style="font-size:26px"><img src="assets/images/wave-logo.png"></span>
+              <span *ngSwitchCase="'orange'" style="font-size:26px"><img src="assets/images/orange-money-logo.png" alt=""></span>
+              <span *ngSwitchCase="'kpay'" style="font-size:26px"><img src="assets/images/kpay-logo.png" alt=""></span>
+              <span *ngSwitchCase="'manual'" style="font-size:26px">📋</span>
             </ng-container>
           </div>
           <div class="method-card__info">

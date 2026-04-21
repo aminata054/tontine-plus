@@ -148,11 +148,11 @@ export const getMessages = async (
         if (!snap) {
             return res.json({
                 success: true,
-                });
+            });
         }
 
         const snapDoc = snap.docs[0];
- 
+
         if (!snapDoc) {
             return res.json({
                 success: true,
@@ -174,7 +174,7 @@ export const getMessages = async (
             hasMore: snap.docs.length === Number(limit),
             nextCursor: snap.docs.length > 0 ? snapDoc.id : null,
         });
-        
+
 
     } catch (err: any) {
         return res.status(500).json({ success: false, error: err.message });

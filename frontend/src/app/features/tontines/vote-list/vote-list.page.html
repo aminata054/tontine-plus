@@ -1,0 +1,252 @@
+<ion-header>
+  <app-page-header title="Votes"></app-page-header>
+  <ion-toolbar>
+    <div class="vote-filters">
+      <button *ngFor="let f of statusFilters" class="vote-filter-btn"
+        [class.vote-filter-btn--active]="activeFilter === f.value" (click)="setFilter(f.value)">
+        {{ f.label }}
+      </button>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="vote-content">
+
+  <!-- Bouton créer un vote -->
+  <div class="vote-create-wrap" *ngIf="availableTypes.length > 0">
+    <button class="vote-create-btn" (click)="openCreateModal()">
+      <ion-icon name="add-circle-outline"></ion-icon>
+      Proposer un vote
+    </button>
+  </div>
+
+  <!-- État vide -->
+  <div class="vote-empty" *ngIf="filteredVotes.length === 0 && !loading">
+    <ion-icon name="stats-chart-outline" class="vote-empty__icon"></ion-icon>
+    <p class="vote-empty__text">Aucun vote {{ activeFilter !== 'all' ? 'dans cette catégorie' : '' }}</p>
+    <p class="vote-empty__sub">Les votes permettent de modifier les règles, choisir les bénéficiaires
+      et gérer la tontine de façon collective.</p>
+  </div>
+
+  <!-- Skeleton loading -->
+  <div class="vote-skeleton-list" *ngIf="loading">
+    <div class="vote-skeleton-card" *ngFor="let i of [1,2,3]"></div>
+  </div>
+
+  <!-- Liste des votes -->
+  <div class="vote-list" *ngIf="!loading">
+    <div *ngFor="let vote of filteredVotes; trackBy: trackById" class="vote-card"
+      [class.vote-card--open]="vote.status === 'open'" (click)="openVoteDetail(vote)">
+
+      <div class="vote-card__header">
+        <div class="vote-card__icon-wrap">
+          <ion-icon [name]="voteService.getConfig(vote.type).icon"></ion-icon>
+        </div>
+        <div class="vote-card__meta">
+          <span class="vote-card__type">{{ voteService.getConfig(vote.type).label }}</span>
+          <span class="vote-card__time">{{ formatDate(vote.createdAt) }}</span>
+        </div>
+        <span class="vote-card__badge" [class]="'vote-card__badge--' + voteService.getResultColor(vote.result)">
+          {{ voteService.getResultLabel(vote.result, vote.status) }}
+        </span>
+      </div>
+
+      <p class="vote-card__title">{{ vote.title }}</p>
+      <p class="vote-card__desc" *ngIf="vote.description">{{ vote.description }}</p>
+
+      <div class="vote-card__progress-wrap">
+        <div class="vote-card__progress-label">
+          <span>Participation</span>
+          <span>{{ voteService.getParticipationRate(vote) }}% / {{ vote.requiredThreshold }}% requis</span>
+        </div>
+        <div class="vote-card__progress-bar">
+          <div class="vote-card__progress-fill" [style.width.%]="voteService.getParticipationRate(vote)"
+            [class.vote-card__progress-fill--reached]="voteService.getParticipationRate(vote) >= vote.requiredThreshold">
+          </div>
+          <div class="vote-card__progress-threshold" [style.left.%]="vote.requiredThreshold"></div>
+        </div>
+      </div>
+
+      <div class="vote-card__results" *ngIf="vote.type !== 'next_turn_selection'">
+        <div *ngFor="let r of voteService.getVoteResults(vote)" class="vote-card__result-row">
+          <span class="vote-card__result-label">{{ r.label }}</span>
+          <div class="vote-card__result-bar-wrap">
+            <div class="vote-card__result-bar" [style.width.%]="r.percent"
+              [class.vote-card__result-bar--yes]="r.choice === 'yes'"
+              [class.vote-card__result-bar--no]="r.choice === 'no'">
+            </div>
+          </div>
+          <span class="vote-card__result-pct">{{ r.percent }}%</span>
+        </div>
+      </div>
+
+      <div class="vote-card__my-vote" *ngIf="getUserChoice(vote) && vote.status === 'open'">
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+        <span>Vous avez voté : <strong>{{ formatChoice(getUserChoice(vote)!) }}</strong></span>
+      </div>
+
+      <div class="vote-card__expires" *ngIf="vote.status === 'open' && voteService.getTimeLeft(vote)">
+        <ion-icon name="time-outline"></ion-icon>
+        <span>{{ voteService.getTimeLeft(vote) }}</span>
+      </div>
+
+      <div class="vote-card__footer">
+        <span>{{ Object.keys(vote.votes).length }} / {{ vote.eligibleVoters.length }} votes</span>
+        <ion-icon name="chevron-forward-outline"></ion-icon>
+      </div>
+    </div>
+  </div>
+
+</ion-content>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL CRÉER UN VOTE
+═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
+  <div class="modal-sheet" (click)="$event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <p class="modal-title">Proposer un vote</p>
+
+    <!-- Étape 1 : Choisir le type -->
+    <ng-container *ngIf="createStep === 1">
+      <p class="modal-subtitle">Quel type de décision souhaitez-vous soumettre au vote ?</p>
+      <div class="type-list">
+        <button *ngFor="let config of availableTypes" class="type-item" (click)="selectVoteType(config)">
+          <div class="type-item__icon">
+            <ion-icon [name]="config.icon"></ion-icon>
+          </div>
+          <div class="type-item__content">
+            <span class="type-item__label">{{ config.label }}</span>
+            <span class="type-item__desc">{{ config.description }}</span>
+          </div>
+          <div class="type-item__threshold">
+            <span>{{ config.threshold }}%</span>
+            <small>requis</small>
+          </div>
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- Étape 2 : Remplir le formulaire -->
+    <ng-container *ngIf="createStep === 2 && selectedTypeConfig">
+      <div class="modal-type-recap">
+        <ion-icon [name]="selectedTypeConfig.icon"></ion-icon>
+        <span>{{ selectedTypeConfig.label }}</span>
+        <button class="modal-back-btn" (click)="createStep = 1">Changer</button>
+      </div>
+
+      <div class="modal-field">
+        <label class="modal-label">Titre du vote *</label>
+        <input class="modal-input" type="text" placeholder="Ex: Augmenter la cotisation à 10 000 FCFA ?"
+          [(ngModel)]="form.title" />
+      </div>
+
+      <div class="modal-field">
+        <label class="modal-label">Description (optionnel)</label>
+        <textarea class="modal-input modal-input--textarea" placeholder="Expliquez votre proposition..."
+          [(ngModel)]="form.description" rows="3"></textarea>
+      </div>
+
+      <!-- Champs spécifiques : rule_change -->
+      <!-- CORRECTION : form.meta['field'] au lieu de form.meta.[field] (syntaxe invalide) -->
+      <ng-container *ngIf="selectedTypeConfig.type === 'rule_change'">
+        <div class="modal-field">
+          <label class="modal-label">Règle à modifier *</label>
+          <select class="modal-input modal-select" [ngModel]="form.meta['field']"
+            (ngModelChange)="form.meta['field'] = $event; onRuleFieldChange()">
+            <option value="">-- Sélectionner --</option>
+            <option *ngFor="let r of ruleFields" [value]="r.field">{{ r.label }}</option>
+          </select>
+        </div>
+        <div class="modal-field" *ngIf="form.meta['field']">
+          <label class="modal-label">Nouvelle valeur *</label>
+          <input class="modal-input" [type]="getRuleInputType(form.meta['field'])"
+            [ngModel]="form.meta['proposedValue']" (ngModelChange)="form.meta['proposedValue'] = $event"
+            [placeholder]="getRuleInputPlaceholder(form.meta['field'])" />
+          <p class="modal-hint" *ngIf="tontine">
+            Valeur actuelle : {{ voteService.formatRuleValue(form.meta['field'],
+            getCurrentRuleValue(form.meta['field'])) }}
+          </p>
+        </div>
+      </ng-container>
+
+      <!-- Champs spécifiques : member_exclusion -->
+      <ng-container *ngIf="selectedTypeConfig.type === 'member_exclusion'">
+        <div class="modal-field">
+          <label class="modal-label">Membre à exclure *</label>
+          <select class="modal-input modal-select" [ngModel]="form.meta['targetUid']"
+            (ngModelChange)="form.meta['targetUid'] = $event">
+            <option value="">-- Sélectionner --</option>
+            <option *ngFor="let m of members" [value]="m.id" [disabled]="m.id === currentUid">
+              {{ m.userName ?? m.id }}
+            </option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">Motif *</label>
+          <textarea class="modal-input modal-input--textarea" placeholder="Raison de l'exclusion..."
+            [ngModel]="form.meta['reason']" (ngModelChange)="form.meta['reason'] = $event" rows="2"></textarea>
+        </div>
+      </ng-container>
+
+      <!-- Champs spécifiques : role_change -->
+      <ng-container *ngIf="selectedTypeConfig.type === 'role_change'">
+        <div class="modal-field">
+          <label class="modal-label">Membre concerné *</label>
+          <select class="modal-input modal-select" [ngModel]="form.meta['targetUid']"
+            (ngModelChange)="form.meta['targetUid'] = $event">
+            <option value="">-- Sélectionner --</option>
+            <option *ngFor="let m of members" [value]="m.id" [disabled]="m.id === currentUid || m.role === 'creator'">
+              {{ m.userName ?? m.id }} ({{ m.role }})
+            </option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">Nouveau rôle *</label>
+          <select class="modal-input modal-select" [ngModel]="form.meta['proposedRole']"
+            (ngModelChange)="form.meta['proposedRole'] = $event">
+            <option value="admin">Admin</option>
+            <option value="member">Membre</option>
+          </select>
+        </div>
+      </ng-container>
+
+      <!-- Champs spécifiques : turn_swap -->
+      <ng-container *ngIf="selectedTypeConfig.type === 'turn_swap'">
+        <div class="modal-field">
+          <label class="modal-label">Premier membre *</label>
+          <select class="modal-input modal-select" [ngModel]="form.meta['uid1']"
+            (ngModelChange)="form.meta['uid1'] = $event">
+            <option value="">-- Sélectionner --</option>
+            <option *ngFor="let m of membersWithTurn" [value]="m.id">
+              {{ m.userName }} — Tour {{ m.turnNumber }}
+            </option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">Second membre *</label>
+          <select class="modal-input modal-select" [ngModel]="form.meta['uid2']"
+            (ngModelChange)="form.meta['uid2'] = $event">
+            <option value="">-- Sélectionner --</option>
+            <option *ngFor="let m of membersWithTurn" [value]="m.id" [disabled]="m.id === form.meta['uid1']">
+              {{ m.userName }} — Tour {{ m.turnNumber }}
+            </option>
+          </select>
+        </div>
+      </ng-container>
+
+      <!-- Expiration -->
+      <div class="modal-field">
+        <label class="modal-label">Durée du vote (heures, optionnel)</label>
+        <input class="modal-input" type="number" placeholder="48" [(ngModel)]="form.expiresInHours" min="1" max="168" />
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn--cancel" (click)="closeCreateModal()">Annuler</button>
+        <button class="modal-btn modal-btn--submit" [disabled]="!canSubmit() || submitting" (click)="submitVote()">
+          {{ submitting ? 'Création...' : 'Soumettre' }}
+        </button>
+      </div>
+    </ng-container>
+  </div>
+</div>

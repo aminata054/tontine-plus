@@ -115,7 +115,7 @@ export class PaymentReceiptsPage implements OnInit, OnDestroy {
 
   openReceipt(payment: Payment): void {
     if (payment.status !== 'confirmed') return;
-    this.router.navigate(['/tontines', payment.tontineId, 'payment', payment.id]);
+    this.router.navigate(['/tontines', payment.tontineId, 'payments', payment.id]);
   }
 
   // ── Helpers UI ───────────────────────────────────────────────

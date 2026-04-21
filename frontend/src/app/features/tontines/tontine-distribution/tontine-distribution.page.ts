@@ -323,8 +323,8 @@ export class TontineDistributionPage implements OnInit, OnDestroy {
 
     const confirmed = await this.showAlert(
       'Confirmer la distribution',
-      `Envoyer <strong>${this.formatAmount(this.tontine?.potPerTurn ?? 0)} FCFA</strong>` +
-      ` via ${this.selectedMethod.label} au numéro <strong>${this.beneficiaryPhone}</strong> ?`
+      `Envoyer ${this.formatAmount(this.tontine?.potPerTurn ?? 0)} FCFA` +
+      ` via ${this.selectedMethod.label} au numéro ${this.beneficiaryPhone} ?`
     );
     if (!confirmed) return;
 
@@ -385,7 +385,7 @@ export class TontineDistributionPage implements OnInit, OnDestroy {
 
     const confirmed = await this.showAlert(
       'Confirmer la réception',
-      `Confirmez-vous avoir reçu <strong>${this.formatAmount(this.currentDistribution.amount)} FCFA</strong> ?`
+      `Confirmez-vous avoir reçu ${this.formatAmount(this.currentDistribution.amount)} FCFA ?`
     );
     if (!confirmed) return;
 

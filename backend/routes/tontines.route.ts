@@ -556,7 +556,7 @@ router.post('/:id/next-turn', verifyToken, requirePremium, processNextTurn);
  *       404:
  *         description: Tontine ou vote introuvable
  */
-router.post('/:id/votes/:voteId/cast', verifyToken, castVote);
+// router.post('/:id/votes/:voteId/cast', verifyToken, castVote);
 
 /**
  * @swagger

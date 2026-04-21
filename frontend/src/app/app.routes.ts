@@ -115,7 +115,14 @@ export const routes: Routes = [
             path: ':tontineId/distribute/:distributionId',
             loadComponent: () => import('./features/tontines/tontine-distribution/tontine-distribution.page').then(m => m.TontineDistributionPage)
           },
-
+          {
+            path: ':tontineId/votes',
+            loadComponent: () => import('./features/tontines/vote-list/vote-list.page').then(m => m.VoteListPage)
+          },
+          {
+            path: ':tontineId/votes/:voteId',
+            loadComponent: () => import('./features/tontines/vote-detail/vote-detail.page').then(m => m.VoteDetailPage)
+          },
 
         ]
       },
@@ -193,4 +200,5 @@ export const routes: Routes = [
     path: 'notification-page',
     loadComponent: () => import('./features/notifications/notification-page/notification-page.page').then(m => m.NotificationPagePage)
   },
+
 ];

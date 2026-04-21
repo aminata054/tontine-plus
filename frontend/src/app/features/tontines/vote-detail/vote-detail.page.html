@@ -1,0 +1,311 @@
+<ion-header>
+  <app-page-header [title]="vote ? voteService.getConfig(vote.type).label : 'Vote'">
+  </app-page-header>
+</ion-header>
+
+<ion-content class="vd-content">
+
+  <!-- ── Skeleton ─────────────────────────────────────────────────────── -->
+  <div class="vd-skeleton" *ngIf="loading">
+    <div class="vd-skeleton__title"></div>
+    <div class="vd-skeleton__bar"></div>
+    <div class="vd-skeleton__bar vd-skeleton__bar--short"></div>
+  </div>
+
+  <ng-container *ngIf="!loading && vote">
+
+    <!-- ── En-tête ──────────────────────────────────────────────────────── -->
+    <div class="vd-header">
+      <div class="vd-header__icon">
+        <ion-icon [name]="voteService.getConfig(vote.type).icon"></ion-icon>
+      </div>
+      <div class="vd-header__info">
+        <span class="vd-header__type">
+          {{ voteService.getConfig(vote.type).label }}
+        </span>
+        <span class="vd-header__badge" [class]="'vd-header__badge--' + voteService.getResultColor(vote.result)">
+          {{ voteService.getResultLabel(vote.result, vote.status) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- ── Titre & description ──────────────────────────────────────────── -->
+    <div class="vd-card">
+      <p class="vd-card__title">{{ vote.title }}</p>
+      <p class="vd-card__desc" *ngIf="vote.description">{{ vote.description }}</p>
+      <p class="vd-card__date">Proposé le {{ formatDate(vote.createdAt) }}</p>
+      <p class="vd-card__expires" *ngIf="vote.status === 'open' && voteService.getTimeLeft(vote)">
+        <ion-icon name="time-outline"></ion-icon>
+        {{ voteService.getTimeLeft(vote) }}
+      </p>
+    </div>
+
+    <!-- ── Métadonnées spécifiques au type ──────────────────────────────── -->
+    <div class="vd-meta-card" *ngIf="vote.meta">
+
+      <!-- rule_change -->
+      <ng-container *ngIf="vote.type === 'rule_change' && getRuleChangeMeta(vote) as m">
+        <p class="vd-meta__label">Modification proposée</p>
+        <div class="vd-meta__rule">
+          <div class="vd-meta__rule-row">
+            <span class="vd-meta__rule-field">
+              {{ voteService.getRuleFieldLabel(m.field) }}
+            </span>
+          </div>
+          <div class="vd-meta__rule-values">
+            <div class="vd-meta__rule-val">
+              <small>Actuel</small>
+              <strong>{{ voteService.formatRuleValue(m.field, m.currentValue) }}</strong>
+            </div>
+            <ion-icon name="arrow-forward-outline" class="vd-meta__rule-arrow"></ion-icon>
+            <div class="vd-meta__rule-val vd-meta__rule-val--proposed">
+              <small>Proposé</small>
+              <strong>{{ voteService.formatRuleValue(m.field, m.proposedValue) }}</strong>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- member_exclusion -->
+      <ng-container *ngIf="vote.type === 'member_exclusion' && getMemberExclusionMeta(vote) as m">
+        <p class="vd-meta__label">Membre concerné</p>
+        <p class="vd-meta__value">{{ m.targetName ?? m.targetUid }}</p>
+        <p class="vd-meta__label" style="margin-top:8px">Motif</p>
+        <p class="vd-meta__value vd-meta__value--reason">{{ m.reason }}</p>
+      </ng-container>
+
+      <!-- role_change -->
+      <ng-container *ngIf="vote.type === 'role_change' && getRoleChangeMeta(vote) as m">
+        <p class="vd-meta__label">Changement de rôle</p>
+        <div class="vd-meta__rule">
+          <div class="vd-meta__rule-values">
+            <div class="vd-meta__rule-val">
+              <small>Membre</small>
+              <strong>{{ m.targetName ?? m.targetUid }}</strong>
+            </div>
+            <ion-icon name="arrow-forward-outline" class="vd-meta__rule-arrow"></ion-icon>
+            <div class="vd-meta__rule-val vd-meta__rule-val--proposed">
+              <small>Nouveau rôle</small>
+              <strong>{{ m.proposedRole === 'admin' ? 'Administrateur' : 'Membre' }}</strong>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- turn_swap -->
+      <ng-container *ngIf="vote.type === 'turn_swap' && getTurnSwapMeta(vote) as m">
+        <p class="vd-meta__label">Échange de tours proposé</p>
+        <div class="vd-meta__swap">
+          <div class="vd-meta__swap-member">
+            <strong>{{ m.name1 ?? m.uid1 }}</strong>
+            <span>Tour {{ m.turn1 }}</span>
+          </div>
+          <ion-icon name="swap-horizontal-outline" class="vd-meta__swap-icon"></ion-icon>
+          <div class="vd-meta__swap-member">
+            <strong>{{ m.name2 ?? m.uid2 }}</strong>
+            <span>Tour {{ m.turn2 }}</span>
+          </div>
+        </div>
+      </ng-container>
+
+    </div>
+
+    <!-- ── Participation ─────────────────────────────────────────────────── -->
+    <div class="vd-participation-card">
+      <div class="vd-participation__header">
+        <span>Participation</span>
+        <span class="vd-participation__numbers">
+          {{ getTotalVotesCount() }} / {{ totalMembers }} membres
+        </span>
+      </div>
+      <div class="vd-progress-bar">
+        <div class="vd-progress-fill" [style.width.%]="voteService.getParticipationRate(vote, totalMembers)"
+          [class.vd-progress-fill--reached]="
+               voteService.getParticipationRate(vote, totalMembers) >= vote.requiredThreshold">
+        </div>
+        <div class="vd-progress-threshold" [style.left.%]="vote.requiredThreshold"
+          [title]="'Seuil : ' + vote.requiredThreshold + '%'">
+        </div>
+      </div>
+      <p class="vd-participation__hint">Seuil requis : {{ vote.requiredThreshold }}%</p>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         CAS 1 : next_turn_selection — voter en tapant sur un candidat
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="vote.type === 'next_turn_selection'">
+
+      <div class="vd-vote-prompt" *ngIf="vote.status === 'open' && !getUserChoice()">
+        <ion-icon name="finger-print-outline"></ion-icon>
+        <span>Appuyez sur un candidat pour voter</span>
+      </div>
+
+      <div class="vd-voted-banner" *ngIf="getUserChoice() && vote.status === 'open'">
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+        <span>
+          Vous avez voté pour
+          <strong>{{ getMemberName(getUserChoice()!) }}</strong>
+          <small>Appuyez sur un autre candidat pour changer</small>
+        </span>
+      </div>
+
+      <div class="vd-results-card">
+        <p class="vd-results__title">Candidats</p>
+        <div *ngFor="let r of voteService.getVoteResults(vote, totalMembers)" class="vd-result-row"
+          [class.vd-result-row--winner]="r.isWinner" [class.vd-result-row--voted]="getUserChoice() === r.choice"
+          [class.vd-result-row--clickable]="vote.status === 'open'"
+          (click)="vote.status === 'open' ? castVote(r.choice) : null">
+          <div class="vd-result-row__info">
+            <span class="vd-result-row__label">{{ getMemberName(r.choice) }}</span>
+            <span class="vd-result-row__count">
+              {{ r.count }} vote{{ r.count > 1 ? 's' : '' }}
+            </span>
+          </div>
+          <div class="vd-result-row__bar-wrap">
+            <div class="vd-result-row__bar vd-result-row__bar--candidate" [style.width.%]="r.percent">
+            </div>
+          </div>
+          <span class="vd-result-row__pct">{{ r.percent }}%</span>
+          <ion-icon *ngIf="getUserChoice() === r.choice" name="checkmark-circle" class="vd-result-row__check">
+          </ion-icon>
+          <ion-icon *ngIf="vote.status === 'open' && getUserChoice() !== r.choice" name="ellipse-outline"
+            class="vd-result-row__radio">
+          </ion-icon>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         CAS 2 : tous les autres types (yes / no)
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="vote.type !== 'next_turn_selection'">
+
+      <!-- Card vote : uniquement si vote ouvert -->
+      <div class="vd-vote-card" *ngIf="vote.status === 'open'">
+
+        <!-- Statut -->
+        <div class="vd-vote-card__status" [class.vd-vote-card__status--pending]="!getUserChoice()"
+          [class.vd-vote-card__status--voted]="!!getUserChoice()">
+          <ion-icon [name]="getUserChoice() ? 'checkmark-circle-outline' : 'hand-left-outline'">
+          </ion-icon>
+          <span *ngIf="!getUserChoice()">Vous n'avez pas encore voté</span>
+          <span *ngIf="getUserChoice()">
+            Vous avez voté
+            <strong>{{ getUserChoice() === 'yes' ? 'Pour' : 'Contre' }}</strong>
+            <small> · Appuyez pour changer</small>
+          </span>
+        </div>
+
+        <!-- Boutons Pour / Contre -->
+        <div class="vd-vote-card__actions">
+          <button class="vd-vote-card__btn vd-vote-card__btn--yes"
+            [class.vd-vote-card__btn--active]="getUserChoice() === 'yes'" [disabled]="casting"
+            (click)="castVote('yes')">
+            <ion-icon [name]="getUserChoice() === 'yes' ? 'thumbs-up' : 'thumbs-up-outline'">
+            </ion-icon>
+            <span class="vd-vote-card__btn-label">Pour</span>
+            <span class="vd-vote-card__btn-count" *ngIf="getChoiceCount('yes') > 0">
+              {{ getChoiceCount('yes') }}
+            </span>
+          </button>
+
+          <div class="vd-vote-card__divider"></div>
+
+          <button class="vd-vote-card__btn vd-vote-card__btn--no"
+            [class.vd-vote-card__btn--active]="getUserChoice() === 'no'" [disabled]="casting" (click)="castVote('no')">
+            <ion-icon [name]="getUserChoice() === 'no' ? 'thumbs-down' : 'thumbs-down-outline'">
+            </ion-icon>
+            <span class="vd-vote-card__btn-label">Contre</span>
+            <span class="vd-vote-card__btn-count" *ngIf="getChoiceCount('no') > 0">
+              {{ getChoiceCount('no') }}
+            </span>
+          </button>
+        </div>
+
+        <!-- Barre de progression -->
+        <div class="vd-vote-card__progress">
+          <div class="vd-vote-card__progress-row">
+            <span class="vd-vote-card__progress-label vd-vote-card__progress-label--yes">
+              Pour {{ getChoicePct('yes') }}%
+            </span>
+            <span class="vd-vote-card__progress-label vd-vote-card__progress-label--no">
+              {{ getChoicePct('no') }}% Contre
+            </span>
+          </div>
+          <div class="vd-vote-card__bar-wrap">
+            <div class="vd-vote-card__bar-yes" [style.width.%]="getChoicePct('yes')"></div>
+            <div class="vd-vote-card__bar-no" [style.width.%]="getChoicePct('no')"></div>
+          </div>
+          <p class="vd-vote-card__quorum-hint">
+            <ion-icon name="people-outline"></ion-icon>
+            <span>
+              {{ getTotalVotesCount() }} / {{ totalMembers }} membres ont voté
+              · Seuil : {{ vote.requiredThreshold }}%
+            </span>
+          </p>
+        </div>
+
+        <p class="vd-vote-card__casting" *ngIf="casting">Enregistrement…</p>
+
+      </div><!-- fin vd-vote-card -->
+
+      <!-- Résultats détaillés — TOUJOURS visibles (ouvert et clôturé) -->
+      <div class="vd-results-card">
+        <p class="vd-results__title">Résultats détaillés</p>
+        <div *ngFor="let r of voteService.getVoteResults(vote)" class="vd-result-row"
+          [class.vd-result-row--voted]="getUserChoice() === r.choice" [class.vd-result-row--yes]="r.choice === 'yes'"
+          [class.vd-result-row--no]="r.choice === 'no'">
+          <div class="vd-result-row__info">
+            <span class="vd-result-row__label">{{ r.label }}</span>
+            <span class="vd-result-row__count">
+              {{ r.count }} vote{{ r.count > 1 ? 's' : '' }}
+            </span>
+          </div>
+          <div class="vd-result-row__bar-wrap">
+            <div class="vd-result-row__bar" [class.vd-result-row__bar--yes]="r.choice === 'yes'"
+              [class.vd-result-row__bar--no]="r.choice === 'no'" [style.width.%]="r.percent">
+            </div>
+          </div>
+          <span class="vd-result-row__pct">{{ r.percent }}%</span>
+          <ion-icon *ngIf="getUserChoice() === r.choice" name="checkmark-circle" class="vd-result-row__check">
+          </ion-icon>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- ── Actions admin ─────────────────────────────────────────────────── -->
+    <div class="vd-admin-actions" *ngIf="vote.status === 'open' && (isAdmin || vote.createdBy === currentUid)">
+      <button *ngIf="isAdmin" class="vd-admin-btn vd-admin-btn--close" [disabled]="casting" (click)="confirmClose()">
+        <ion-icon name="lock-closed-outline"></ion-icon>
+        Clôturer le vote
+      </button>
+      <button *ngIf="vote.createdBy === currentUid && Object.keys(vote.votes ?? {}).length === 0"
+        class="vd-admin-btn vd-admin-btn--cancel" (click)="confirmCancel()">
+        <ion-icon name="trash-outline"></ion-icon>
+        Annuler le vote
+      </button>
+    </div>
+
+    <!-- ── Résultat final ─────────────────────────────────────────────────── -->
+    <div class="vd-final-result" *ngIf="vote.status === 'closed' && vote.result">
+      <div class="vd-final-result__icon" [class.vd-final-result__icon--approved]="vote.result === 'approved'"
+        [class.vd-final-result__icon--rejected]="vote.result === 'rejected'"
+        [class.vd-final-result__icon--noquorum]="vote.result === 'no_quorum'">
+        <ion-icon [name]="getResultIcon(vote.result)"></ion-icon>
+      </div>
+      <p class="vd-final-result__label">
+        {{ voteService.getResultLabel(vote.result, vote.status) }}
+      </p>
+      <p class="vd-final-result__desc" *ngIf="vote.result === 'approved' && vote.appliedAt">
+        Modifications appliquées le {{ formatDate(vote.appliedAt) }}
+      </p>
+      <p class="vd-final-result__desc" *ngIf="vote.result === 'no_quorum'">
+        Le seuil de {{ vote.requiredThreshold }}% n'a pas été atteint
+      </p>
+    </div>
+
+  </ng-container>
+
+</ion-content>

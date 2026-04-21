@@ -25,6 +25,27 @@
    
 }
 
+.chat-header__votes-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 8px;
+
+    ion-icon {
+        font-size: 16px;
+    }
+
+    &:hover {
+        background: var(--primary-light);
+    }
+}
 .chat-header__info {
     display: flex;
     align-items: center;
@@ -284,6 +305,312 @@
         color: #22C55E;
     }
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// CARTE VOTE dans le CHAT — à fusionner dans message.page.scss
+// ════════════════════════════════════════════════════════════════════════════
+// Ces styles remplacent / complètent le bloc .chat-vote existant.
+// Ajoutez-les à la fin de votre fichier message.page.scss.
+
+.chat-vote {
+    // Layout & boîte
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 230px;
+    max-width: 300px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: var(--ion-color-light, #f4f5f8);
+    border: 1.5px solid rgba(0, 0, 0, 0.07);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+    // Carte dans un message "own" — fond légèrement teinté
+    .chat-msg--own & {
+        background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.08);
+        border-color: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.2);
+    }
+
+    &:active {
+        transform: scale(0.98);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+        // Ajouter dans .chat-vote
+    
+        &__launcher {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-mid, #4A5568);
+    
+            ion-icon {
+                font-size: 14px;
+                color: var(--primary);
+            }
+    
+            strong {
+                color: var(--text-dark, #0D1B2A);
+            }
+        }
+    
+        &__desc {
+            font-size: 12px;
+            color: var(--text-mid);
+            margin: 0;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    
+        &__yesno {
+            display: flex;
+            gap: 8px;
+        }
+    
+        &__choice {
+            flex: 1;
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid transparent;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+    
+            &--voted {
+                border-color: currentColor;
+            }
+    
+            &--yes.chat-vote__choice--voted {
+                border-color: #22c55e;
+                background: rgba(34, 197, 94, 0.07);
+            }
+    
+            &--no.chat-vote__choice--voted {
+                border-color: #ef4444;
+                background: rgba(239, 68, 68, 0.07);
+            }
+    
+            &-top {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 12px;
+                font-weight: 600;
+    
+                ion-icon {
+                    font-size: 13px;
+                }
+            }
+    
+            &-pct {
+                margin-left: auto;
+                font-size: 11px;
+                font-weight: 700;
+            }
+        }
+    
+        &__choice--yes {
+            color: #16a34a;
+        }
+    
+        &__choice--no {
+            color: #dc2626;
+        }
+    
+        &__mini-bar {
+            height: 3px;
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+    
+        &__mini-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.4s ease;
+    
+            &--yes {
+                background: #22c55e;
+            }
+    
+            &--no {
+                background: #ef4444;
+            }
+        }
+    // ── En-tête ──────────────────────────────────────────────────────────────
+    &__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    &__header-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    &__icon {
+        font-size: 16px;
+        color: var(--ion-color-primary, #3880ff);
+    }
+
+    &__chevron {
+        font-size: 16px;
+        color: var(--ion-color-medium, #92949c);
+    }
+
+    // ── Badge statut ─────────────────────────────────────────────────────────
+    &__badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+
+        &--open {
+            background: rgba(45, 211, 111, 0.15);
+            color: var(--ion-color-success, #2dd36f);
+        }
+
+        &--closed {
+            background: rgba(146, 148, 156, 0.15);
+            color: var(--ion-color-medium, #92949c);
+        }
+    }
+
+    // ── Question ─────────────────────────────────────────────────────────────
+    &__question {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ion-color-dark, #222428);
+        line-height: 1.35;
+    }
+
+    // ── Options / barres ─────────────────────────────────────────────────────
+    &__options {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    &__option {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.03);
+        border: 1px solid transparent;
+        transition: border-color 0.12s;
+
+        &--voted {
+            border-color: var(--ion-color-primary, #3880ff);
+            background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.06);
+        }
+
+        &--closed {
+            cursor: default;
+        }
+    }
+
+    &__option-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    &__option-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--ion-color-dark, #222428);
+    }
+
+    &__option-pct {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--ion-color-primary, #3880ff);
+    }
+
+    &__bar-wrap {
+        height: 4px;
+        background: rgba(0, 0, 0, 0.08);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    &__bar {
+        height: 100%;
+        border-radius: 4px;
+        background: var(--ion-color-medium, #92949c);
+        transition: width 0.4s ease;
+
+        &--voted {
+            background: var(--ion-color-primary, #3880ff);
+        }
+    }
+
+    &__option-count {
+        font-size: 10px;
+        color: var(--ion-color-medium, #92949c);
+    }
+
+    // ── Pied de carte ─────────────────────────────────────────────────────────
+    &__footer {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-top: 4px;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    &__total,
+    &__expires,
+    &__my-choice {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 11px;
+        color: var(--ion-color-medium, #92949c);
+
+        ion-icon {
+            font-size: 12px;
+        }
+    }
+
+    &__my-choice {
+        color: var(--ion-color-success, #2dd36f);
+        font-weight: 600;
+    }
+
+    // ── CTA "Appuyez pour voter" ──────────────────────────────────────────────
+    &__cta {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 6px 0 2px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ion-color-primary, #3880ff);
+
+        ion-icon {
+            font-size: 16px;
+        }
+    }
+}
+
+
 
 // ── Réactions ─────────────────────────────────────────────────
 .chat-reactions {

@@ -70,6 +70,12 @@ import {
     paperPlaneOutline,
     trophyOutline,
     chevronDownOutline,
+    chevronUpOutline,
+    settingsOutline,
+    personRemoveOutline,
+    shieldOutline,
+    swapHorizontalOutline,
+    thumbsDownOutline,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -91,7 +97,7 @@ export function registerIcons() {
         alertCircleOutline, checkmarkCircleOutline, megaphoneOutline, timeOutline,
         helpCircleOutline,
         searchOutline,
-        walletOutline,
+        walletOutline, chevronUpOutline,
         calendarOutline, trophyOutline, chevronDownOutline,
         chevronBackOutline, closeOutline,
         imageOutline, pencilOutline,
@@ -104,10 +110,11 @@ export function registerIcons() {
         handLeftOutline, cameraOutline,
         cardOutline, receiptOutline,
         sendOutline, headsetOutline, logOutOutline,
-        callOutline, ellipseOutline,
-        rocketOutline, openOutline, card,
+        callOutline, ellipseOutline, settingsOutline,
+        rocketOutline, openOutline, card, thumbsDownOutline,
         infiniteOutline, rocket, statsChartOutline,
         trendingUpOutline, starOutline, flashOutline,
-        sparkles, closeCircle, linkOutline, informationCircle, chatbubbleOutline
+        sparkles, closeCircle, linkOutline, informationCircle, chatbubbleOutline,
+        personRemoveOutline,shieldOutline, swapHorizontalOutline
     });
 }

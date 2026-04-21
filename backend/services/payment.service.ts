@@ -56,9 +56,26 @@ export const computePenalty = (
 /**
  * Calcule le nombre de jours de retard par rapport à la nextPaymentDate de la tontine.
  */
-export const computeDaysLate = (nextPaymentDate: admin.firestore.Timestamp | null): number => {
+export const computeDaysLate = (nextPaymentDate: any): number => {
     if (!nextPaymentDate) return 0;
-    const dueDate = nextPaymentDate.toDate();
+
+    let dueDate: Date;
+
+    // Gérer tous les formats possibles de Firestore
+    if (typeof nextPaymentDate.toDate === 'function') {
+        dueDate = nextPaymentDate.toDate();
+    } else if (nextPaymentDate._seconds !== undefined) {
+        dueDate = new Date(nextPaymentDate._seconds * 1000);
+    } else if (nextPaymentDate.seconds !== undefined) {
+        dueDate = new Date(nextPaymentDate.seconds * 1000);
+    } else if (nextPaymentDate instanceof Date) {
+        dueDate = nextPaymentDate;
+    } else {
+        const parsed = new Date(nextPaymentDate);
+        if (isNaN(parsed.getTime())) return 0;
+        dueDate = parsed;
+    }
+
     const diffMs = Date.now() - dueDate.getTime();
     if (diffMs <= 0) return 0;
     return Math.floor(diffMs / (1000 * 60 * 60 * 24));

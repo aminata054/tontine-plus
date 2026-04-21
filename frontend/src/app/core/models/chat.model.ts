@@ -1,3 +1,5 @@
+import { TontineVote } from "./vote.model";
+
 export type MessageType = 'text' | 'vote' | 'system';
 export type VoteStatus = 'open' | 'closed';
 
@@ -43,7 +45,7 @@ export interface ChatMessage {
     deletedAt: any | null;
 
     // Uniquement si type === 'vote'
-    vote: VoteData | null;
+    vote: TontineVote | null;
 
     createdAt: any;   // Firestore Timestamp
 }

@@ -42,18 +42,21 @@
           </app-custom-button>
         </ng-container>
 
-        <ng-container *ngIf="isBeneficiary && tontine.currentDistributionId">
-          <app-custom-button expand="block" color="success" (clicked)="goToConfirmReception()">
+        <!-- Bouton BÉNÉFICIAIRE : confirmer réception -->
+        <!-- Affiché si : je suis le bénéficiaire ET une distribution est en cours -->
+        <ng-container *ngIf="isBeneficiary && pendingDistribution">
+          <app-custom-button expand="block" color="primary" [loading]="isConfirmingReception"
+            (clicked)="confirmReceptionInline()">
             <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-            Confirmer la réception de mon pot 🎉
+            Confirmer la réception de mon pot
           </app-custom-button>
         </ng-container>
-        
+
         <div class="timeline">
           <div class="timeline__item" *ngFor="let turn of turns; let last = last"
             [class.timeline__item--current]="turn.isCurrent" [class.timeline__item--done]="turn.isDone"
             [class.timeline__item--last]="last">
-            <!-- Ligne verticale + dot -->
+
             <div class="timeline__track">
               <div class="timeline__dot" [class.timeline__dot--current]="turn.isCurrent"
                 [class.timeline__dot--done]="turn.isDone">
@@ -164,7 +167,8 @@
         <!-- EN RETARD -->
         <div class="contribution-card contribution-card--late" *ngIf="myContribution?.status === 'late'">
           <div class="contribution-card__header">
-            <ion-icon name="close-circle-outline" class="contribution-card__icon contribution-card__icon--late"></ion-icon>
+            <ion-icon name="close-circle-outline"
+              class="contribution-card__icon contribution-card__icon--late"></ion-icon>
             <span>Cotisation en retard</span>
           </div>
           <div class="info-card__row">

@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil, finalize } from 'rxjs/operators';
 import {
-  IonContent, IonIcon, IonSkeletonText, ToastController, ModalController
+  IonContent, IonIcon, IonSkeletonText, ToastController, ModalController, AlertController
 } from '@ionic/angular/standalone';
 
 import {
@@ -18,6 +18,7 @@ import { CustomButtonComponent } from 'src/app/shared/ui/custom-button/custom-bu
 import { PaymentService } from 'src/app/core/services/payment.service';
 import { ReceiptModalComponent } from 'src/app/shared/modals/receipt-modal/receipt-modal.component';
 import { DistributionService } from 'src/app/core/services/distribution.service';
+import { Distribution } from 'src/app/core/models/distribution.model';
 
 type PageStatus = 'loading' | 'success' | 'error';
 type TabKey = 'flux' | 'tour' | 'historiques' | 'parametres';
@@ -52,6 +53,8 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
   private donutDrawn = false;
   isAdminOrCreator = false;
   isBeneficiary = false;
+  pendingDistribution: Distribution | null = null;
+  isConfirmingReception = false;
 
   tabs: { key: TabKey; label: string }[] = [
     { key: 'flux', label: 'Flux' },
@@ -87,7 +90,8 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
     private authService: AuthService,
     private distributionService: DistributionService,
     private toastCtrl: ToastController,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private alertCtrl: AlertController,
   ) { }
 
   ngOnInit(): void {
@@ -153,16 +157,15 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
           this.isAdminOrCreator =
             this.tontine.myRole === 'creator' || this.tontine.myRole === 'admin';
 
-          const currentBeneficiaryUid = (this.tontine as any).currentBeneficiaryUid;
-          this.isBeneficiary =
-            !!currentBeneficiaryUid && this.uid === currentBeneficiaryUid;
+          // UTILISER myTurnNumber depuis la tontine ───────────────────────────
+          
+          const myTurnNumber = (this.tontine as any).myTurnNumber ?? null;
+          this.isBeneficiary = myTurnNumber !== null
+            && myTurnNumber === this.tontine.currentTurn;
 
-          // ── FIX : charger les paiements AVANT de construire myContribution
-          // On doit connaître le paiement du tour courant pour afficher
-          // le bon état (payé / à payer / en retard)
           this.loadMyPayments();
-
           if (this.isAdminOrCreator) this.loadDistributionHistory();
+          this.loadPendingDistribution();
         },
       });
   }
@@ -283,6 +286,116 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
+  private loadPendingDistribution(): void {
+    if (!this.tontineId || !this.tontine) return;
+
+    const currentDistributionId = (this.tontine as any).currentDistributionId;
+
+    if (currentDistributionId) {
+      this.distributionService
+        .getOne(currentDistributionId, this.tontineId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (res) => {
+            if (res.success) {
+              if (['sent', 'partial'].includes(res.data.status)) {
+                this.pendingDistribution = res.data;
+              } else {
+                this.pendingDistribution = null;
+              }
+            }
+            // Reconstruire la timeline avec le bon état isDone
+            this.buildTimeline();
+          },
+        });
+      return;
+    }
+
+    this.distributionService
+      .getByTontine(this.tontineId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          if (!res.success) return;
+          this.pendingDistribution = res.data.find(
+            d => d.turnNumber === this.tontine!.currentTurn
+              && ['sent', 'partial'].includes(d.status)
+          ) ?? null;
+          // Reconstruire la timeline avec le bon état isDone
+          this.buildTimeline();
+        },
+      });
+  }
+
+
+  async confirmReceptionInline(): Promise<void> {
+    if (!this.pendingDistribution || !this.tontineId || this.isConfirmingReception) return;
+
+    // Demander confirmation
+    const alert = await this.alertCtrl.create({
+      header: 'Confirmer la réception',
+      message: `Confirmez-vous avoir reçu ${this.formatAmount(this.pendingDistribution.amount)} FCFA via ${this.pendingDistribution.distributionMethod} ?`,
+      buttons: [
+        { text: 'Annuler', role: 'cancel' },
+        {
+          text: 'Oui, je confirme',
+          handler: () => this._doConfirmReception(),
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  private _doConfirmReception(): void {
+    if (!this.pendingDistribution || !this.tontineId) return;
+    this.isConfirmingReception = true;
+
+    this.distributionService.confirm({
+      distributionId: this.pendingDistribution.id,
+      tontineId: this.tontineId,
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: async (res) => {
+          this.isConfirmingReception = false;
+
+          if (!res.success) {
+            const t = await this.toastCtrl.create({
+              message: res.message ?? 'Erreur lors de la confirmation',
+              duration: 3500, position: 'bottom', color: 'danger',
+            });
+            await t.present();
+            return;
+          }
+
+          this.pendingDistribution = null;
+
+          const message = res.data.tontineCompleted
+            ? '🏆 Réception confirmée ! La tontine est terminée.'
+            : `✅ Réception confirmée ! Le tour ${res.data.nextTurnNumber} a démarré.`;
+
+          const t = await this.toastCtrl.create({
+            message,
+            duration: 4000,
+            position: 'bottom',
+            color: 'success',
+          });
+          await t.present();
+
+          // Recharger la page pour refléter le nouveau tour
+          this.load();
+        },
+        error: async () => {
+          this.isConfirmingReception = false;
+          const t = await this.toastCtrl.create({
+            message: 'Erreur lors de la confirmation',
+            duration: 3500, position: 'bottom', color: 'danger',
+          });
+          await t.present();
+        },
+      });
+  }
+
   // ════════════════════════════════════════════════════════
   // DISTRIBUTION — REFRESH AUTOMATIQUE APRÈS CONFIRMATION
   //
@@ -339,6 +452,11 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
       this.tontine.startedAt ?? this.tontine.nextPaymentDate
     );
 
+    // Un tour est "terminé" si son numéro est < currentTurn
+    // OU si son numéro === currentTurn ET qu'une distribution received existe pour lui
+    const currentTurnIsReceived = this.pendingDistribution === null
+      && (this.tontine as any).currentDistributionId != null;
+
     this.turns = this.allMembers
       .filter(m => m.turnNumber != null)
       .sort((a, b) => (a.turnNumber ?? 0) - (b.turnNumber ?? 0))
@@ -348,6 +466,13 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
           m.turnNumber!,
           this.tontine!.frequency
         );
+
+        const isCurrent = m.turnNumber === this.tontine!.currentTurn
+          && !currentTurnIsReceived;
+
+        const isDone = (m.turnNumber ?? 0) < this.tontine!.currentTurn
+          || (m.turnNumber === this.tontine!.currentTurn && currentTurnIsReceived);
+
         return {
           number: m.turnNumber!,
           memberId: m.userId,
@@ -360,8 +485,8 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
             : '—',
           estimatedDate,
           isMe: m.userId === this.uid,
-          isCurrent: m.turnNumber === this.tontine!.currentTurn,
-          isDone: (m.turnNumber ?? 0) < this.tontine!.currentTurn,
+          isCurrent,
+          isDone,
         };
       });
   }

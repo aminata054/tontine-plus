@@ -11,6 +11,7 @@ import subscriptionRoutes from './routes/subscription.route';
 import chatRoutes from './routes/chat.route';
 import paymentRoutes from './routes/payment.route';
 import distributionRoutes from './routes/distribution.route';
+import voteRoutes from './routes/vote.route';
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use('/api/tontines/:id/chat', chatRoutes);
 app.use('/api/chat', chatRoutes);  
 app.use('/api/payments', paymentRoutes);
 app.use('/api/distributions', distributionRoutes);
+app.use('/api/tontines/:id/votes', voteRoutes);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {

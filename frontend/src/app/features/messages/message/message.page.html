@@ -12,6 +12,11 @@
         <p class="chat-header__name">{{ tontineName }}</p>
         <p class="chat-header__members">{{ membersCount }} membres</p>
       </div>
+      <!-- Bouton accès direct à la liste des votes officiels -->
+      <button class="chat-header__votes-btn" (click)="openVotes(); $event.stopPropagation()">
+        <ion-icon name="stats-chart-outline"></ion-icon>
+        Votes
+      </button>
     </div>
   </ion-toolbar>
 </ion-header>
@@ -37,15 +42,10 @@
         {{ msg.text }}
       </div>
 
-      <!-- ────────────────────────────────────────────────────────
-           FIX : [class.chat-msg--own]="isOwn(msg)"
-           au lieu de [class.chat-msg--own]="msg.senderId === currentUid"
-           isOwn() vérifie que currentUid est bien défini avant de comparer.
-      ──────────────────────────────────────────────────────────── -->
       <div *ngIf="msg.type !== 'system'" class="chat-msg" [class.chat-msg--own]="isOwn(msg)"
         [class.chat-msg--deleted]="!!msg.deletedAt" (press)="onLongPress(msg)">
 
-        <!-- Avatar — uniquement pour les messages des autres -->
+        <!-- Avatar -->
         <div class="chat-msg__avatar" *ngIf="!isOwn(msg)">
           <img *ngIf="msg.senderPhotoUrl" [src]="msg.senderPhotoUrl" />
           <div *ngIf="!msg.senderPhotoUrl" class="chat-msg__avatar-placeholder">
@@ -55,12 +55,11 @@
 
         <div class="chat-msg__body">
 
-          <!-- Nom — uniquement pour les messages des autres -->
+          <!-- Nom de l'expéditeur -->
           <p class="chat-msg__sender" *ngIf="!isOwn(msg) && showSenderName(i)">
             {{ msg.senderName }}
-            <span *ngIf="msg.senderRole === 'creator' || msg.senderRole === 'admin'" class="chat-msg__admin-badge">
-              Admin
-            </span>
+            <span *ngIf="msg.senderRole === 'creator' || msg.senderRole === 'admin'"
+              class="chat-msg__admin-badge">Admin</span>
           </p>
 
           <!-- Réponse à -->
@@ -74,7 +73,6 @@
             <p class="chat-msg__text">{{ msg.text }}</p>
             <div class="chat-msg__meta">
               <span class="chat-msg__time">{{ chatService.formatMessageTime(msg.createdAt) }}</span>
-              <!-- Icône lu — uniquement pour ses propres messages -->
               <ion-icon *ngIf="isOwn(msg)" name="checkmark-done-outline" class="chat-msg__read-icon"
                 [class.chat-msg__read-icon--read]="isReadByAll(msg)"></ion-icon>
             </div>
@@ -86,49 +84,119 @@
             <span>Message supprimé</span>
           </div>
 
-          <!-- Carte vote -->
-          <div class="chat-vote" *ngIf="msg.type === 'vote' && !msg.deletedAt">
-            <div class="chat-vote__header">
-              <span class="chat-vote__badge">
-                {{ msg.vote?.status === 'open' ? 'Vote en cours' : 'Vote clôturé' }}
-              </span>
-              <button *ngIf="msg.vote?.status === 'open' && isAdmin" class="chat-vote__close-btn"
-                (click)="closeVote(msg)">
-                Clôturer
-              </button>
+          <!-- ══════════════════════════════════════════════════
+               CARTE VOTE — aperçu cliquable → vote-detail
+               Affiche titre, options avec barres et participation.
+               Un clic redirige vers /tontines/:id/votes/:voteId
+          ══════════════════════════════════════════════════ -->
+
+        <!-- CARTE VOTE — affiche le TontineVote officiel -->
+        <div class="chat-vote" *ngIf="msg.type === 'vote' && !msg.deletedAt" (click)="openVoteDetail(msg)">
+        
+          <!-- Qui a lancé le vote -->
+          <div class="chat-vote__launcher">
+            <ion-icon name="stats-chart-outline"></ion-icon>
+            <span><strong>{{ msg.senderName }}</strong> a lancé un vote</span>
+            <span class="chat-vote__badge" [class.chat-vote__badge--open]="msg.vote?.status === 'open'"
+              [class.chat-vote__badge--closed]="msg.vote?.status === 'closed'">
+              {{ msg.vote?.status === 'open' ? 'En cours' : 'Clôturé' }}
+            </span>
+          </div>
+        
+          <!-- Titre du vote (TontineVote.title) -->
+          <p class="chat-vote__question">{{ msg.vote?.title }}</p>
+        
+          <!-- Description si présente -->
+          <p class="chat-vote__desc" *ngIf="msg.vote?.description">
+            {{ msg.vote?.description }}
+          </p>
+        
+          <!-- Icône + label du type de vote -->
+          <div class="chat-vote__type" *ngIf="msg.vote?.type">
+            <ion-icon [name]="getVoteTypeIcon(msg.vote!.type)"></ion-icon>
+            <span>{{ getVoteTypeLabel(msg.vote!.type) }}</span>
+          </div>
+        
+          <!-- Barres Pour / Contre (votes yes/no — tous sauf next_turn_selection) -->
+          <ng-container *ngIf="msg.vote?.type !== 'next_turn_selection'">
+            <div class="chat-vote__yesno">
+        
+              <div class="chat-vote__choice chat-vote__choice--yes"
+                [class.chat-vote__choice--voted]="getUserVote(msg) === 'yes'">
+                <div class="chat-vote__choice-top">
+                  <ion-icon name="thumbs-up-outline"></ion-icon>
+                  <span>Pour</span>
+                  <span class="chat-vote__choice-pct">{{ getVoteChoicePct(msg, 'yes') }}%</span>
+                </div>
+                <div class="chat-vote__mini-bar">
+                  <div class="chat-vote__mini-fill chat-vote__mini-fill--yes" [style.width.%]="getVoteChoicePct(msg, 'yes')">
+                  </div>
+                </div>
+              </div>
+        
+              <div class="chat-vote__choice chat-vote__choice--no" [class.chat-vote__choice--voted]="getUserVote(msg) === 'no'">
+                <div class="chat-vote__choice-top">
+                  <ion-icon name="thumbs-down-outline"></ion-icon>
+                  <span>Contre</span>
+                  <span class="chat-vote__choice-pct">{{ getVoteChoicePct(msg, 'no') }}%</span>
+                </div>
+                <div class="chat-vote__mini-bar">
+                  <div class="chat-vote__mini-fill chat-vote__mini-fill--no" [style.width.%]="getVoteChoicePct(msg, 'no')">
+                  </div>
+                </div>
+              </div>
+        
             </div>
-
-            <p class="chat-vote__question">{{ msg.vote?.question }}</p>
-
-            <div class="chat-vote__options">
-              <div *ngFor="let opt of getVoteResults(msg)" class="chat-vote__option"
-                [class.chat-vote__option--voted]="getUserVote(msg) === opt.id"
-                [class.chat-vote__option--closed]="msg.vote?.status === 'closed'" (click)="castVote(msg, opt.id)">
-                <div class="chat-vote__option-top">
-                  <span class="chat-vote__option-label">{{ opt.label }}</span>
-                  <span class="chat-vote__option-pct">{{ opt.percent }}%</span>
+          </ng-container>
+        
+          <!-- Candidats pour next_turn_selection -->
+          <ng-container *ngIf="msg.vote?.type === 'next_turn_selection'">
+            <div class="chat-vote__candidates">
+              <div *ngFor="let candidate of msg.vote?.candidates" class="chat-vote__candidate"
+                [class.chat-vote__candidate--voted]="getUserVote(msg) === candidate">
+                <span>{{ candidate }}</span>
+                <span class="chat-vote__choice-pct">{{ getVoteChoicePct(msg, candidate) }}%</span>
+                <div class="chat-vote__mini-bar">
+                  <div class="chat-vote__mini-fill" [style.width.%]="getVoteChoicePct(msg, candidate)"></div>
                 </div>
-                <div class="chat-vote__bar-wrap">
-                  <div class="chat-vote__bar" [style.width.%]="opt.percent"
-                    [class.chat-vote__bar--voted]="getUserVote(msg) === opt.id"></div>
-                </div>
-                <span class="chat-vote__option-count">
-                  {{ opt.count }} vote{{ opt.count > 1 ? 's' : '' }}
-                </span>
               </div>
             </div>
-
-            <div class="chat-vote__footer">
-              <span>{{ getTotalVotes(msg) }} vote{{ getTotalVotes(msg) > 1 ? 's' : '' }}</span>
-              <span *ngIf="msg.vote?.expiresAt">
-                · expire le {{ formatDate(msg.vote?.expiresAt) }}
-              </span>
-            </div>
-
-            <div class="chat-msg__meta">
-              <span class="chat-msg__time">{{ chatService.formatMessageTime(msg.createdAt) }}</span>
-            </div>
+          </ng-container>
+        
+          <!-- Pied de carte -->
+          <div class="chat-vote__footer">
+            <span class="chat-vote__total">
+              <ion-icon name="people-outline"></ion-icon>
+              {{ getTotalVotes(msg) }} vote{{ getTotalVotes(msg) > 1 ? 's' : '' }}
+              / {{ msg.vote?.eligibleVoters?.length ?? 0 }} éligibles
+            </span>
+            <span *ngIf="msg.vote?.expiresAt" class="chat-vote__expires">
+              <ion-icon name="time-outline"></ion-icon>
+              {{ getTimeLeft(msg) }}
+            </span>
+            <span *ngIf="getUserVote(msg)" class="chat-vote__my-choice">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              Voté
+            </span>
           </div>
+        
+          <!-- Seuil requis -->
+          <div class="chat-vote__threshold">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
+            Seuil requis : {{ msg.vote?.requiredThreshold }}%
+          </div>
+        
+          <!-- CTA si pas encore voté -->
+          <div class="chat-vote__cta" *ngIf="msg.vote?.status === 'open' && !getUserVote(msg)">
+            <span>Appuyer pour voter</span>
+            <ion-icon name="arrow-forward-circle-outline"></ion-icon>
+          </div>
+        
+          <div class="chat-msg__meta">
+            <span class="chat-msg__time">{{ chatService.formatMessageTime(msg.createdAt) }}</span>
+          </div>
+        </div>
+          <!-- fin carte vote -->
 
           <!-- Réactions -->
           <div class="chat-reactions" *ngIf="hasReactions(msg)">
@@ -161,7 +229,6 @@
       <ion-icon name="return-up-back-outline"></ion-icon>
       Répondre
     </button>
-    <!-- FIX : isOwn() au lieu de selectedMessage?.senderId === currentUid -->
     <button class="chat-action-bar__btn chat-action-bar__btn--danger" *ngIf="isOwn(selectedMessage!) || isAdmin"
       (click)="deleteMessage(selectedMessage!)">
       <ion-icon name="trash-outline"></ion-icon>
@@ -184,12 +251,8 @@
   </div>
 </div>
 
-<!-- Input -->
+<!-- Barre de saisie -->
 <div class="chat-input-bar">
-  <button class="chat-input-bar__action" *ngIf="isAdmin" (click)="openVoteModal()" title="Lancer un vote">
-    <ion-icon name="stats-chart-outline"></ion-icon>
-  </button>
-
   <button class="chat-input-bar__action" (click)="openAttachment()">
     <ion-icon name="add-outline"></ion-icon>
   </button>
@@ -203,43 +266,4 @@
     [disabled]="messageText.trim().length === 0 || isSending" (click)="sendMessage()">
     <ion-icon name="send-outline"></ion-icon>
   </button>
-</div>
-
-<!-- Modal Vote -->
-<div class="vote-modal-overlay" *ngIf="showVoteModal" (click)="closeVoteModal()">
-  <div class="vote-modal" (click)="$event.stopPropagation()">
-    <div class="vote-modal__handle"></div>
-    <p class="vote-modal__title">Lancer un vote</p>
-
-    <div class="vote-modal__field">
-      <input class="vote-modal__input" type="text" placeholder="Question du vote..." [(ngModel)]="voteQuestion" />
-    </div>
-
-    <div class="vote-modal__options">
-      <div *ngFor="let opt of voteOptions; let i = index" class="vote-modal__option-row">
-        <input class="vote-modal__input vote-modal__input--sm" type="text" [placeholder]="'Option ' + (i + 1)"
-          [(ngModel)]="voteOptions[i]" />
-        <button *ngIf="voteOptions.length > 2" class="vote-modal__remove" (click)="removeVoteOption(i)">
-          <ion-icon name="close-outline"></ion-icon>
-        </button>
-      </div>
-    </div>
-
-    <button *ngIf="voteOptions.length < 6" class="vote-modal__add-opt" (click)="addVoteOption()">
-      + Ajouter une option
-    </button>
-
-    <div class="vote-modal__expiry">
-      <label class="vote-modal__label">Expiration (heures, optionnel)</label>
-      <input class="vote-modal__input" type="number" placeholder="48" [(ngModel)]="voteExpiresHours" min="1"
-        max="168" />
-    </div>
-
-    <div class="vote-modal__actions">
-      <button class="vote-modal__cancel" (click)="closeVoteModal()">Annuler</button>
-      <button class="vote-modal__submit" [disabled]="!canSubmitVote()" (click)="submitVote()">
-        Lancer le vote
-      </button>
-    </div>
-  </div>
 </div>

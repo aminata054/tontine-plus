@@ -15,9 +15,11 @@ import { filter, take, takeUntil } from 'rxjs/operators';
 import { ChatService } from 'src/app/core/services/chat.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { ChatMessage } from 'src/app/core/models/chat.model';
-import { PageHeaderComponent } from "src/app/shared/ui/page-header/page-header.component";
+import { PageHeaderComponent } from 'src/app/shared/ui/page-header/page-header.component';
 import { TontineService } from 'src/app/core/services/tontine.service';
 import { UserProfile } from 'src/app/core/models/auth.model';
+import { TontineVote } from 'src/app/core/models/vote.model';
+import { VoteService } from 'src/app/core/services/vote.service';
 
 @Component({
   selector: 'app-message',
@@ -27,7 +29,7 @@ import { UserProfile } from 'src/app/core/models/auth.model';
   imports: [
     CommonModule, FormsModule,
     IonContent, IonHeader, IonToolbar, IonIcon,
-    PageHeaderComponent
+    PageHeaderComponent,
   ],
 })
 export class MessagePage implements OnInit, OnDestroy, AfterViewChecked {
@@ -43,7 +45,7 @@ export class MessagePage implements OnInit, OnDestroy, AfterViewChecked {
   user: UserProfile | null = null;
 
   messages: ChatMessage[] = [];
-  currentUid = '';          // ← initialisé à '' (jamais undefined)
+  currentUid = '';
   isAdmin = false;
   isSending = false;
   hasMore = false;
@@ -55,11 +57,8 @@ export class MessagePage implements OnInit, OnDestroy, AfterViewChecked {
   replyingTo: ChatMessage | null = null;
   selectedMessage: ChatMessage | null = null;
 
-  showVoteModal = false;
-  voteQuestion = '';
-  voteOptions: string[] = ['', ''];
-  voteExpiresHours: number | null = null;
-
+  vote : TontineVote | null = null;
+  
   quickEmojis = ['👍', '❤️', '😂', '😮', '🙏', '🔥'];
 
   private destroy$ = new Subject<void>();
@@ -70,6 +69,7 @@ export class MessagePage implements OnInit, OnDestroy, AfterViewChecked {
     public chatService: ChatService,
     private authService: AuthService,
     private tontineService: TontineService,
+    public voteService: VoteService,
     private route: ActivatedRoute,
     private router: Router,
     private toastCtrl: ToastController,
@@ -80,17 +80,12 @@ export class MessagePage implements OnInit, OnDestroy, AfterViewChecked {
   ngOnInit(): void {
     this.tontineId = this.route.snapshot.paramMap.get('id')!;
 
-  
     this.authService.currentUser$
-      .pipe(
-        filter((u): u is UserProfile => !!u),  
-        take(1),                                
-        takeUntil(this.destroy$)
-      )
+      .pipe(filter((u): u is UserProfile => !!u), take(1), takeUntil(this.destroy$))
       .subscribe(u => {
         this.user = u;
-        this.currentUid = u.uid;                  
-        this.cdr.detectChanges();                  
+        this.currentUid = u.uid;
+        this.cdr.detectChanges();
         this.initPage();
       });
 
@@ -119,9 +114,7 @@ export class MessagePage implements OnInit, OnDestroy, AfterViewChecked {
             this.tontineName = res.data.name;
             this.tontineIcon = res.data.iconUrl ?? null;
             this.membersCount = res.data.totalMembers ?? 0;
-            this.isAdmin =
-              res.data.myRole === 'creator' ||
-              res.data.myRole === 'admin';
+            this.isAdmin = res.data.myRole === 'creator' || res.data.myRole === 'admin';
             this.cdr.detectChanges();
           }
         });
@@ -137,13 +130,12 @@ export class MessagePage implements OnInit, OnDestroy, AfterViewChecked {
         next: (messages) => {
           this.messages = messages;
           this.shouldScrollBottom = true;
-          this.cdr.detectChanges();   
+          this.cdr.detectChanges();
         },
-        error: (err) => console.error('[MessagePage]', err)
+        error: (err) => console.error('[MessagePage]', err),
       });
   }
 
-  
   isOwn(msg: ChatMessage): boolean {
     return !!this.currentUid && msg.senderId === this.currentUid;
   }
@@ -158,6 +150,8 @@ export class MessagePage implements OnInit, OnDestroy, AfterViewChecked {
   private scrollToBottom(): void {
     this.content?.scrollToBottom(300);
   }
+
+  // ── Envoi ─────────────────────────────────────────────────────────────────
 
   async sendMessage(): Promise<void> {
     const text = this.messageText.trim();
@@ -180,9 +174,7 @@ export class MessagePage implements OnInit, OnDestroy, AfterViewChecked {
           this.messageText = text;
           const toast = await this.toastCtrl.create({
             message: 'Erreur lors de l\'envoi du message',
-            duration: 2500,
-            color: 'danger',
-            position: 'top',
+            duration: 2500, color: 'danger', position: 'top',
           });
           await toast.present();
         },
@@ -227,56 +219,6 @@ export class MessagePage implements OnInit, OnDestroy, AfterViewChecked {
       .subscribe();
   }
 
-  castVote(msg: ChatMessage, optionId: string): void {
-    if (msg.vote?.status === 'closed') return;
-    if (this.getUserVote(msg) === optionId) return;
-    this.chatService.castVote(this.tontineId, msg.id, optionId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe();
-  }
-
-  closeVote(msg: ChatMessage): void {
-    this.chatService.closeVote(this.tontineId, msg.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe();
-  }
-
-  openVoteModal(): void {
-    this.voteQuestion = '';
-    this.voteOptions = ['', ''];
-    this.voteExpiresHours = null;
-    this.showVoteModal = true;
-  }
-
-  closeVoteModal(): void { this.showVoteModal = false; }
-
-  addVoteOption(): void {
-    if (this.voteOptions.length < 6) this.voteOptions.push('');
-  }
-
-  removeVoteOption(i: number): void { this.voteOptions.splice(i, 1); }
-
-  canSubmitVote(): boolean {
-    return (
-      this.voteQuestion.trim().length >= 5 &&
-      this.voteOptions.filter(o => o.trim().length > 0).length >= 2
-    );
-  }
-
-  submitVote(): void {
-    if (!this.canSubmitVote()) return;
-    this.chatService.createVote(this.tontineId, {
-      question: this.voteQuestion.trim(),
-      options: this.voteOptions.filter(o => o.trim()),
-      expiresInHours: this.voteExpiresHours ?? undefined,
-    }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        this.closeVoteModal();
-        this.shouldScrollBottom = true;
-      },
-    });
-  }
-
   async deleteMessage(msg: ChatMessage): Promise<void> {
     if (!this.isOwn(msg) && !this.isAdmin) return;
     const alert = await this.alertCtrl.create({
@@ -299,11 +241,37 @@ export class MessagePage implements OnInit, OnDestroy, AfterViewChecked {
     await alert.present();
   }
 
-  // ── Utilitaires template ─────────────────────────────────────
+  // ── Navigation ────────────────────────────────────────────────────────────
+
+  openTontineDetail(): void {
+    this.router.navigate(['/tontines', this.tontineId]);
+  }
+
+  /** Ouvre la liste des votes officiels de la tontine */
+  openVotes(): void {
+    this.router.navigate(['/tontines', this.tontineId, 'votes']);
+  }
+
+  /**
+   * Ouvre le détail d'un vote officiel depuis une carte dans le chat.
+   * msg.vote.id contient l'identifiant Firestore du TontineVote.
+   *
+   * IMPORTANT : msg est un ChatMessage — on lit msg.vote.id, pas msg.id
+   * (msg.id = id du message chat, msg.vote.id = id du vote Firestore).
+   */
+  openVoteDetail(msg: ChatMessage): void {
+    const voteId = msg.vote?.id;
+    if (!voteId) return;
+    this.router.navigate(['/tontines', this.tontineId, 'votes', voteId]);
+  }
+
+  openAttachment(): void { }
+
+  // ── Utilitaires template ──────────────────────────────────────────────────
 
   getVoteResults(msg: ChatMessage) {
     if (!msg.vote) return [];
-    return this.chatService.getVotePercentages(msg.vote.votes, msg.vote.options);
+    return this.chatService.getVotePercentages(msg.vote.votes, []);
   }
 
   getUserVote(msg: ChatMessage): string | null {
@@ -343,6 +311,21 @@ export class MessagePage implements OnInit, OnDestroy, AfterViewChecked {
     return this.messages[i - 1]?.senderId !== this.messages[i]?.senderId;
   }
 
+  getVoteTypeIcon(type: string): string {
+    return this.voteService.getConfig(type as any)?.icon ?? 'stats-chart-outline';
+  }
+
+  /** Libellé selon le type de vote */
+  getVoteTypeLabel(type: string): string {
+    return this.voteService.getConfig(type as any)?.label ?? type;
+  }
+
+  /** Temps restant avant expiration */
+  getTimeLeft(msg: ChatMessage): string {
+    if (!msg.vote?.expiresAt) return '';
+    return this.voteService.getTimeLeft(msg.vote) ?? '';
+  }
+
   formatDate(ts: any): string {
     if (!ts) return '';
     const date = ts?.toDate ? ts.toDate() : new Date(ts);
@@ -374,17 +357,18 @@ export class MessagePage implements OnInit, OnDestroy, AfterViewChecked {
 
   cancelReply(): void { this.replyingTo = null; }
 
-  openTontineDetail(): void {
-    this.router.navigate(['/tontines', this.tontineId]);
-  }
-
-  openOptions(): void { }
-  openAttachment(): void { }
-
   onScroll(event: any): void {
     if (event.detail.scrollTop < 50 && this.hasMore && !this.loadingMore) {
       this.loadMoreMessages();
     }
+  }
+
+  getVoteChoicePct(msg: ChatMessage, choice: string): number {
+    if (!msg.vote) return 0;
+    const total = this.membersCount;
+    if (total === 0) return 0;
+    const count = Object.values(msg.vote.votes ?? {}).filter(v => v === choice).length;
+    return Math.round((count / total) * 100);
   }
 
   ngOnDestroy(): void {

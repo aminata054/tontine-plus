@@ -1,0 +1,860 @@
+// ─────────────────────────────────────────────────────────────
+// VARIABLES
+// ─────────────────────────────────────────────────────────────
+:host {
+    --primary: var(--ion-color-primary);
+    --primary-light: #EEF2FF;
+    --success: #22C55E;
+    --danger: #EF4444;
+    --warning: #F59E0B;
+    --text-dark: #0D1B2A;
+    --text-mid: #4A5568;
+    --text-light: #9AA5B4;
+    --border: #E2E8F0;
+    --bg: #F0F4F8;
+    --card-bg: #FFFFFF;
+}
+
+// ─────────────────────────────────────────────────────────────
+// CONTENT
+// ─────────────────────────────────────────────────────────────
+.vd-content {
+    --background: var(--bg);
+    --padding-bottom: calc(32px + env(safe-area-inset-bottom));
+}
+
+// ─────────────────────────────────────────────────────────────
+// SKELETON
+// ─────────────────────────────────────────────────────────────
+.vd-skeleton {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vd-skeleton__title,
+.vd-skeleton__bar {
+    background: linear-gradient(90deg, #e2e8f0 25%, #f0f4f8 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 8px;
+}
+
+.vd-skeleton__title {
+    height: 28px;
+}
+
+.vd-skeleton__bar {
+    height: 12px;
+}
+
+.vd-skeleton__bar--short {
+    width: 60%;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// EN-TÊTE
+// ─────────────────────────────────────────────────────────────
+.vd-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card-bg);
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+
+    &__icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: var(--primary-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+
+        ion-icon {
+            font-size: 22px;
+            color: var(--primary);
+        }
+    }
+
+    &__info {
+        flex: 1;
+    }
+
+    &__type {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--primary);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 4px;
+    }
+
+    &__badge {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 20px;
+
+        &--primary {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        &--success {
+            background: #D1FAE5;
+            color: #059669;
+        }
+
+        &--danger {
+            background: #FEE2E2;
+            color: var(--danger);
+        }
+
+        &--warning {
+            background: #FEF3C7;
+            color: #D97706;
+        }
+
+        &--medium {
+            background: var(--bg);
+            color: var(--text-mid);
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// CARDS COMMUNES
+// ─────────────────────────────────────────────────────────────
+.vd-card,
+.vd-meta-card,
+.vd-participation-card,
+.vd-results-card,
+.vd-final-result {
+    background: var(--card-bg);
+    margin: 12px 16px 0;
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+// ─────────────────────────────────────────────────────────────
+// CARD TITRE/DESC
+// ─────────────────────────────────────────────────────────────
+.vd-card {
+    &__title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0 0 6px;
+        line-height: 1.4;
+    }
+
+    &__desc {
+        font-size: 13px;
+        color: var(--text-mid);
+        margin: 0 0 10px;
+        line-height: 1.5;
+    }
+
+    &__date {
+        font-size: 11px;
+        color: var(--text-light);
+        margin: 0;
+    }
+
+    &__expires {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--warning);
+        margin-top: 6px;
+
+        ion-icon {
+            font-size: 14px;
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// MÉTADONNÉES
+// ─────────────────────────────────────────────────────────────
+.vd-meta {
+    &__label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--text-light);
+        margin: 0 0 8px;
+    }
+
+    &__value {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin: 0;
+
+        &--reason {
+            background: #FEF9EC;
+            border-left: 3px solid var(--warning);
+            padding: 8px 12px;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+        }
+    }
+
+    &__rule-row {
+        margin-bottom: 8px;
+    }
+
+    &__rule-field {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+
+    &__rule-values {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    &__rule-val {
+        flex: 1;
+        background: var(--bg);
+        border-radius: 10px;
+        padding: 8px 12px;
+        text-align: center;
+
+        small {
+            display: block;
+            font-size: 10px;
+            color: var(--text-light);
+            margin-bottom: 2px;
+        }
+
+        strong {
+            font-size: 14px;
+            color: var(--text-dark);
+        }
+
+        &--proposed {
+            background: var(--primary-light);
+
+            strong {
+                color: var(--primary);
+            }
+        }
+    }
+
+    &__rule-arrow {
+        font-size: 20px;
+        color: var(--text-light);
+        flex-shrink: 0;
+    }
+
+    &__swap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    &__swap-member {
+        flex: 1;
+        background: var(--bg);
+        border-radius: 10px;
+        padding: 10px;
+        text-align: center;
+
+        strong {
+            display: block;
+            font-size: 13px;
+            color: var(--text-dark);
+            margin-bottom: 2px;
+        }
+
+        span {
+            font-size: 11px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+    }
+
+    &__swap-icon {
+        font-size: 24px;
+        color: var(--primary);
+        flex-shrink: 0;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// PARTICIPATION
+// ─────────────────────────────────────────────────────────────
+.vd-participation {
+    &__header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 10px;
+    }
+
+    &__numbers {
+        color: var(--primary);
+    }
+
+    &__hint {
+        font-size: 11px;
+        color: var(--text-light);
+        margin: 6px 0 0;
+        text-align: right;
+    }
+}
+
+.vd-progress-bar {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    position: relative;
+    overflow: visible;
+}
+
+.vd-progress-fill {
+    height: 100%;
+    background: #C7D3F5;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+
+    &--reached {
+        background: var(--primary);
+    }
+}
+
+.vd-progress-threshold {
+    position: absolute;
+    top: -4px;
+    width: 3px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 2px;
+    transform: translateX(-50%);
+}
+
+// ─────────────────────────────────────────────────────────────
+// BANDEROLES next_turn_selection
+// ─────────────────────────────────────────────────────────────
+.vd-vote-prompt,
+.vd-voted-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 12px 16px 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+
+    ion-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    span {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    small {
+        font-size: 11px;
+        font-weight: 400;
+        color: var(--text-light);
+    }
+}
+
+.vd-vote-prompt {
+    background: var(--primary-light);
+    color: var(--primary);
+
+    ion-icon {
+        color: var(--primary);
+    }
+}
+
+.vd-voted-banner {
+    background: rgba(34, 197, 94, 0.10);
+    color: #14532d;
+
+    ion-icon {
+        color: #16a34a;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// RÉSULTATS
+// ─────────────────────────────────────────────────────────────
+.vd-results {
+    &__title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--text-light);
+        margin: 0 0 12px;
+    }
+}
+
+.vd-result-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1.5px solid transparent;
+    margin-bottom: 8px;
+    transition: border-color 0.2s, background 0.2s;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    &--clickable {
+        cursor: pointer;
+
+        &:hover {
+            background: var(--bg);
+            border-color: var(--primary);
+        }
+    }
+
+    &--voted {
+        border-color: var(--primary);
+        background: var(--primary-light);
+    }
+
+    &--yes:not(.vd-result-row--voted):hover {
+        border-color: var(--success);
+    }
+
+    &--no:not(.vd-result-row--voted):hover {
+        border-color: var(--danger);
+    }
+
+    &--winner {
+        border-color: #F59E0B;
+        background: #FFFBEB;
+    }
+
+    &__info {
+        flex: 1;
+    }
+
+    &__label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 2px;
+    }
+
+    &__count {
+        display: block;
+        font-size: 11px;
+        color: var(--text-light);
+    }
+
+    &__bar-wrap {
+        flex: 2;
+        height: 8px;
+        background: var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    &__bar {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.5s ease;
+        background: #C7D3F5;
+
+        &--candidate {
+            background: var(--primary);
+        }
+
+        &--yes {
+            background: var(--success);
+        }
+
+        &--no {
+            background: var(--danger);
+        }
+    }
+
+    &__pct {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--primary);
+        width: 40px;
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    &__check {
+        font-size: 18px;
+        color: var(--primary);
+        flex-shrink: 0;
+    }
+
+    &__radio {
+        font-size: 18px;
+        color: var(--text-light);
+        flex-shrink: 0;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// CARD VOTE POUR / CONTRE
+// ─────────────────────────────────────────────────────────────
+.vd-vote-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    margin: 12px 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    // ── Statut ──────────────────────────────────────────────────
+    &__status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        padding: 10px 12px;
+        border-radius: 10px;
+
+        ion-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        small {
+            color: var(--text-light);
+        }
+
+        &--pending {
+            background: rgba(234, 179, 8, 0.10);
+            color: #92400e;
+
+            ion-icon {
+                color: #d97706;
+            }
+        }
+
+        &--voted {
+            background: rgba(34, 197, 94, 0.10);
+            color: #14532d;
+
+            ion-icon {
+                color: #16a34a;
+            }
+        }
+    }
+
+    // ── Boutons ──────────────────────────────────────────────────
+    &__actions {
+        display: flex;
+        align-items: stretch;
+        border: 1.5px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    &__divider {
+        width: 1px;
+        background: var(--border);
+        flex-shrink: 0;
+    }
+
+    &__btn {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 16px 12px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        transition: background 0.15s;
+        position: relative;
+
+        ion-icon {
+            font-size: 24px;
+            color: var(--text-mid);
+        }
+
+        &-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-mid);
+        }
+
+        &-count {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 2px 7px;
+            color: var(--text-mid);
+        }
+
+        &:active {
+            background: var(--bg);
+        }
+
+        &:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        // Actif Pour
+        &--yes.vd-vote-card__btn--active {
+            background: rgba(34, 197, 94, 0.08);
+
+            ion-icon,
+            .vd-vote-card__btn-label {
+                color: #16a34a;
+            }
+
+            .vd-vote-card__btn-count {
+                background: rgba(34, 197, 94, 0.15);
+                color: #14532d;
+            }
+        }
+
+        // Actif Contre
+        &--no.vd-vote-card__btn--active {
+            background: rgba(239, 68, 68, 0.08);
+
+            ion-icon,
+            .vd-vote-card__btn-label {
+                color: #dc2626;
+            }
+
+            .vd-vote-card__btn-count {
+                background: rgba(239, 68, 68, 0.15);
+                color: #7f1d1d;
+            }
+        }
+    }
+
+    // ── Barre de progression ─────────────────────────────────────
+    &__progress {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    &__progress-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    &__progress-label--yes {
+        color: #16a34a;
+    }
+
+    &__progress-label--no {
+        color: #dc2626;
+    }
+
+    &__bar-wrap {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--border);
+        overflow: hidden;
+        display: flex;
+    }
+
+    &__bar-yes {
+        height: 100%;
+        background: #22c55e;
+        border-radius: 3px 0 0 3px;
+        transition: width 0.4s ease;
+        min-width: 0;
+    }
+
+    &__bar-no {
+        height: 100%;
+        background: #ef4444;
+        border-radius: 0 3px 3px 0;
+        transition: width 0.4s ease;
+        margin-left: auto;
+        min-width: 0;
+    }
+
+    &__quorum-hint {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        color: var(--text-light);
+        margin: 0;
+
+        ion-icon {
+            font-size: 12px;
+        }
+
+        span {
+            line-height: 1.4;
+        }
+    }
+
+    &__casting {
+        font-size: 12px;
+        color: var(--text-light);
+        text-align: center;
+        margin: 0;
+        font-style: italic;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// ACTIONS ADMIN
+// ─────────────────────────────────────────────────────────────
+.vd-admin-actions {
+    margin: 12px 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vd-admin-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+
+    ion-icon {
+        font-size: 20px;
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    &--close {
+        background: var(--bg);
+        color: var(--text-mid);
+        border: 1.5px solid var(--border);
+
+        &:active {
+            background: var(--border);
+        }
+    }
+
+    &--cancel {
+        background: none;
+        color: var(--danger);
+        border: 1.5px solid var(--danger);
+
+        &:active {
+            background: rgba(239, 68, 68, 0.06);
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// RÉSULTAT FINAL
+// ─────────────────────────────────────────────────────────────
+.vd-final-result {
+    margin: 12px 16px 0;
+    text-align: center;
+    padding: 24px;
+
+    &__icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+
+        ion-icon {
+            font-size: 32px;
+        }
+
+        &--approved {
+            background: #D1FAE5;
+
+            ion-icon {
+                color: #059669;
+            }
+        }
+
+        &--rejected {
+            background: #FEE2E2;
+
+            ion-icon {
+                color: var(--danger);
+            }
+        }
+
+        &--noquorum {
+            background: #FEF3C7;
+
+            ion-icon {
+                color: #D97706;
+            }
+        }
+    }
+
+    &__label {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0 0 8px;
+    }
+
+    &__desc {
+        font-size: 13px;
+        color: var(--text-mid);
+        margin: 0;
+    }
+}
