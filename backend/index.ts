@@ -13,12 +13,13 @@ import paymentRoutes from './routes/payment.route';
 import distributionRoutes from './routes/distribution.route';
 import voteRoutes from './routes/vote.route';
 
-const app = express();
+export const app = express();
 
 const allowedOrigins = [
     'http://localhost:8100',
     'http://localhost:4200',
     'http://localhost:8000',
+    'https://us-central1-tontine-plus-dc217.cloudfunctions.net',
 ];
 
 app.use(
@@ -49,8 +50,11 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/distributions', distributionRoutes);
 app.use('/api/tontines/:id/votes', voteRoutes);
 
-const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-    console.log(`Serveur: http://localhost:${PORT}`);
-    console.log(`Swagger: http://localhost:${PORT}/api-docs`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 8000;
+    app.listen(PORT, () => {
+        console.log(`Serveur: http://localhost:${PORT}`);
+        console.log(`Swagger: http://localhost:${PORT}/api-docs`);
+    });
+}
+

@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import { db } from '../config/firebase';
-import { buildNotificationDoc, sendNotificationToUser } from './notification.service';
+import { buildNotificationDoc } from './notification.service';
 import {
     Distribution,
     DistributionMethod,

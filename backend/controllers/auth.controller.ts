@@ -614,7 +614,7 @@ export const getReferralLink = async (req: Request, res: Response) => {
             return res.status(404).json({ success: false, error: 'Compte introuvable' });
         }
 
-        const { referralCode, fullName, referralCount = 0 } = userDoc.data() as any;
+        const { referralCode, referralCount = 0 } = userDoc.data() as any;
 
         if (!referralCode) {
             return res.status(400).json({

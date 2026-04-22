@@ -4,14 +4,12 @@ import { db } from '../config/firebase';
 import { buildNotificationDoc, sendNotificationToUser } from '../services/notification.service';
 import {
     VoteType,
-    VoteStatus,
     VoteResult,
     TontineVote,
     RuleChangeMeta,
     MemberExclusionMeta,
     RoleChangeMeta,
     TurnSwapMeta,
-    EarlyDissolutionMeta,
 } from '../types/vote.type';
 
 // ─────────────────────────────────────────────────────────────────────────────

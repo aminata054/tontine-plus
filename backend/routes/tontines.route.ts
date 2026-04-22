@@ -6,7 +6,6 @@ import {
     getJoinPreview, joinTontine, getTontineMembers, validateMember,
     getMemberProfile,
     processNextTurn,
-    castVote,
     launchTontine
 } from '../controllers/tontines.controller';
 import { requirePremium } from '../middleware/premium.middleware';

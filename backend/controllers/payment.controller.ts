@@ -8,14 +8,12 @@ import {
     generateReceiptNumber,
     generateReceiptUrl,
     simulateOperatorVerification,
-    updateMemberStatsAfterPayment,
-    updateTontineStatsAfterPayment,
     hasAlreadyPaidTurn,
     SIMULATION_CONFIG,
 } from '../services/payment.service';
 import { buildNotificationDoc, sendNotificationToUser } from '../services/notification.service';
 import { InitiatePaymentPayload, PaymentMethod, VerifyPaymentPayload } from '../types/payment.type';
-import { checkAndTriggerDistribution, saveMemberPaymentPhone } from '../services/distribution.service';
+import { checkAndTriggerDistribution } from '../services/distribution.service';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VALIDATION — méthodes de paiement acceptées

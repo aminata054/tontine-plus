@@ -1,6 +1,5 @@
 import * as admin from 'firebase-admin';
 import { db } from '../config/firebase';
-import { buildNotificationDoc, sendNotificationToUser } from './notification.service';
 import { Payment, PaymentMethod, PaymentStatus } from '../types/payment.type';
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -10,7 +10,6 @@ import {
     hasExistingDistribution,
     DISTRIBUTION_SIM_CONFIG,
     generateDistributionReceiptUrl,
-    simulateDistributionSend,
 } from '../services/distribution.service';
 import { buildNotificationDoc, sendNotificationToUser } from '../services/notification.service';
 import {

@@ -55,17 +55,17 @@ export const requirePremium = async (
     req: Request,
     res: Response,
     next: NextFunction
-) => {
+): Promise<void> => {
     const uid = (req as any).user.uid;
-
     const sub = await getActiveSub(uid);
 
     if (!sub) {
-        return res.status(403).json({
+        res.status(403).json({
             success: false,
             error: 'Cette fonctionnalité nécessite un abonnement Premium',
             code: 'SUBSCRIPTION_REQUIRED',
         });
+        return;
     }
 
     (req as any).subscription = sub;
@@ -87,57 +87,50 @@ export const checkTontineLimit = async (
     req: Request,
     res: Response,
     next: NextFunction
-) => {
+): Promise<void> => {
     const uid = (req as any).user.uid;
     const { type, rotationMethod, securityModel } = req.body;
 
-    // ── 1. Des champs premium sont-ils demandés ? ──────────────
     const needsPremium =
         PREMIUM_TONTINE_TYPES.includes(type) ||
         PREMIUM_ROTATION_METHODS.includes(rotationMethod) ||
         PREMIUM_SECURITY_MODELS.includes(securityModel);
 
-    // Récupérer le sub une seule fois (réutilisé ensuite)
     const sub = (req as any).subscription ?? (await getActiveSub(uid));
 
     if (needsPremium) {
         if (!sub) {
-            return res.status(403).json({
+            res.status(403).json({
                 success: false,
                 error: 'Cette fonctionnalité nécessite un abonnement Premium',
                 code: 'SUBSCRIPTION_REQUIRED',
                 premiumFeatures: {
                     type: PREMIUM_TONTINE_TYPES.includes(type) ? type : null,
-                    rotationMethod: PREMIUM_ROTATION_METHODS.includes(rotationMethod)
-                        ? rotationMethod
-                        : null,
-                    securityModel: PREMIUM_SECURITY_MODELS.includes(securityModel)
-                        ? securityModel
-                        : null,
+                    rotationMethod: PREMIUM_ROTATION_METHODS.includes(rotationMethod) ? rotationMethod : null,
+                    securityModel: PREMIUM_SECURITY_MODELS.includes(securityModel) ? securityModel : null,
                 },
             });
+            return;
         }
-
-        // Injecter pour les middlewares/controllers suivants
         (req as any).subscription = sub;
     }
 
-    // ── 2. Limite de tontines pour les gratuits ────────────────
     if (!sub) {
         const countSnap = await db
             .collection('tontines')
             .where('createdBy', '==', uid)
-            .where('status', 'in', ['pending', 'active']) // exclut archived/completed/cancelled
+            .where('status', 'in', ['pending', 'active'])
             .count()
             .get();
 
         if (countSnap.data().count >= FREE_TONTINE_LIMIT) {
-            return res.status(403).json({
+            res.status(403).json({                      // ← return séparé
                 success: false,
                 error: `Limite de ${FREE_TONTINE_LIMIT} tontines atteinte. Passez à Premium pour en créer davantage.`,
                 code: 'TONTINE_LIMIT_REACHED',
                 limit: FREE_TONTINE_LIMIT,
             });
+            return;                                     // ← ici
         }
     }
 
@@ -152,17 +145,18 @@ export const checkTontineLimit = async (
 // ─────────────────────────────────────────────────────────────
 
 export const requirePlan = (...allowedPlans: string[]) => {
-    return async (req: Request, res: Response, next: NextFunction) => {
+    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         const sub = (req as any).subscription;
 
         if (!sub || !allowedPlans.includes(sub.plan)) {
-            return res.status(403).json({
+            res.status(403).json({
                 success: false,
                 error: `Cette fonctionnalité requiert un plan : ${allowedPlans.join(' ou ')}`,
                 code: 'PLAN_UPGRADE_REQUIRED',
                 requiredPlans: allowedPlans,
                 currentPlan: sub?.plan ?? null,
             });
+            return;
         }
 
         next();
