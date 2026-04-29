@@ -181,8 +181,31 @@ export class ProfilePage implements OnInit, OnDestroy {
   get periodEndFormatted(): string {
     const end = (this.subscription as any)?.currentPeriodEnd;
     if (!end) return '';
-    const date = end?.toDate ? end.toDate() : new Date(end);
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    let date: Date | null = null;
+
+    if (end instanceof Date) {
+      date = end;
+    } else if (typeof end.toDate === 'function') {
+      // Firestore Timestamp SDK
+      date = end.toDate();
+    } else if (typeof end._seconds === 'number') {
+      // Firestore Timestamp sérialisé via API REST : { _seconds, _nanoseconds }
+      date = new Date(end._seconds * 1000);
+    } else if (typeof end.seconds === 'number') {
+      // Variante sans underscore : { seconds, nanoseconds }
+      date = new Date(end.seconds * 1000);
+    } else if (typeof end === 'string' || typeof end === 'number') {
+      date = new Date(end);
+    }
+
+    if (!date || isNaN(date.getTime())) return '';
+
+    return new Intl.DateTimeFormat('fr-FR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(date);
   }
 
   // ── Reste des méthodes (inchangées) ──────────────────────────

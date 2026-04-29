@@ -76,6 +76,9 @@ import {
     shieldOutline,
     swapHorizontalOutline,
     thumbsDownOutline,
+    diamond,
+    checkmarkOutline,
+    enterOutline,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -103,11 +106,11 @@ export function registerIcons() {
         imageOutline, pencilOutline,
         shareOutline, qrCodeOutline, copyOutline, downloadOutline,
         refreshOutline, paperPlaneOutline,
-        shieldCheckmarkOutline,
+        shieldCheckmarkOutline, checkmarkOutline, enterOutline,
         listOutline, shuffleOutline, logoWhatsapp, logoTwitter, logoSnapchat, syncOutline,
         repeatOutline, flagOutline, playCircleOutline, personAddOutline, lockClosedOutline,
         homeOutline, closeCircleOutline, informationCircleOutline, thumbsUpOutline,
-        handLeftOutline, cameraOutline,
+        handLeftOutline, cameraOutline, diamond,
         cardOutline, receiptOutline,
         sendOutline, headsetOutline, logOutOutline,
         callOutline, ellipseOutline, settingsOutline,
@@ -115,6 +118,6 @@ export function registerIcons() {
         infiniteOutline, rocket, statsChartOutline,
         trendingUpOutline, starOutline, flashOutline,
         sparkles, closeCircle, linkOutline, informationCircle, chatbubbleOutline,
-        personRemoveOutline,shieldOutline, swapHorizontalOutline
+        personRemoveOutline, shieldOutline, swapHorizontalOutline
     });
 }

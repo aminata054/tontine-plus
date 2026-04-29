@@ -156,7 +156,9 @@ export class TontinePage implements OnInit, OnDestroy {
    */
   private toDate(value: any): Date | null {
     if (!value) return null;
-    if (typeof value.toDate === 'function') return value.toDate();   // Firestore Timestamp
+    if (typeof value.toDate === 'function') return value.toDate();
+    if (value._seconds !== undefined) return new Date(value._seconds * 1000); 
+    if (value.seconds !== undefined) return new Date(value.seconds * 1000);   
     if (value instanceof Date) return value;
     const d = new Date(value);
     return isNaN(d.getTime()) ? null : d;

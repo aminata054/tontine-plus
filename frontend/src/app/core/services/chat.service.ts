@@ -190,9 +190,20 @@ export class ChatService implements OnDestroy {
     // ─────────────────────────────────────────────────────────────
 
     /** Formater l'heure d'un message */
+    private toDate(value: any): Date | null {
+        if (!value) return null;
+        if (typeof value.toDate === 'function') return value.toDate();
+        if (value._seconds !== undefined) return new Date(value._seconds * 1000);
+        if (value.seconds !== undefined) return new Date(value.seconds * 1000);
+        if (value instanceof Date) return value;
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? null : d;
+    }
+
     formatMessageTime(timestamp: any): string {
-        if (!timestamp) return '';
-        const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+        const date = this.toDate(timestamp);
+        if (!date) return '';
+
         const now = new Date();
         const isToday = date.toDateString() === now.toDateString();
 

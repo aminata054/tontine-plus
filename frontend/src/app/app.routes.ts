@@ -52,6 +52,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/tontines/join-preview/join-preview.page').then(m => m.JoinPreviewPage)
       },
       {
+        path: 'join/:id',
+        loadComponent: () => import('./features/tontines/join-preview/join-preview.page').then(m => m.JoinPreviewPage)
+      },
+      {
         path: 'tontines',
         loadComponent: () => import('./features/tontines/layout/layout.page').then(m => m.LayoutPage),
         children: [

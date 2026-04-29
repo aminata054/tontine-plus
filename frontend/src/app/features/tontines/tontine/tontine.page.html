@@ -85,16 +85,16 @@
     <!-- LISTE -->
     <ng-container *ngIf="!isLoading && !hasError && hasTontines">
       <div class="ov-card" *ngFor="let t of filteredTontines" (click)="openTontine(t)">
-      
+
         <!-- Avatar -->
         <div class="ov-card__avatar">
           <img *ngIf="t.iconUrl" [src]="t.iconUrl" [alt]="t.name" (error)="onImageError(t)" />
           <ion-icon *ngIf="!t.iconUrl" name="people-circle-outline"></ion-icon>
         </div>
-      
+
         <!-- Body -->
         <div class="ov-card__body">
-      
+
           <!-- Header : Nom + Badge -->
           <div class="ov-card__header">
             <span class="ov-card__name">{{ t.name }}</span>
@@ -102,28 +102,28 @@
               {{ statusLabel(t.status) }}
             </span>
           </div>
-      
+
           <!-- Gain -->
           <div class="ov-card__gain">
             Gain : {{ t.potPerTurn | number:'1.0-0' }} FCFA
           </div>
-      
+
           <!-- Meta -->
           <div class="ov-card__meta">
             Prochaine distribution : <strong>{{ nextPaymentLabel(t) }}</strong><br>
             Cotisation : <strong>{{ t.amount | number:'1.0-0' }} FCFA</strong>
           </div>
-      
+
           <!-- Barre de progression -->
           <div class="ov-progress">
             <div class="ov-progress__bar" [style.width.%]="progress(t)"></div>
           </div>
-      
+
           <!-- Membres -->
           <div class="ov-card__members">
             {{ t.currentMembers }}/{{ t.totalMembers }} membres
           </div>
-      
+
         </div>
       </div>
 

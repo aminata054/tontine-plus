@@ -113,6 +113,11 @@ export class TontineService {
         return this.http.get<TontineInviteResponse>(`${this.API}/${id}/invite`);
     }
 
+    // ── TONTINES PUBLIQUES ─────────────────────────────────────────────────────
+    getPublicTontines(): Observable<TontineListResponse> {
+        return this.http.get<TontineListResponse>(`${this.API}/public`);
+    }
+
     // ── LABELS LISIBLES EN FRANÇAIS ────────────────────────────────────────────
 
     frequencyLabel(frequency: Frequency): string {

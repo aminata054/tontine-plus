@@ -6,11 +6,14 @@ import {
     getJoinPreview, joinTontine, getTontineMembers, validateMember,
     getMemberProfile,
     processNextTurn,
-    launchTontine
+    launchTontine, getPublicTontines,
 } from '../controllers/tontines.controller';
 import { requirePremium } from '../middleware/premium.middleware';
 
 const router = Router();
+
+router.get('/public', verifyToken, getPublicTontines);
+
 
 /**
  * @swagger
@@ -611,5 +614,6 @@ router.post('/:id/next-turn', verifyToken, requirePremium, processNextTurn);
  *         description: Tontine déjà lancée ou déjà active
  */
 router.post('/:id/launch', verifyToken, launchTontine);
+
 
 export default router;

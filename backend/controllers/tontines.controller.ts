@@ -670,6 +670,32 @@ export const deleteTontine = async (
 };
 
 // ─────────────────────────────────────────────────────────────
+// GET /api/v1/tontines/public — LISTE DES TONTINES PUBLIQUES
+// Accessible à tous, même sans authentification
+// ─────────────────────────────────────────────────────────────
+export const getPublicTontines = async (req: Request, res: Response) => {
+    try {
+        const snap = await db.collection('tontines').where('visibility', '==', 'public').get();
+        const tontines = snap.docs.map(doc => ({
+            id: doc.id,
+            name: doc.data().name,
+            description: doc.data().description ?? null,
+            iconUrl: doc.data().iconUrl ?? null,
+            amount: doc.data().amount,
+            frequency: doc.data().frequency,
+            totalMembers: doc.data().totalMembers,
+            currentMembers: doc.data().currentMembers,
+            inviteLink: doc.data().inviteLink,
+        }));
+
+        return res.json({ success: true, data: tontines, count: tontines.length });
+    }
+    catch (err: any) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+// ─────────────────────────────────────────────────────────────
 // GET /api/v1/tontines/:id/invite — LIEN + QR CODE
 // ─────────────────────────────────────────────────────────────
 export const getTontineInvite = async (
