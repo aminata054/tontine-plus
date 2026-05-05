@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { verifyToken } from '../middleware/auth.middleware';
 import {
     sendOtp, verifyOtp, setupPin, completeProfile, loginWithPin, getProfile,
-    updateProfile,
+    updateProfile, refreshToken,
     getReferralLink,
     updatePin,
     getReferralStats
@@ -172,6 +172,44 @@ router.post('/login-pin', loginWithPin);
  *         description: Profil utilisateur (sans pinHash)
  */
 router.get('/profile', verifyToken, getProfile);
+
+
+/**
+ * @swagger
+ * /auth/refresh:
+ *   post:
+ *     summary: Rafraîchir le token d'authentification
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [refreshToken]
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                 description: Token de rafraîchissement
+ *     responses:
+ *       200:
+ *         description: Nouveau token généré
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                   description: Nouveau token d'accès
+ *                 refreshToken:
+ *                   type: string
+ *                   description: Nouveau refresh token (optionnel)
+ *       401:
+ *         description: Refresh token invalide ou expiré
+ */
+router.post('/refresh', refreshToken);
 
 /**
  * @swagger

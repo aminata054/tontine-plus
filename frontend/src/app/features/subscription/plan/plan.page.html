@@ -90,8 +90,8 @@
 
       <!-- Footer sticky -->
       <div class="sp-footer">
-        <app-custom-button fill="solid" expand="block" [disabled]="!selectedMethod || !selectedPlan" [loading]="isSubmitting"
-          (clicked)="simulateSubscription(selectedPlan!.id)">
+        <app-custom-button fill="solid" expand="block" [disabled]="!selectedMethod || !selectedPlan"
+          [loading]="isSubmitting" (clicked)="simulateSubscription(selectedPlan!.id)">
           S'abonner maintenant
         </app-custom-button>
         <p class="sp-legal">

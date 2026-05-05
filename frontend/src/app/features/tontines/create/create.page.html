@@ -39,13 +39,13 @@
         </div>
       </div>
 
-      <app-custom-input [value]="step2Form.get('name')?.value"
+      <app-custom-input [value]="step2Form.get('name')?.value" class="cr-name-input"
         (valueChange)="step2Form.get('name')!.setValue($event); step2Form.get('name')!.markAsTouched()"
         placeholder="Nom de la tontine" type="text"
-        [errorMessage]="step2Form.get('name')?.invalid && step2Form.get('name')?.touched ? 'Minimum 3 caractères' : ''">
+        [errorMessage]="step2Form.get('name')?.invalid && step2Form.get('name')?.touched ? 'Minimum 3 caractères' : ''" >
       </app-custom-input>
 
-      <app-custom-input [value]="step2Form.get('description')?.value"
+      <app-custom-input [value]="step2Form.get('description')?.value" class="cr-description-input"
         (valueChange)="step2Form.get('description')!.setValue($event)" placeholder="Description" type="textarea">
       </app-custom-input>
 
@@ -60,8 +60,7 @@
           </ion-icon>
         </div>
         <div class="cr-dropdown" *ngIf="showVisibilityDropdown">
-          <!-- Avant : affichait seulement v.label
-               Après : affiche aussi v.description en sous-texte -->
+          <!-- affiche v.description en sous-texte -->
           <div class="cr-dropdown__item" *ngFor="let v of visibilityOptions" (click)="selectVisibility(v.value)">
             <span class="cr-dropdown__item-label">{{ v.label }}</span>
             <span class="cr-dropdown__item-sub">{{ v.description }}</span>

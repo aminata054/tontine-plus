@@ -230,6 +230,13 @@ export class DashboardPage implements OnInit, OnDestroy {
     await modal.present();
   }
 
+  joinPublicTontine(t: Tontine): void {
+    const code = t.inviteLink?.split('/').pop() ?? (t as any).inviteCode;
+    if (code) {
+      this.router.navigate(['/join', code]);
+    }
+  }
+
   // ── Navigation ───────────────────────────────────────────────
 
   goToProfile(): void { this.router.navigate(['/profile']); }
@@ -239,7 +246,6 @@ export class DashboardPage implements OnInit, OnDestroy {
   seeAllPublicTontines(): void { this.router.navigate(['/tontines/public']); }
   seeAllReceipts(): void { this.router.navigate(['/profile/receipts']); }
   openTontine(t: Tontine): void { this.router.navigate(['/tontines', t.id, 'overview']); }
-  joinPublicTontine(t: Tontine): void { this.router.navigate(['/join', t.id]); }
   createTontine(): void { this.router.navigate(['/tontines/create']); }
   joinTontine(): void { this.router.navigate(['/tontines/join']); }
 }

@@ -17,7 +17,7 @@
 // ─── Content ───────────────────────────────────────────────
 
 .create-content {
-    --background: var(--bg);
+    --background: var(--ion-background-color);
     --padding-bottom: 0;
 }
 
@@ -58,8 +58,6 @@
 }
 
 // ─── Fields ─────────────────────────────────────────────────
-// (les inputs eux-mêmes sont gérés par app-custom-input)
-
 .cr-field {
     margin-bottom: 16px;
     position: relative;

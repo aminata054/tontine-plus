@@ -12,6 +12,7 @@ export interface VerifyOtpResponse {
     profileComplete: boolean;
     pinSet: boolean;
     profile?: UserProfile;
+    refreshToken: string;
 }
 
 export interface SetupPinResponse {

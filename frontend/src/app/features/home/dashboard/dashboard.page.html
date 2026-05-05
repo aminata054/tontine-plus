@@ -15,8 +15,8 @@
     </div>
 
     <div class="header-center">
-      <p class="header-greeting">Bonjour {{ user?.fullName }}</p>
-      <h1 class="header-title">Bienvenue</h1>
+      <!-- <p class="header-greeting">Bonjour {{ user?.fullName }}</p> -->
+      <h1 class="header-title">Tontine Plus</h1>
     </div>
 
     <div class="notif-btn" (click)="openNotifications()">
@@ -264,7 +264,7 @@
 
         <!-- Liste -->
         <div class="history-list" *ngIf="recentPayments.length > 0">
-          <div class="history-item" *ngFor="let tx of recentPayments" >
+          <div class="history-item" *ngFor="let tx of recentPayments">
 
             <!-- Icône statut -->
             <div class="history-avatar history-avatar--success">

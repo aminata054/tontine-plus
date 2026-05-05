@@ -79,6 +79,7 @@ import {
     diamond,
     checkmarkOutline,
     enterOutline,
+    arrowForwardCircleOutline,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -98,7 +99,7 @@ export function registerIcons() {
         checkmarkDoneOutline, trashOutline,
         ellipsisVerticalOutline, cashOutline, peopleOutline,
         alertCircleOutline, checkmarkCircleOutline, megaphoneOutline, timeOutline,
-        helpCircleOutline,
+        helpCircleOutline, arrowForwardCircleOutline,
         searchOutline,
         walletOutline, chevronUpOutline,
         calendarOutline, trophyOutline, chevronDownOutline,

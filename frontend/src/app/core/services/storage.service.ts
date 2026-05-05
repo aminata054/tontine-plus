@@ -9,6 +9,7 @@ export class StorageService {
         ID_TOKEN: 'idToken',
         USER: 'user',
         PHONE: 'phoneNumber',
+        REFRESH_TOKEN: 'refresh_token',
     };
 
     // ── Onboarding ────────────────────────────────────────────
@@ -28,6 +29,15 @@ export class StorageService {
 
     async getToken(): Promise<string | null> {
         const { value } = await Preferences.get({ key: this.KEYS.ID_TOKEN });
+        return value;
+    }
+
+    async setRefreshToken(token: string): Promise<void> {
+        await Preferences.set({ key: this.KEYS.REFRESH_TOKEN, value: token });
+    }
+
+    async getRefreshToken(): Promise<string | null> {
+        const { value } = await Preferences.get({ key: this.KEYS.REFRESH_TOKEN });
         return value;
     }
 
@@ -57,6 +67,7 @@ export class StorageService {
             Preferences.remove({ key: this.KEYS.ID_TOKEN }),
             Preferences.remove({ key: this.KEYS.USER }),
             Preferences.remove({ key: this.KEYS.PHONE }),
+            Preferences.remove({ key: this.KEYS.REFRESH_TOKEN }),
         ]);
     }
 }

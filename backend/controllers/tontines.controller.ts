@@ -675,7 +675,7 @@ export const deleteTontine = async (
 // ─────────────────────────────────────────────────────────────
 export const getPublicTontines = async (req: Request, res: Response) => {
     try {
-        const snap = await db.collection('tontines').where('visibility', '==', 'public').get();
+        const snap = await db.collection('tontines').where('visibility', '==', 'public').where('status', '==', 'pending').get();
         const tontines = snap.docs.map(doc => ({
             id: doc.id,
             name: doc.data().name,
