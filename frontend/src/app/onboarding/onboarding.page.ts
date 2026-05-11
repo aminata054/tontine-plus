@@ -85,7 +85,7 @@ export class OnboardingPage implements ViewDidEnter {
 
   onSkip() {
     this.storageService.setHasSeenOnboarding().then(() => {
-      this.router.navigate(['/login'], { replaceUrl: true });
+      this.router.navigate(['/register'], { replaceUrl: true });
     });
   }
 

@@ -1,7 +1,7 @@
 import { Injectable, Injector } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, from, of } from 'rxjs';
-import { tap, switchMap, map } from 'rxjs/operators';
+import { tap, switchMap, map, catchError } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { StorageService } from './storage.service';
 import type { PushNotificationService } from './push-notification.service';
@@ -66,6 +66,7 @@ export class AuthService {
         if (res.success) {
           const saves: Promise<any>[] = [
             this.storage.setToken(res.idToken),
+            this.storage.setRefreshToken(res.refreshToken),
             this.storage.setPhoneNumber(phoneNumber),
           ];
 
@@ -113,6 +114,7 @@ export class AuthService {
         if (res.success && res.customToken) {
           const firebaseRes = await this.exchangeCustomToken(res.customToken);
           await this.storage.setToken(firebaseRes.idToken);
+          await this.storage.setRefreshToken(firebaseRes.refreshToken);
           await this.storage.setUser(res.profile);
           this.currentUserSubject.next(res.profile);
           this.getPushService()
@@ -169,6 +171,26 @@ export class AuthService {
   async isLoggedIn(): Promise<boolean> {
     const token = await this.storage.getToken();
     return !!token;
+  }
+
+  refreshSession(): Observable<boolean> {
+    return from(this.storage.getRefreshToken()).pipe(
+      switchMap(refreshToken => {
+        if (!refreshToken) return of(false);
+
+        return this.http.post<any>(`${this.API}/refresh`, { refreshToken }).pipe(
+          switchMap(async (res) => {
+            if (res.success) {
+              await this.storage.setToken(res.data.idToken);
+              await this.storage.setRefreshToken(res.data.refreshToken);
+              return true;
+            }
+            return false;
+          }),
+          catchError(() => of(false))
+        );
+      })
+    );
   }
 
   async getSavedPhoneNumber(): Promise<string | null> {

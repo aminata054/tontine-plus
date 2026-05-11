@@ -10,7 +10,6 @@
 
 <ion-content class="premium-modal-content" fullscreen="true" scrollY="true">
 
-  <!-- Hero Image -->
   <div class="hero-image">
     <img src="/assets/images/premium.jpg" alt="Premium" />
     <div class="overlay"></div>
@@ -23,7 +22,7 @@
   <div class="content-body">
 
     <div class="benefits">
-      <p class="intro">Débloquez tout le potentiel de l’application, des tontines illimitées ainsi que des
+      <p class="intro">Débloquez tout le potentiel de l'application, des tontines illimitées ainsi que des
         fonctionnalités exclusives.</p>
       <ul>
         <li><ion-icon name="checkmark-circle"></ion-icon> Accès illimité aux tontines</li>
@@ -32,46 +31,23 @@
       </ul>
     </div>
 
-    <!-- Options d'abonnement -->
+    <!-- Options d'abonnement — générées depuis plans[] -->
     <div class="pricing-options">
+      <div class="price-card" *ngFor="let plan of plans" [class.selected]="selectedPlan.id === plan.id"
+        (click)="selectPlan(plan)">
 
-      <!-- Annuel -->
-      <div class="price-card" [class.selected]="selectedPlan === 'annual'" (click)="selectPlan('annual')">
-        <div class="badge">50% off</div>
+        <div class="badge" *ngIf="plan.badge">{{ plan.badge }}</div>
+
         <div class="plan-header">
-          <ion-radio slot="start" [value]="'annual'"></ion-radio>
+          <ion-radio slot="start" [value]="plan.id" (check)="selectedPlan.id === plan.id"></ion-radio>
           <div>
-            <p class="period">Annuel</p>
-            <p class="price">20 000 FCFA <span>/an</span></p>
+            <p class="period">{{ plan.name }}</p>
+            <p class="price">{{ plan.priceLabel }}</p>
           </div>
         </div>
-        <p class="description">Inclut toutes les fonctionnalités avancées</p>
-      </div>
 
-      <!-- Mensuel -->
-      <div class="price-card" [class.selected]="selectedPlan === 'monthly'" (click)="selectPlan('monthly')">
-        <div class="plan-header">
-          <ion-radio slot="start" [value]="'monthly'"></ion-radio>
-          <div>
-            <p class="period">Mensuel</p>
-            <p class="price">500 FCFA <span>/mois</span></p>
-          </div>
-        </div>
-        <p class="description">Inclut toutes les fonctionnalités avancées</p>
+        <p class="description">{{ plan.subtitle }}</p>
       </div>
-
-      <!-- Premium (à vie ou annuel haut de gamme) -->
-      <div class="price-card" [class.selected]="selectedPlan === 'premium'" (click)="selectPlan('premium')">
-        <div class="plan-header">
-          <ion-radio slot="start" [value]="'premium'"></ion-radio>
-          <div>
-            <p class="period">Premium</p>
-            <p class="price">50 000 FCFA <span>/an</span></p>
-          </div>
-        </div>
-        <p class="description">Inclut toutes les fonctionnalités avancées</p>
-      </div>
-
     </div>
 
     <app-custom-button expand="block" fill="solid" color="primary" (clicked)="subscribe()">
@@ -79,8 +55,8 @@
     </app-custom-button>
 
     <p class="terms">
-      En souscrivant, vous acceptez nos <a href="#">Conditions d'utilisation</a> et <a href="#">Politique de
-        confidentialité</a>.<br>
+      En souscrivant, vous acceptez nos <a href="#">Conditions d'utilisation</a> et
+      <a href="#">Politique de confidentialité</a>.
     </p>
 
   </div>

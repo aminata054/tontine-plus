@@ -41,9 +41,9 @@ router.get('/public', verifyToken, getPublicTontines);
  *               description:
  *                 type: string
  *                 example: "Tontine mensuelle de la famille"
- *               emoji:
+ *               icon:
  *                 type: string
- *                 example: "👨‍👩‍👧‍👦"
+ *                 example: "👨‍👩"
  *               visibility:
  *                 type: string
  *                 enum: [private, semi_public]

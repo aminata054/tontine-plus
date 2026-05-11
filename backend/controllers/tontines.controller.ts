@@ -241,8 +241,13 @@ export const createTontine = async (req: Request, res: Response) => {
     }
 
     // ── 13. URL de l'icône (optionnel) ────────────────────────────────────────
-    if (iconUrl && !/^https?:\/\/.+/.test(iconUrl))
-        errors.push('iconUrl invalide (doit commencer par http:// ou https://)');
+    if (iconUrl) {
+        const isUrl = /^https?:\/\/.+/.test(iconUrl);
+        const isBase64 = /^data:image\/(jpeg|jpg|png|webp);base64,/.test(iconUrl);
+        if (!isUrl && !isBase64) {
+            errors.push('iconUrl invalide (doit être une URL http/https ou une image base64)');
+        }
+    }
 
     if (errors.length > 0) {
         return res.status(400).json({ success: false, errors });
@@ -574,8 +579,12 @@ export const updateTontine = async (
             return res.status(400).json({ success: false, error: 'Aucun champ valide à mettre à jour' });
         }
 
-        if (updates.iconUrl && !/^https?:\/\/.+/.test(updates.iconUrl)) {
-            return res.status(400).json({ success: false, error: 'iconUrl invalide' });
+        if (updates.iconUrl) {
+            const isUrl = /^https?:\/\/.+/.test(updates.iconUrl);
+            const isBase64 = /^data:image\/(jpeg|jpg|png|webp);base64,/.test(updates.iconUrl);
+            if (!isUrl && !isBase64) {
+                return res.status(400).json({ success: false, error: 'iconUrl invalide' });
+            }
         }
 
         const newAmount = updates.amount ?? tontine.amount;
@@ -675,7 +684,7 @@ export const deleteTontine = async (
 // ─────────────────────────────────────────────────────────────
 export const getPublicTontines = async (req: Request, res: Response) => {
     try {
-        const snap = await db.collection('tontines').where('visibility', '==', 'public').get();
+        const snap = await db.collection('tontines').where('visibility', '==', 'public').where('status', '==', 'pending').get();
         const tontines = snap.docs.map(doc => ({
             id: doc.id,
             name: doc.data().name,
@@ -970,7 +979,7 @@ export const joinTontine = async (
                 tontineId,
                 userId: uid,
                 userName: userData.fullName ?? null,
-                userPhotoUrl: userData.photoUrl ?? null,
+                userPhotoUrl: userData.iconUrl ?? null,
                 role: 'member',
                 status: memberStatus,
                 turnNumber: null,

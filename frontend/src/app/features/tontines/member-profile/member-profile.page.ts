@@ -28,7 +28,7 @@ export class MemberProfilePage implements OnInit, OnDestroy {
 
   status: PageStatus = 'loading';
   member: TontineMember | null = null;
-
+  isCurrentUser: boolean = false;
   tontineId: string | null = null;
   memberId: string | null = null;
 
@@ -45,8 +45,6 @@ export class MemberProfilePage implements OnInit, OnDestroy {
     this.tontineId = this.route.snapshot.paramMap.get('id');
     this.memberId = this.route.snapshot.paramMap.get('memberId');
 
-    this.tontineService.getMemberProfile(this.tontineId!, this.memberId!)
-
     if (!this.tontineId || !this.memberId) {
       this.status = 'error';
       return;
@@ -55,39 +53,30 @@ export class MemberProfilePage implements OnInit, OnDestroy {
     this.load();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  // ── Chargement ──────────────────────────────────────────────────────────────
-
   load(): void {
     this.status = 'loading';
 
-    // On charge toute la liste puis on isole le membre ciblé.
-    // Évite d'avoir besoin d'un endpoint GET /members/:uid dédié.
-    this.tontineService.getTontineMembers(this.tontineId!)
+    this.tontineService.getMemberProfile(this.tontineId!, this.memberId!)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => { if (this.status === 'loading') this.status = 'error'; })
       )
       .subscribe({
         next: (res) => {
-          if (res.success) {
-            const found = res.data.find(m => m.id === this.memberId);
-            if (found) {
-              this.member = found;
-              this.status = 'success';
-            } else {
-              this.status = 'error';
-            }
+          if (res.success && res.data) {
+            this.member = res.data;
+            this.status = 'success';
           } else {
             this.status = 'error';
           }
         },
         error: () => { this.status = 'error'; },
       });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   // ── Helpers affichage ───────────────────────────────────────────────────────
@@ -97,15 +86,13 @@ export class MemberProfilePage implements OnInit, OnDestroy {
       .split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
   }
 
-  /** Convertit un Timestamp Firestore ou une Date en Date JS */
-  toDate(value: any): Date | null {
-    if (!value) return null;
-    if (typeof value.toDate === 'function') return value.toDate();
-    if (value._seconds !== undefined) return new Date(value._seconds * 1000);
-    if (value.seconds !== undefined) return new Date(value.seconds * 1000);
-    if (value instanceof Date) return value;
-    const d = new Date(value);
-    return isNaN(d.getTime()) ? null : d;
+  /** Vérifie si le membre est l'utilisateur courant */
+  isCurrentMember(member: TontineMember): boolean {
+    // TODO : comparer member.userId avec l'ID de l'utilisateur courant
+    if (member.userId === this.memberId) {
+      return true;
+    }
+    return false;
   }
 
   /** Score de confiance 0-5 basé sur le taux de paiements à temps */
@@ -141,6 +128,28 @@ export class MemberProfilePage implements OnInit, OnDestroy {
 
   formatAmount(v: number): string {
     return new Intl.NumberFormat('fr-FR').format(v);
+  }
+
+  private toDate(value: any): Date | null {
+    if (!value) return null;
+    if (typeof value.toDate === 'function') return value.toDate();
+    if (value._seconds !== undefined) return new Date(value._seconds * 1000);
+    if (value.seconds !== undefined) return new Date(value.seconds * 1000);
+    if (value instanceof Date) return value;
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  joinedAtLabel(): string {
+    const d = this.toDate(this.member?.joinedAt);
+    if (!d) return '—';
+    return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  validatedAtLabel(): string {
+    const d = this.toDate(this.member?.validatedAt);
+    if (!d) return '—';
+    return 'le ' + d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   }
 
   // ── Actions ─────────────────────────────────────────────────────────────────

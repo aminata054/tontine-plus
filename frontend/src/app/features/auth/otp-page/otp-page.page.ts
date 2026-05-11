@@ -93,7 +93,7 @@ export class OtpPagePage implements OnInit {
     } else if (!state.profileComplete) {
       this.router.navigate(['/profile-completion']);
     } else {
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/login']);
     }
   }
 

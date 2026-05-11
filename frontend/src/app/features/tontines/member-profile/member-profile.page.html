@@ -6,17 +6,17 @@
   <ng-container *ngIf="status === 'loading'">
     <div class="profile-container">
       <div class="profile-header">
-        <ion-skeleton-text animated style="width:88px;height:88px;border-radius:50%;margin:0 auto 12px;">
+        <ion-skeleton-text animated style="width:92px;height:92px;border-radius:50%;margin-bottom:16px;">
         </ion-skeleton-text>
-        <ion-skeleton-text animated style="width:45%;height:18px;border-radius:6px;margin:0 auto;">
+        <ion-skeleton-text animated style="width:50%;height:20px;border-radius:6px;margin-bottom:8px;">
+        </ion-skeleton-text>
+        <ion-skeleton-text animated style="width:35%;height:14px;border-radius:6px;">
         </ion-skeleton-text>
       </div>
       <div class="profile-info">
-        <div class="info-row" *ngFor="let _ of [1,2,3,4]">
-          <ion-skeleton-text animated style="width:40%;height:13px;border-radius:4px;">
-          </ion-skeleton-text>
-          <ion-skeleton-text animated style="width:30%;height:13px;border-radius:4px;">
-          </ion-skeleton-text>
+        <div class="info-row" *ngFor="let _ of [1,2,3,4,5]">
+          <ion-skeleton-text animated style="width:40%;height:13px;border-radius:4px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width:30%;height:13px;border-radius:4px;"></ion-skeleton-text>
         </div>
       </div>
     </div>
@@ -48,23 +48,22 @@
         <h1 class="profile-name">{{ member.userName ?? 'Utilisateur' }}</h1>
 
         <div class="profile-badges">
-          <span class="profile-badge profile-badge--role profile-badge--{{ member.role }}">
+          <span class="profile-badge profile-badge--{{ member.role }}">
             {{ roleLabel(member.role) }}
           </span>
-          <span class="profile-badge profile-badge--status profile-badge--{{ statusColor(member.status) }}">
+          <span class="profile-badge profile-badge--status-{{ statusColor(member.status) }}">
             {{ statusLabel(member.status) }}
           </span>
         </div>
       </div>
 
       <!-- Informations générales -->
-      <div class="profile-section">
-        <h2 class="profile-section__title">Informations</h2>
+      <div class="profile-info">
 
         <div class="info-row">
           <span class="info-label">Membre depuis</span>
           <span class="info-value">
-            {{ toDate(member.joinedAt) | date:'d MMM yyyy' : '' : 'fr-FR' }}
+            {{ (joinedAtLabel())  }}
           </span>
         </div>
 
@@ -78,25 +77,26 @@
         <div class="info-row" *ngIf="member.validatedAt">
           <span class="info-label">Validé le</span>
           <span class="info-value">
-            {{ toDate(member.validatedAt) | date:'d MMM yyyy' : '' : 'fr-FR' }}
+            {{ validatedAtLabel() }}
           </span>
         </div>
+
       </div>
 
-      <!-- Statistiques de paiement -->
-      <div class="profile-section">
-        <h2 class="profile-section__title">Statistiques</h2>
+      <!-- Statistiques -->
+      <div class="profile-info">
+        <h2 class="profile-section-title">Statistiques de paiement</h2>
 
         <div class="info-row">
           <span class="info-label">Total cotisé</span>
-          <span class="info-value info-value--accent">
+          <span class="info-value info-value--blue">
             {{ formatAmount(member.stats.totalPaid) }} FCFA
           </span>
         </div>
 
         <div class="info-row">
           <span class="info-label">Total reçu</span>
-          <span class="info-value info-value--primary">
+          <span class="info-value info-value--green">
             {{ formatAmount(member.stats.totalReceived) }} FCFA
           </span>
         </div>
@@ -119,21 +119,28 @@
             {{ member.stats.missedPayments }}
           </span>
         </div>
+
       </div>
 
       <!-- Score de confiance -->
-      <div class="profile-section">
-        <h2 class="profile-section__title">Score de confiance</h2>
-        <div class="trust-score">
-          <span *ngFor="let filled of stars" class="trust-score__star"
-            [class.trust-score__star--filled]="filled">★</span>
-          <span class="trust-score__label">{{ trustScore }}/5</span>
+      <div class="profile-info">
+        <h2 class="profile-section-title">Score de confiance</h2>
+        <div class="info-row">
+          <span class="info-label">Note globale</span>
+          <div class="score-block">
+            <span class="score-stars">
+              <ion-icon *ngFor="let filled of stars" [name]="filled ? 'star' : 'star-outline'"
+                [style.color]="filled ? '#f4c542' : '#ccc'">
+              </ion-icon>
+            </span>
+            <span class="score-value">{{ trustScore }}/5</span>
+          </div>
         </div>
       </div>
 
-      <!-- Actions -->
+      <!-- Bouton Signaler -->
       <div class="profile-actions">
-        <button class="report-button" (click)="report()">
+        <button class="report-button" (click)="report()" *ngIf="isCurrentMember(member) === false">
           <ion-icon name="flag-outline"></ion-icon>
           Signaler ce membre
         </button>

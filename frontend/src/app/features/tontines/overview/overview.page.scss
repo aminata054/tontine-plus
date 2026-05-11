@@ -14,6 +14,48 @@
     --ion-font-family: var(--font-urbanist);
 }
 
+.ov-skeleton {
+    padding: 16px;
+
+    &__card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    }
+
+    &__hero {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    &__hero-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    &__grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    &__member {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 0;
+        border-bottom: 1px solid #F1F5F9;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+}
+
 // ─── Hero Card ─────────────────────
 .ov-hero {
     background: var(--hero-bg);

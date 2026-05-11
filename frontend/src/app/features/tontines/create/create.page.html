@@ -3,6 +3,7 @@
   <div class="cr-wrapper" *ngIf="currentStep <= 7">
 
     <app-page-header title="Tontine"></app-page-header>
+    <input #fileInput type="file" accept="image/*" style="display:none" (change)="onFileSelected($event)" />
     <app-step-indicator [currentStep]="currentStep" [totalSteps]="TOTAL_STEPS"></app-step-indicator>
 
     <!-- ─────────────────────────────────────────────────
@@ -29,23 +30,36 @@
     <div class="cr-step" *ngIf="currentStep === 2">
       <h2 class="cr-step__title">Informations de base</h2>
 
-      <div class="cr-icon-picker" (click)="onIconPick()">
-        <img *ngIf="iconPreviewUrl" [src]="iconPreviewUrl" class="cr-icon-picker__img" />
-        <div *ngIf="!iconPreviewUrl" class="cr-icon-picker__placeholder">
-          <ion-icon name="image-outline"></ion-icon>
+      <div class="cr-icon-picker" (click)="!isUploadingIcon && onIconPick()">
+      
+        <!-- Image choisie -->
+        <img *ngIf="iconPreviewUrl && !isUploadingIcon" [src]="iconPreviewUrl" class="cr-icon-picker__img" />
+      
+        <!-- Spinner pendant l'upload -->
+        <div *ngIf="isUploadingIcon" class="cr-icon-picker__loading">
+          <ion-spinner name="crescent" color="primary"></ion-spinner>
         </div>
-        <div class="cr-icon-picker__edit">
+      
+        <!-- Placeholder vide -->
+        <div *ngIf="!iconPreviewUrl && !isUploadingIcon" class="cr-icon-picker__placeholder">
+          <ion-icon name="image-outline"></ion-icon>
+          <span class="cr-icon-picker__hint">Choisir une photo</span>
+        </div>
+      
+        <!-- Bouton édition (si image déjà choisie) -->
+        <div class="cr-icon-picker__edit" *ngIf="iconPreviewUrl && !isUploadingIcon">
           <ion-icon name="pencil-outline"></ion-icon>
         </div>
+      
       </div>
 
-      <app-custom-input [value]="step2Form.get('name')?.value"
+      <app-custom-input [value]="step2Form.get('name')?.value" class="cr-name-input"
         (valueChange)="step2Form.get('name')!.setValue($event); step2Form.get('name')!.markAsTouched()"
         placeholder="Nom de la tontine" type="text"
-        [errorMessage]="step2Form.get('name')?.invalid && step2Form.get('name')?.touched ? 'Minimum 3 caractères' : ''">
+        [errorMessage]="step2Form.get('name')?.invalid && step2Form.get('name')?.touched ? 'Minimum 3 caractères' : ''" >
       </app-custom-input>
 
-      <app-custom-input [value]="step2Form.get('description')?.value"
+      <app-custom-input [value]="step2Form.get('description')?.value" class="cr-description-input"
         (valueChange)="step2Form.get('description')!.setValue($event)" placeholder="Description" type="textarea">
       </app-custom-input>
 
@@ -60,8 +74,7 @@
           </ion-icon>
         </div>
         <div class="cr-dropdown" *ngIf="showVisibilityDropdown">
-          <!-- Avant : affichait seulement v.label
-               Après : affiche aussi v.description en sous-texte -->
+          <!-- affiche v.description en sous-texte -->
           <div class="cr-dropdown__item" *ngFor="let v of visibilityOptions" (click)="selectVisibility(v.value)">
             <span class="cr-dropdown__item-label">{{ v.label }}</span>
             <span class="cr-dropdown__item-sub">{{ v.description }}</span>

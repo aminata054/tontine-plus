@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent, IonIcon, IonSpinner, ToastController } from '@ionic/angular/standalone';
@@ -6,7 +6,7 @@ import { IonContent, IonIcon, IonSpinner, ToastController } from '@ionic/angular
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { getStorage, ref, uploadString, getDownloadURL } from '@angular/fire/storage';
 import { inject } from '@angular/core';
-import { Storage } from '@angular/fire/storage'; 
+import { Storage } from '@angular/fire/storage';
 import { Router } from '@angular/router';
 
 import { PageHeaderComponent } from 'src/app/shared/ui/page-header/page-header.component';
@@ -15,6 +15,7 @@ import { CustomButtonComponent } from 'src/app/shared/ui/custom-button/custom-bu
 import { AuthService } from 'src/app/core/services/auth.service';
 import { UserProfile } from 'src/app/core/models/auth.model';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
+import { ImageUploadService } from 'src/app/core/services/image-upload.service';
 
 @Component({
   selector: 'app-profile-completion',
@@ -37,17 +38,19 @@ export class ProfileCompletionPage {
   fullName: string = '';
   email: string = '';
   birthDate: string = '';
-  photoPreview: string = '';  
-  photoUrl: string = '';          
+  photoPreview: string = '';
+  photoUrl: string = '';
   isUploading: boolean = false;
   errorMessage: string = '';
   status: 'input' | 'success' | 'error' = 'input';
 
   private fireStorage = inject(Storage);
-
-  constructor(private router: Router, 
-    private auth: AuthService, 
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  
+  constructor(private router: Router,
+    private auth: AuthService,
     private subscriptionService: SubscriptionService,
+    private imageUploadService: ImageUploadService,
     private toastCtrl: ToastController
   ) { }
 
@@ -80,48 +83,37 @@ export class ProfileCompletionPage {
       !this.isUploading;
   }
 
-  async pickPhoto(): Promise<void> {
-    try {
-      const photo = await Camera.getPhoto({
-        quality: 80,
-        allowEditing: true,
-        resultType: CameraResultType.Base64,   
-        source: CameraSource.Prompt,          
-        width: 400,
-        height: 400,
-      });
-
-      if (!photo.base64String) return;
-
-      // Afficher la preview 
-      this.photoPreview = `data:image/${photo.format};base64,${photo.base64String}`;
-      this.isUploading = true;
-      this.errorMessage = '';
-
-      this.photoUrl = await this.uploadToFirebase(
-        photo.base64String,
-        photo.format ?? 'jpeg'
-      );
-
-    } catch (err: any) {
-      if (err?.message?.includes('cancelled') || err?.message?.includes('canceled')) return;
-      this.errorMessage = "Impossible de charger la photo. Réessayez.";
-    } finally {
-      this.isUploading = false;
-    }
+  onAvatarClick(): void {
+    if (this.isUploading) return;
+    this.fileInput.nativeElement.click();
   }
 
-  private async uploadToFirebase(base64: string, format: string): Promise<string> {
-    const uid = this.auth.currentUser?.uid ?? Date.now().toString();
-    const path = `avatars/${uid}/profile.${format}`;
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
 
-    const storageRef = ref(this.fireStorage, path);
+    if (!file.type.startsWith('image/')) {
+      this.errorMessage = 'Veuillez choisir une image';
+      return;
+    }
 
-    await uploadString(storageRef, base64, 'base64', {
-      contentType: `image/${format}`
+    this.isUploading = true;
+    this.errorMessage = '';
+
+    this.imageUploadService.compressAndConvert(file).subscribe({
+      next: (base64) => {
+        this.photoPreview = base64;
+        this.photoUrl = base64; // envoyé au backend
+        this.isUploading = false;
+      },
+      error: () => {
+        this.isUploading = false;
+        this.errorMessage = "Erreur lors du traitement de l'image";
+      }
     });
 
-    return await getDownloadURL(storageRef);
+    input.value = '';
   }
 
   async completeProfile() {
@@ -132,14 +124,14 @@ export class ProfileCompletionPage {
       fullName: this.fullName,
       birthDate: this.birthDate,
       email: this.email || undefined,
-      photoUrl: this.photoUrl || undefined, 
+      photoUrl: this.photoUrl || undefined,
     }).subscribe({
       next: async (res) => {
         if (res.success) {
           await this.applyPendingReferral();
           this.router.navigate(['/dashboard']);
         }
-         error: (err: any) => {
+        error: (err: any) => {
 
           this.errorMessage =
             err?.error?.error || 'Une erreur est survenue. Réessayez.';

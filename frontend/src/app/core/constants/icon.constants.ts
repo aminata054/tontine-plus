@@ -79,6 +79,8 @@ import {
     diamond,
     checkmarkOutline,
     enterOutline,
+    arrowForwardCircleOutline,
+    star,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -98,8 +100,8 @@ export function registerIcons() {
         checkmarkDoneOutline, trashOutline,
         ellipsisVerticalOutline, cashOutline, peopleOutline,
         alertCircleOutline, checkmarkCircleOutline, megaphoneOutline, timeOutline,
-        helpCircleOutline,
-        searchOutline,
+        helpCircleOutline, arrowForwardCircleOutline,
+        searchOutline, star, starOutline,
         walletOutline, chevronUpOutline,
         calendarOutline, trophyOutline, chevronDownOutline,
         chevronBackOutline, closeOutline,
@@ -116,7 +118,7 @@ export function registerIcons() {
         callOutline, ellipseOutline, settingsOutline,
         rocketOutline, openOutline, card, thumbsDownOutline,
         infiniteOutline, rocket, statsChartOutline,
-        trendingUpOutline, starOutline, flashOutline,
+        trendingUpOutline, flashOutline,
         sparkles, closeCircle, linkOutline, informationCircle, chatbubbleOutline,
         personRemoveOutline, shieldOutline, swapHorizontalOutline
     });

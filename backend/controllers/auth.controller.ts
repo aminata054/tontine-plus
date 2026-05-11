@@ -230,11 +230,12 @@ export const completeProfile = async (req: Request, res: Response) => {
     }
 
     // Valider l'URL de la photo si fournie
-    if (photoUrl && !/^https?:\/\/.+/.test(photoUrl)) {
-        return res.status(400).json({
-            success: false,
-            error: 'URL de photo invalide',
-        });
+    if (photoUrl) {
+        const isUrl = /^https?:\/\/.+/.test(photoUrl);
+        const isBase64 = /^data:image\/(jpeg|jpg|png|webp);base64,/.test(photoUrl);
+        if (!isUrl && !isBase64) {
+            return res.status(400).json({ success: false, error: 'URL de photo invalide' });
+        }
     }
 
     const validPlans = ['monthly', 'annual', 'premium'];
@@ -499,8 +500,12 @@ export const updateProfile = async (req: Request, res: Response) => {
     }
 
     if (photoUrl !== undefined) {
-        if (photoUrl && !/^https?:\/\/.+/.test(photoUrl)) {
-            return res.status(400).json({ success: false, error: 'URL de photo invalide' });
+        if (photoUrl) {
+            const isUrl = /^https?:\/\/.+/.test(photoUrl);
+            const isBase64 = /^data:image\/(jpeg|jpg|png|webp);base64,/.test(photoUrl);
+            if (!isUrl && !isBase64) {
+                return res.status(400).json({ success: false, error: 'URL de photo invalide' });
+            }
         }
         updates.photoUrl = photoUrl ?? null;
         authUpdates.photoURL = photoUrl ?? undefined;
@@ -594,6 +599,51 @@ export const updatePin = async (req: Request, res: Response) => {
         });
 
         return res.json({ success: true, message: 'Code PIN mis à jour avec succès' });
+    } catch (err: any) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+// ─────────────────────────────────────────────
+// REFRESH TOKEN
+// POST /api/v1/auth/refresh
+// Body: { refreshToken }
+// ─────────────────────────────────────────────
+
+export const refreshToken = async (req: Request, res: Response) => {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+        return res.status(400).json({ success: false, error: 'refreshToken requis' });
+    }
+
+    try {
+        const response = await fetch(
+            `https://securetoken.googleapis.com/v1/token?key=${process.env.FIREBASE_API_KEY}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    grant_type: 'refresh_token',
+                    refresh_token: refreshToken,
+                }),
+            }
+        );
+
+        const data = await response.json();
+
+        if (data.error) {
+            return res.status(401).json({ success: false, error: 'Session expirée, reconnectez-vous' });
+        }
+
+        return res.json({
+            success: true,
+            data: {
+                idToken: data.id_token,
+                refreshToken: data.refresh_token,
+                expiresIn: data.expires_in,
+            },
+        });
     } catch (err: any) {
         return res.status(500).json({ success: false, error: err.message });
     }

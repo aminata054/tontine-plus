@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormsModule, ReactiveFormsModule,
@@ -7,7 +7,7 @@ import {
 import { Router } from '@angular/router';
 import {
   IonContent, IonIcon,
-  ToastController, ModalController
+  ToastController, ModalController, IonSpinner
 } from '@ionic/angular/standalone';
 
 import { TontineService } from 'src/app/core/services/tontine.service';
@@ -28,6 +28,10 @@ import { CustomButtonComponent } from 'src/app/shared/ui/custom-button/custom-bu
 import { CustomInputComponent } from 'src/app/shared/ui/custom-input/custom-input.component';
 import { PremiumModalComponent } from 'src/app/shared/modals/premium-modal/premium-modal.component';
 import { SubscriptionService } from 'src/app/core/services/subscription.service';
+
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { ImageUploadService } from 'src/app/core/services/image-upload.service';
+import { LoadingController } from '@ionic/angular/standalone';
 
 // ─── Types locaux ──────────────────────────────────────────────────────────────
 
@@ -70,7 +74,7 @@ interface SecurityOption {
   templateUrl: './create.page.html',
   styleUrls: ['./create.page.scss'],
   standalone: true,
-  imports: [
+  imports: [IonSpinner,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -85,7 +89,10 @@ interface SecurityOption {
 })
 export class CreatePage implements OnInit {
 
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
   isPremium = false;
+  isUploadingIcon = false;
 
   // ── Navigation ──────────────────────────────────────────────────────────────
   currentStep = 1;
@@ -195,9 +202,9 @@ export class CreatePage implements OnInit {
 
 
   visibilityOptions: { value: TontineVisibility; label: string; description: string }[] = [
-    { value: 'private', label: 'Privée', description: 'Sur invitation uniquement' },
-    { value: 'semi_public', label: 'Semi-publique', description: 'Lien partageable' },
-    { value: 'public', label: 'Publique', description: 'Annuaire (bientôt disponible)' },
+    { value: 'private', label: 'Privée', description: ' : Sur invitation uniquement' },
+    { value: 'semi_public', label: 'Semi-publique', description: ' : Lien partageable' },
+    { value: 'public', label: 'Publique', description: ' : Annuaire' },
   ];
 
   quickAmounts = [5_000, 10_000, 15_000, 25_000, 50_000];
@@ -329,6 +336,7 @@ export class CreatePage implements OnInit {
     private router: Router,
     private tontineService: TontineService,
     private subscriptionService: SubscriptionService,
+    private imageUploadService: ImageUploadService,
     private toastCtrl: ToastController,
     private modalCtrl: ModalController,
   ) { }
@@ -433,9 +441,51 @@ export class CreatePage implements OnInit {
   // ── Étape 2 — Infos de base ─────────────────────────────────────────────────
 
   onIconPick(): void {
-    // Remplacer par un vrai sélecteur d'image
-    this.iconPreviewUrl = 'https://picsum.photos/seed/tontine/200';
-    this.iconUrl = this.iconPreviewUrl;
+    if (this.isUploadingIcon) return;
+    this.fileInput.nativeElement.click();
+  }
+
+  // Déclenché quand l'utilisateur choisit un fichier
+  async onFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.showToast('Veuillez choisir une image');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.showToast('Image trop lourde (max 5 Mo)');
+      return;
+    }
+
+    this.isUploadingIcon = true;
+
+    this.imageUploadService.compressAndConvert(file).subscribe({
+      next: (base64) => {
+        const sizeKb = Math.round(base64.length * 0.75 / 1024);
+        if (sizeKb > 700) {
+          this.isUploadingIcon = false;
+          this.showToast('Image encore trop lourde après compression');
+          return;
+        }
+        this.iconPreviewUrl = base64;
+        this.iconUrl = base64;
+        this.isUploadingIcon = false;
+      },
+      error: () => {
+        this.isUploadingIcon = false;
+        this.showToast("Erreur lors du traitement de l'image");
+      }
+    });
+
+    input.value = '';
+  }
+
+  private async dataUrlToBlob(dataUrl: string): Promise<Blob> {
+    const response = await fetch(dataUrl);
+    return response.blob();
   }
 
   selectVisibility(v: TontineVisibility): void {

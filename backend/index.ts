@@ -35,7 +35,8 @@ app.use(
         credentials: true,
     })
 );
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -45,16 +46,14 @@ app.use('/api/tontines', tontineRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/tontines/:id/chat', chatRoutes);
-app.use('/api/chat', chatRoutes);  
+app.use('/api/chat', chatRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/distributions', distributionRoutes);
 app.use('/api/tontines/:id/votes', voteRoutes);
 
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 8000;
-    app.listen(PORT, () => {
-        console.log(`Serveur: http://localhost:${PORT}`);
-        console.log(`Swagger: http://localhost:${PORT}/api-docs`);
-    });
-}
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => {
+    console.log(`Serveur: http://localhost:${PORT}`);
+    console.log(`Swagger: http://localhost:${PORT}/api-docs`);
+});
 
