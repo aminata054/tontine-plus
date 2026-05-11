@@ -1,23 +1,60 @@
 <ion-content [fullscreen]="true" class="ov-content">
 
+  <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
   <!-- ── LOADING ────────────────────────────────────────────── -->
   <ng-container *ngIf="status === 'loading'">
     <app-page-header title="Vue d'ensemble"></app-page-header>
     <div class="ov-skeleton">
-      <div class="ov-skeleton__hero">
-        <ion-skeleton-text animated style="width:64px;height:64px;border-radius:14px;"></ion-skeleton-text>
-        <div class="ov-skeleton__hero-body">
-          <ion-skeleton-text animated
-            style="width:55%;height:16px;border-radius:6px;margin-bottom:8px;"></ion-skeleton-text>
-          <ion-skeleton-text animated style="width:35%;height:12px;border-radius:6px;"></ion-skeleton-text>
+
+      <!-- Hero card skeleton -->
+      <div class="ov-skeleton__card">
+        <div class="ov-skeleton__hero">
+          <ion-skeleton-text animated style="width:64px;height:64px;border-radius:14px;flex-shrink:0;">
+          </ion-skeleton-text>
+          <div class="ov-skeleton__hero-body">
+            <ion-skeleton-text animated style="width:60%;height:16px;border-radius:6px;margin-bottom:10px;">
+            </ion-skeleton-text>
+            <ion-skeleton-text animated style="width:40%;height:12px;border-radius:6px;">
+            </ion-skeleton-text>
+          </div>
+        </div>
+
+        <!-- Grid 2x2 -->
+        <div class="ov-skeleton__grid">
+          <ion-skeleton-text animated *ngFor="let _ of [1,2,3,4]" style="height:50px;border-radius:10px;">
+          </ion-skeleton-text>
+        </div>
+
+        <!-- Progress bar -->
+        <ion-skeleton-text animated style="width:100%;height:8px;border-radius:9999px;margin-top:16px;">
+        </ion-skeleton-text>
+      </div>
+
+      <!-- Actions skeleton -->
+      <ion-skeleton-text animated style="width:100%;height:52px;border-radius:14px;margin-top:16px;">
+      </ion-skeleton-text>
+      <ion-skeleton-text animated style="width:100%;height:52px;border-radius:14px;margin-top:12px;">
+      </ion-skeleton-text>
+
+      <!-- Members skeleton -->
+      <div class="ov-skeleton__card" style="margin-top:16px;">
+        <ion-skeleton-text animated style="width:35%;height:16px;border-radius:6px;margin-bottom:16px;">
+        </ion-skeleton-text>
+        <div class="ov-skeleton__member" *ngFor="let _ of [1,2,3]">
+          <ion-skeleton-text animated style="width:42px;height:42px;border-radius:50%;flex-shrink:0;">
+          </ion-skeleton-text>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+            <ion-skeleton-text animated style="width:55%;height:13px;border-radius:4px;">
+            </ion-skeleton-text>
+            <ion-skeleton-text animated style="width:35%;height:11px;border-radius:4px;">
+            </ion-skeleton-text>
+          </div>
         </div>
       </div>
-      <ion-skeleton-text animated
-        style="width:100%;height:80px;border-radius:14px;margin-top:16px;"></ion-skeleton-text>
-      <ion-skeleton-text animated
-        style="width:100%;height:52px;border-radius:14px;margin-top:12px;"></ion-skeleton-text>
-      <ion-skeleton-text animated
-        style="width:100%;height:52px;border-radius:14px;margin-top:12px;"></ion-skeleton-text>
+
     </div>
   </ng-container>
 

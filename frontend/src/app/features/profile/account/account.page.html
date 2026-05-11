@@ -1,10 +1,10 @@
 <ion-content>
   <app-page-header title="Mon compte" />
-
+  <input #fileInput type="file" accept="image/*" style="display:none" (change)="onFileSelected($event)" />
   <div class="account-container">
 
     <!-- Avatar -->
-    <div class="avatar-wrapper" (click)="pickPhoto()">
+    <div class="avatar-wrapper" (click)="onAvatarClick()">
       <img *ngIf="photoPreview" [src]="photoPreview" class="avatar-img" alt="Photo de profil" />
       <div *ngIf="!photoPreview" class="avatar-initials">
         {{ getInitials() }}

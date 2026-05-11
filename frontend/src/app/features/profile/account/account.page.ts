@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,6 +14,7 @@ import { AuthService } from 'src/app/core/services/auth.service';
 import { UserProfile } from 'src/app/core/models/auth.model';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { getDownloadURL, ref, uploadString } from 'firebase/storage';
+import { ImageUploadService } from 'src/app/core/services/image-upload.service';
 
 @Component({
   selector: 'app-account',
@@ -43,10 +44,12 @@ export class AccountPage implements OnInit, OnDestroy {
 
   private fireStorage = inject(Storage);
   private destroy$ = new Subject<void>();
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   constructor(
     private auth: AuthService,
     private router: Router,
+    private imageUploadService: ImageUploadService,
     private toastCtrl: ToastController,
     private loadingCtrl: LoadingController,
   ) { }
@@ -71,49 +74,34 @@ export class AccountPage implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  async pickPhoto(): Promise<void> {
-    try {
-      const photo = await Camera.getPhoto({
-        quality: 80,
-        allowEditing: true,
-        resultType: CameraResultType.Base64,
-        source: CameraSource.Prompt,
-        width: 400,
-        height: 400,
-      });
-
-      if (!photo.base64String) return;
-
-      // Afficher la preview 
-      this.photoPreview = `data:image/${photo.format};base64,${photo.base64String}`;
-      this.isUploading = true;
-      this.errorMessage = '';
-
-      this.photoUrl = await this.uploadToFirebase(
-        photo.base64String,
-        photo.format ?? 'jpeg'
-      );
-
-    } catch (err: any) {
-      if (err?.message?.includes('cancelled') || err?.message?.includes('canceled')) return;
-      this.errorMessage = "Impossible de charger la photo. Réessayez.";
-    } finally {
-      this.isUploading = false;
-    }
+  onAvatarClick(): void {
+    if (this.isUploading) return;
+    this.fileInput.nativeElement.click();
   }
 
-  private async uploadToFirebase(base64: string, format: string): Promise<string> {
-    const uid = this.auth.currentUser?.uid ?? Date.now().toString();
-    const path = `avatars/${uid}/profile.${format}`;
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
 
-    const storageRef = ref(this.fireStorage, path);
+    this.isUploading = true;
+    this.errorMessage = '';
 
-    await uploadString(storageRef, base64, 'base64', {
-      contentType: `image/${format}`
+    this.imageUploadService.compressAndConvert(file).subscribe({
+      next: (base64) => {
+        this.photoPreview = base64;
+        this.photoUrl = base64;
+        this.isUploading = false;
+      },
+      error: () => {
+        this.isUploading = false;
+        this.errorMessage = "Erreur lors du traitement de l'image";
+      }
     });
 
-    return await getDownloadURL(storageRef);
+    input.value = '';
   }
+
 
   async save(): Promise<void> {
     if (!this.fullName.trim()) return;
@@ -125,12 +113,18 @@ export class AccountPage implements OnInit, OnDestroy {
     this.auth.updateProfile({
       fullName: this.fullName.trim(),
       email: this.email.trim() || undefined,
-      photoUrl: this.photoPreview || undefined,
+      photoUrl: this.photoUrl || undefined,
     }).subscribe({
       next: async (res) => {
         this.isLoading = false;
         await loading.dismiss();
         if (res.success) {
+          if (this.photoUrl) {
+            this.photoPreview = this.photoUrl;
+            if (this.user) {
+              this.user = { ...this.user, photoUrl: this.photoUrl, fullName: this.fullName };
+            }
+          }
           await this.showToast('Profil mis à jour.', 'success');
           this.router.navigate(['/profile']);
         }

@@ -82,8 +82,14 @@
         box-shadow: none;
         width: 100%;
         max-width: 400px;
+
+        position: absolute;
+            top: 10%;
+            left: 5%;
     }
 }
+
+
 
 /* ==================== DARK MODE ==================== */
 @media (prefers-color-scheme: dark) {

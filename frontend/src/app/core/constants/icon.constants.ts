@@ -80,6 +80,7 @@ import {
     checkmarkOutline,
     enterOutline,
     arrowForwardCircleOutline,
+    star,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -100,7 +101,7 @@ export function registerIcons() {
         ellipsisVerticalOutline, cashOutline, peopleOutline,
         alertCircleOutline, checkmarkCircleOutline, megaphoneOutline, timeOutline,
         helpCircleOutline, arrowForwardCircleOutline,
-        searchOutline,
+        searchOutline, star, starOutline,
         walletOutline, chevronUpOutline,
         calendarOutline, trophyOutline, chevronDownOutline,
         chevronBackOutline, closeOutline,
@@ -117,7 +118,7 @@ export function registerIcons() {
         callOutline, ellipseOutline, settingsOutline,
         rocketOutline, openOutline, card, thumbsDownOutline,
         infiniteOutline, rocket, statsChartOutline,
-        trendingUpOutline, starOutline, flashOutline,
+        trendingUpOutline, flashOutline,
         sparkles, closeCircle, linkOutline, informationCircle, chatbubbleOutline,
         personRemoveOutline, shieldOutline, swapHorizontalOutline
     });

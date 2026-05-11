@@ -322,9 +322,9 @@ export class TontineService {
     }
 
 
-    getMemberProfile(tontineId: string, memberId: string) {
-        return this.http.get<any>(
-            `/api/v1/tontines/${tontineId}/members/${memberId}`
+    getMemberProfile(tontineId: string, memberId: string): Observable<{ success: boolean; data: TontineMember }> {
+        return this.http.get<{ success: boolean; data: TontineMember }>(
+            `${this.API}/${tontineId}/members/${memberId}`
         );
     }
 

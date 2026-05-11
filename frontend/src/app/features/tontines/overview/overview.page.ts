@@ -4,8 +4,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil, finalize } from 'rxjs/operators';
 import {
-  IonContent, IonIcon, IonSkeletonText,
-  ModalController, ToastController,
+  IonContent, IonIcon, IonRefresher, IonSkeletonText,
+  ModalController, ToastController, IonRefresherContent
 } from '@ionic/angular/standalone';
 
 import { Tontine, TontineMember, TontineStatus } from 'src/app/core/models/tontine.model';
@@ -24,10 +24,11 @@ type PageStatus = 'loading' | 'success' | 'error';
   templateUrl: './overview.page.html',
   styleUrls: ['./overview.page.scss'],
   standalone: true,
-  imports: [
+  imports: [IonRefresherContent,
     CommonModule,
     IonContent,
     IonIcon,
+    IonRefresher,
     IonSkeletonText,
     PageHeaderComponent,
     CustomButtonComponent,
@@ -84,6 +85,21 @@ export class OverviewPage implements OnInit, OnDestroy {
     );
   }
   // ── Chargement ──────────────────────────────────────────────────────────────
+
+  onRefresh(event: any): void {
+    this.tontineService.getTontineById(this.tontineId!).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.tontine = res.data;
+          this.status = 'success';
+          this.loadMembers();
+          if (this.isAdmin && this.isPending) this.loadPendingCount();
+        }
+        event.target.complete();
+      },
+      error: () => event.target.complete(),
+    });
+  }
 
   load(): void {
     this.status = 'loading';
@@ -314,6 +330,7 @@ export class OverviewPage implements OnInit, OnDestroy {
         cancelText: 'Annuler',
         confirmColor: 'primary',
       },
+
       cssClass: 'alert-modal',
       backdropDismiss: true,
     });

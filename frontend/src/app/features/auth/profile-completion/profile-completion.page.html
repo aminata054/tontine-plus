@@ -1,6 +1,7 @@
 <ion-content [fullscreen]="true" class="ion-padding">
 
   <app-page-header></app-page-header>
+  <input #fileInput type="file" accept="image/*" style="display:none" (change)="onFileSelected($event)" />
   <div class="ion-text-center">
     <h2 class="title">Compléter votre profil</h2>
   </div>
@@ -9,7 +10,7 @@
 
     <!-- Photo de profil -->
     <div class="avatar-section ion-text-center">
-      <div class="avatar-container" (click)="pickPhoto()">
+      <div class="avatar-container" (click)="onAvatarClick()">
     
         <img *ngIf="photoPreview" [src]="photoPreview" class="avatar-img" />
     

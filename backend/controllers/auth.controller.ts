@@ -230,11 +230,12 @@ export const completeProfile = async (req: Request, res: Response) => {
     }
 
     // Valider l'URL de la photo si fournie
-    if (photoUrl && !/^https?:\/\/.+/.test(photoUrl)) {
-        return res.status(400).json({
-            success: false,
-            error: 'URL de photo invalide',
-        });
+    if (photoUrl) {
+        const isUrl = /^https?:\/\/.+/.test(photoUrl);
+        const isBase64 = /^data:image\/(jpeg|jpg|png|webp);base64,/.test(photoUrl);
+        if (!isUrl && !isBase64) {
+            return res.status(400).json({ success: false, error: 'URL de photo invalide' });
+        }
     }
 
     const validPlans = ['monthly', 'annual', 'premium'];
@@ -499,8 +500,12 @@ export const updateProfile = async (req: Request, res: Response) => {
     }
 
     if (photoUrl !== undefined) {
-        if (photoUrl && !/^https?:\/\/.+/.test(photoUrl)) {
-            return res.status(400).json({ success: false, error: 'URL de photo invalide' });
+        if (photoUrl) {
+            const isUrl = /^https?:\/\/.+/.test(photoUrl);
+            const isBase64 = /^data:image\/(jpeg|jpg|png|webp);base64,/.test(photoUrl);
+            if (!isUrl && !isBase64) {
+                return res.status(400).json({ success: false, error: 'URL de photo invalide' });
+            }
         }
         updates.photoUrl = photoUrl ?? null;
         authUpdates.photoURL = photoUrl ?? undefined;
