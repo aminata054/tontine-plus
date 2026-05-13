@@ -13,18 +13,31 @@
 .avatar-section {
     margin-bottom: 40px;
 }
-
-.avatar-container {
+.avatar-wrapper {
     position: relative;
     width: 100px;
     height: 100px;
     margin: 0 auto 12px;
+    cursor: pointer;
+}
+
+// Le cercle avec overflow:hidden — ne contient plus le badge
+.avatar-container {
+    width: 100%;
+    height: 100%;
     background: #F1F5F9;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     border: 4px solid #EFF6FF;
+    overflow: hidden; // ← s'applique uniquement au contenu du cercle
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .avatar-icon {
@@ -32,10 +45,11 @@
     color: var(--ion-text-gray);
 }
 
+// Badge positionné par rapport au wrapper, pas au container
 .edit-badge {
     position: absolute;
-    bottom: 4px;
-    right: 4px;
+    bottom: 2px;
+    right: 2px;
     background: var(--ion-color-primary);
     color: white;
     width: 28px;
@@ -45,12 +59,27 @@
     align-items: center;
     justify-content: center;
     border: 2px solid white;
+    z-index: 2;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-.avatar-hint {
-    font-size: 14px;
-    color: var(--ion-text-gray);
-    margin: 0;
+.avatar-uploading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    ion-spinner {
+        color: #fff;
+        width: 28px;
+        height: 28px;
+    }
 }
 
 .terms {

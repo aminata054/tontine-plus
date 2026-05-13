@@ -2,9 +2,20 @@ import { Request, Response } from 'express';
 import * as admin from 'firebase-admin';
 import bcrypt from 'bcrypt';
 import { db } from '../config/firebase';
+import { buildNotificationDoc, sendNotificationToUser } from '../services/notification.service';
 
 const normalizePhoneNumber = (phone: string): string => {
     return phone.replace(/[\s-]/g, '');
+};
+
+const capitalizeWords = (str: string): string => {
+    return str
+        .trim()
+        .toLowerCase()
+        .split(' ')
+        .filter(word => word.length > 0)       // ignore les espaces multiples
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
 };
 
 const REFERRAL_CONFIG = {
@@ -273,7 +284,7 @@ export const completeProfile = async (req: Request, res: Response) => {
             // 1. Mise à jour du profil utilisateur
             const userRef = db.collection('users').doc(uid);
             const userUpdate: Record<string, any> = {
-                fullName: fullName.trim(),
+                fullName: capitalizeWords(fullName),
                 birthDate: admin.firestore.Timestamp.fromDate(new Date(birthDate)),
                 referralCode,
                 profileComplete: true,
@@ -306,11 +317,28 @@ export const completeProfile = async (req: Request, res: Response) => {
         });
 
         // Mettre à jour Firebase Auth
+        const isRealUrl = photoUrl && /^https?:\/\/.+/.test(photoUrl);
         await admin.auth().updateUser(uid, {
             displayName: fullName.trim(),
-            photoURL: photoUrl ?? undefined,
+            ...(isRealUrl ? { photoURL: photoUrl } : {}),
             ...(email ? { email: email.toLowerCase().trim() } : {}),
         });
+
+        // ── Notification de bienvenue ──────────────────────────────
+        try {
+            const welcomeNotif = buildNotificationDoc(uid, {
+                title: `Bienvenue ${capitalizeWords(fullName).split(' ')[0]} 🎉`,
+                body: `Votre compte est créé ! Profitez de 14 jours d'essai gratuit pour découvrir toutes les fonctionnalités de Tontine Plus.`,
+                type: 'welcome',
+                senderUid: 'system',
+            });
+
+            await db.collection('notifications').doc(welcomeNotif.ref.id).set(welcomeNotif.data);
+            await sendNotificationToUser(uid, welcomeNotif.data);
+        } catch (notifErr) {
+            // Ne pas bloquer l'inscription si la notif échoue
+            console.error('[Welcome notif] Erreur:', notifErr);
+        }
 
         const userDoc = await db.collection('users').doc(uid).get();
 
@@ -468,7 +496,7 @@ export const updateProfile = async (req: Request, res: Response) => {
                 error: 'Le nom complet doit contenir au moins 2 caractères',
             });
         }
-        updates.fullName = fullName.trim();
+        updates.fullName = capitalizeWords(fullName);
         authUpdates.displayName = fullName.trim();
     }
 
@@ -506,9 +534,11 @@ export const updateProfile = async (req: Request, res: Response) => {
             if (!isUrl && !isBase64) {
                 return res.status(400).json({ success: false, error: 'URL de photo invalide' });
             }
+            if (isUrl) {
+                authUpdates.photoURL = photoUrl;
+            }
         }
         updates.photoUrl = photoUrl ?? null;
-        authUpdates.photoURL = photoUrl ?? undefined;
     }
 
     try {

@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import { db } from '../config/firebase';
-import { NotificationPayload} from '../types/notification.type';
+import { NotificationPayload } from '../types/notification.type';
 
 // ─────────────────────────────────────────────────────────────
 // SERVICE — Firebase Cloud Messaging + persistance Firestore

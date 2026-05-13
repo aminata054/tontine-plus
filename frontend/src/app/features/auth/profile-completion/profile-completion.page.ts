@@ -43,10 +43,11 @@ export class ProfileCompletionPage {
   isUploading: boolean = false;
   errorMessage: string = '';
   status: 'input' | 'success' | 'error' = 'input';
+  isSubmitting = false;
 
   private fireStorage = inject(Storage);
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
-  
+
   constructor(private router: Router,
     private auth: AuthService,
     private subscriptionService: SubscriptionService,
@@ -116,10 +117,12 @@ export class ProfileCompletionPage {
     input.value = '';
   }
 
-  async completeProfile() {
-    if (!this.isFormValid) return;
+  async completeProfile(): Promise<void> {
+    if (!this.isFormValid || this.isSubmitting) return;
 
+    this.isSubmitting = true;
     this.errorMessage = '';
+
     this.auth.completeProfile({
       fullName: this.fullName,
       birthDate: this.birthDate,
@@ -130,13 +133,27 @@ export class ProfileCompletionPage {
         if (res.success) {
           await this.applyPendingReferral();
           this.router.navigate(['/dashboard']);
+        } else {
+          this.isSubmitting = false;
+          await this.showToast(res.message ?? 'Une erreur est survenue. Réessayez.');
         }
-        error: (err: any) => {
-
-          this.errorMessage =
-            err?.error?.error || 'Une erreur est survenue. Réessayez.';
-        }
+      },
+      error: async (err: any) => {
+        this.isSubmitting = false;
+        const message = err?.error?.error ?? 'Une erreur est survenue. Réessayez.';
+        await this.showToast(message);
       }
     });
+  }
+
+  private async showToast(message: string): Promise<void> {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 3000,
+      position: 'bottom',
+      color: 'danger',
+      icon: 'alert-circle-outline',
+    });
+    await toast.present();
   }
 }

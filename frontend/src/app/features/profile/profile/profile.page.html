@@ -52,8 +52,8 @@
     <div class="profile-container">
 
       <!-- HEADER -->
-      <div class="profile-header" (click)="goToMyAccount()">
-        <div class="profile-avatar">
+      <div class="profile-header">
+        <div class="profile-avatar" (click)="goToMyAccount()">
           <img *ngIf="user.photoUrl" [src]="user.photoUrl" [alt]="user.fullName" class="avatar-img" />
           <div class="profile-avatar-placeholder" *ngIf="!user.photoUrl">
             {{ getInitials(user.fullName) }}

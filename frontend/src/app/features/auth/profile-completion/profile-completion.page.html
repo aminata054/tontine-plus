@@ -10,23 +10,26 @@
 
     <!-- Photo de profil -->
     <div class="avatar-section ion-text-center">
-      <div class="avatar-container" (click)="onAvatarClick()">
-    
-        <img *ngIf="photoPreview" [src]="photoPreview" class="avatar-img" />
-    
-        <ion-icon *ngIf="!photoPreview" name="person-outline" class="avatar-icon"></ion-icon>
-    
+      <div class="avatar-wrapper" (click)="onAvatarClick()">
+
+        <div class="avatar-container">
+          <img *ngIf="photoPreview && !isUploading" [src]="photoPreview" class="avatar-img" />
+          <ion-icon *ngIf="!photoPreview && !isUploading" name="person-outline" class="avatar-icon"></ion-icon>
+          <div class="avatar-uploading" *ngIf="isUploading">
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+        </div>
+
+        <!-- Badge en dehors du container overflow:hidden -->
         <div class="edit-badge">
           <ion-icon name="pencil" size="small"></ion-icon>
         </div>
-    
-        <div class="avatar-uploading" *ngIf="isUploading">
-          <ion-spinner name="crescent"></ion-spinner>
-        </div>
+
       </div>
-    
+
       <p class="avatar-hint">
-        {{ isUploading ? 'Envoi en cours...' : photoPreview ? 'Appuyez pour changer' : 'Ajouter une photo (optionnel)' }}
+        {{ isUploading ? 'Envoi en cours...' : photoPreview ? 'Appuyez pour changer' : 'Ajouter une photo (optionnel)'
+        }}
       </p>
 
     </div>
@@ -54,8 +57,9 @@
     </div>
 
     <!-- Bouton Terminer -->
-    <app-custom-button color="primary" expand="block" [disabled]="!isFormValid" (click)="completeProfile()">
-      Terminer
+    <app-custom-button color="primary" expand="block" [disabled]="!isFormValid || isSubmitting" [loading]="isSubmitting"
+      (click)="completeProfile()">
+      {{ isSubmitting ? 'Création en cours…' : 'Terminer' }}
     </app-custom-button>
 
   </div>

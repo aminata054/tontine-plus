@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────────
 
 export type NotificationType =
+    | 'welcome'  
     | 'cotisation_reminder'     // Rappel de cotisation à venir
     | 'cotisation_paid'         // Cotisation payée avec succès
     | 'cotisation_late'         // Cotisation en retard
