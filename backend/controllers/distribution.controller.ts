@@ -17,6 +17,7 @@ import {
     TriggerDistributionPayload,
     ConfirmDistributionPayload,
 } from '../types/distribution.type';
+import { emptyWalletAfterDistribution, resetWalletForNextTurn } from '../services/wallet.service';
 
 const VALID_DIST_METHODS: DistributionMethod[] = ['wave', 'orange', 'free', 'manual'];
 
@@ -355,7 +356,30 @@ export const confirmDistribution = async (req: Request, res: Response) => {
             // 2. Avancer au tour suivant
             nextTurnResult = await advanceToNextTurn(tontineId, transaction);
 
-            // 3. Notifier tous les membres
+            // 3. Récupérer le nombre de membres actifs pour le tour suivant
+            const activeMembersSnapshot = await transaction.get(
+                db.collection('tontines').doc(tontineId)
+                    .collection('members')
+                    .where('status', '==', 'active')
+            );
+            const activeMembersCount = activeMembersSnapshot.size;
+
+            emptyWalletAfterDistribution(
+                transaction,
+                tontineId
+            );
+
+
+            if (!nextTurnResult.tontineCompleted) {
+                resetWalletForNextTurn(
+                    transaction,
+                    tontineId,
+                    nextTurnResult.nextTurn,
+                    tontine.amount * activeMembersCount
+                );
+            }
+
+            // 4. Notifier tous les membres
             await notifyTurnDistributed(
                 tontineId,
                 tontine.name,
@@ -363,7 +387,7 @@ export const confirmDistribution = async (req: Request, res: Response) => {
                 dist.beneficiaryName,
                 dist.turnNumber,
                 dist.amount,
-                nextTurnResult!.nextBeneficiaryUid,
+                nextTurnResult.nextBeneficiaryUid,
                 transaction
             );
 

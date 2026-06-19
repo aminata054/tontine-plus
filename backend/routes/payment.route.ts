@@ -7,6 +7,7 @@ import {
     getMyPayments,
     manualVerifyPayment,
 } from '../controllers/payment.controller';
+import { getTontineWallet } from '../controllers/wallet.controller';
 
 const router = Router();
 
@@ -164,5 +165,7 @@ router.patch('/:paymentId/manual-verify', verifyToken, manualVerifyPayment);
  *         description: Liste des paiements
  */
 router.get('/', verifyToken, getMyPayments);
+
+router.get('/wallets/:tontineId', verifyToken, getTontineWallet);
 
 export default router;

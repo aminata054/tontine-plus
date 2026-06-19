@@ -14,6 +14,7 @@ import {
 import { buildNotificationDoc, sendNotificationToUser } from '../services/notification.service';
 import { InitiatePaymentPayload, PaymentMethod, VerifyPaymentPayload } from '../types/payment.type';
 import { checkAndTriggerDistribution } from '../services/distribution.service';
+import {  applyContributionWrite, readWalletSnapshot } from '../services/wallet.service';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VALIDATION — méthodes de paiement acceptées
@@ -206,35 +207,49 @@ export const verifyPayment = async (req: Request, res: Response) => {
             return res.status(403).json({ success: false, error: 'Accès refusé' });
 
         if (payment.status !== 'pending')
-            return res.status(400).json({
-                success: false,
-                error: `Ce paiement est déjà ${payment.status}`,
-                data: { paymentId, status: payment.status },
-            });
+            return res.status(400).json({ success: false, error: `Ce paiement est déjà ${payment.status}`, data: { paymentId, status: payment.status } });
 
-        // ── Paiement manuel : vérification humaine requise ────────────────────
         if (payment.paymentMethod === 'manual') {
             return res.json({
                 success: true,
                 message: 'Paiement manuel en attente de vérification par le créateur',
-                data: {
-                    paymentId,
-                    status: 'pending',
-                    verificationStatus: 'pending',
-                    memberStatsUpdated: false,
-                    collectionStatus: null,
-                },
+                data: { paymentId, status: 'pending', verificationStatus: 'pending', memberStatsUpdated: false, collectionStatus: null },
             });
         }
 
-        // ── Simulation opérateur ──────────────────────────────────────────────
         const simulatedStatus = simulateOperatorVerification(payment.paymentMethod);
         const isLate = (payment.metadata?.daysLate ?? 0) > (payment.metadata?.gracePeriod ?? 0);
         const tontineId = payment.tontineId;
         let memberStatsUpdated = false;
         let receiptUrl: string | null = null;
 
+        // ── FIX : tous les READS avant la transaction ─────────────────────────
+        // On lit le wallet snapshot et le nombre de membres actifs ici,
+        // AVANT d'ouvrir db.runTransaction(), pour ne pas mélanger reads/writes.
+        let walletSnapshot: Awaited<ReturnType<typeof readWalletSnapshot>> | null = null;
+
+        if (simulatedStatus === 'confirmed') {
+            // Read 1 : snapshot du wallet
+            walletSnapshot = await readWalletSnapshot(tontineId);
+
+            // Read 2 : nombre de membres actifs (pour calculer targetAmount si wallet pas init)
+            // Uniquement utile si le wallet n'existe pas encore (premier paiement du tour)
+            if (!walletSnapshot.exists || walletSnapshot.targetAmount === 0) {
+                const activeMembersSnap = await db
+                    .collection('tontines').doc(tontineId)
+                    .collection('members')
+                    .where('status', '==', 'active')
+                    .get();
+
+                // Patcher le snapshot avec le bon targetAmount avant de l'utiliser dans la tx
+                const tontineSnap = await db.collection('tontines').doc(tontineId).get();
+                walletSnapshot.targetAmount = (tontineSnap.data()?.amount ?? 0) * activeMembersSnap.size;
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         await db.runTransaction(async (transaction) => {
+            // À partir d'ici : UNIQUEMENT des writes dans cette transaction
             if (simulatedStatus === 'confirmed') {
                 receiptUrl = generateReceiptUrl(paymentId);
 
@@ -245,22 +260,14 @@ export const verifyPayment = async (req: Request, res: Response) => {
                     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 });
 
-                const memberRef = db
-                    .collection('tontines').doc(tontineId)
-                    .collection('members').doc(uid);
+                const memberRef = db.collection('tontines').doc(tontineId).collection('members').doc(uid);
                 transaction.update(memberRef, {
                     'stats.totalPaid': admin.firestore.FieldValue.increment(payment.totalAmount),
-                    [`stats.${isLate ? 'latePayments' : 'onTimePayments'}`]:
-                        admin.firestore.FieldValue.increment(1),
+                    [`stats.${isLate ? 'latePayments' : 'onTimePayments'}`]: admin.firestore.FieldValue.increment(1),
                 });
 
-                // Mémoriser le numéro de paiement pour pré-remplir la distribution
                 if (payment.paymentMethodNumber && payment.paymentMethod !== 'manual') {
-                    const memberPhoneRef = db
-                        .collection('tontines').doc(tontineId)
-                        .collection('members').doc(uid);
-
-                    transaction.update(memberPhoneRef, {
+                    transaction.update(memberRef, {
                         paymentPhone: payment.paymentMethodNumber,
                         preferredPaymentMethod: payment.paymentMethod,
                     });
@@ -271,10 +278,19 @@ export const verifyPayment = async (req: Request, res: Response) => {
                     'stats.totalCollected': admin.firestore.FieldValue.increment(payment.totalAmount),
                 });
 
+                // Write wallet : utilise le snapshot pré-lu, pas de read dans la transaction
+                applyContributionWrite(transaction, walletSnapshot!, {
+                    userId: uid,
+                    userName: payment.userName ?? 'Membre',
+                    amount: payment.totalAmount,
+                    paidAt: admin.firestore.Timestamp.now(),
+                    turnNumber: payment.turnNumber,
+                }, tontineId);
+
                 memberStatsUpdated = true;
 
                 const notif = buildNotificationDoc(uid, {
-                    title: 'Paiement confirmé ',
+                    title: 'Paiement confirmé',
                     body: `Votre cotisation de ${payment.totalAmount} FCFA a été confirmée pour ${payment.metadata?.tontineName}`,
                     type: 'payment_confirmed',
                     tontineId,
@@ -303,8 +319,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
             }
         });
 
-        // ── HOOK POST-CONFIRMATION : vérifier si la collecte est complète ──────
-        // Exécuté hors transaction pour ne pas bloquer la réponse au client
+        // Hook post-confirmation (hors transaction — inchangé)
         let collectionStatus = null;
         let distributionReady = false;
 
@@ -312,69 +327,44 @@ export const verifyPayment = async (req: Request, res: Response) => {
             try {
                 const { shouldDistribute, collectionStatus: cs } =
                     await checkAndTriggerDistribution(tontineId, payment.turnNumber);
-
                 collectionStatus = cs;
                 distributionReady = shouldDistribute;
 
-                // Si la collecte est complète, notifier le créateur qu'il peut distribuer
                 if (shouldDistribute) {
                     const tontineDoc = await db.collection('tontines').doc(tontineId).get();
                     const tontine = tontineDoc.data()!;
-
                     const creatorNotif = buildNotificationDoc(tontine.createdBy, {
                         title: '💰 Collecte complète !',
                         body: `Tous les membres ont payé le tour ${payment.turnNumber} de ${tontine.name}. Vous pouvez distribuer le pot.`,
                         type: 'collection_complete',
-                        tontineId,
-                        tontineName: tontine.name,
-                        turnNumber: payment.turnNumber,
-                        amount: tontine.potPerTurn,
+                        tontineId, tontineName: tontine.name,
+                        turnNumber: payment.turnNumber, amount: tontine.potPerTurn,
                     });
-
-                    await db.runTransaction(async (t) => {
-                        t.set(creatorNotif.ref, creatorNotif.data);
-                    });
-
+                    await db.runTransaction(async (t) => { t.set(creatorNotif.ref, creatorNotif.data); });
                     await sendNotificationToUser(tontine.createdBy, creatorNotif.data);
                 }
             } catch (hookErr) {
-                // Le hook ne doit jamais faire échouer la réponse principale
                 console.error('[verifyPayment] Hook post-confirmation error:', hookErr);
             }
-        }
 
-        // Push notification
-        if (simulatedStatus === 'confirmed') {
             await sendNotificationToUser(uid, {
                 title: 'Paiement confirmé',
                 body: `Votre cotisation de ${payment.totalAmount} FCFA a été confirmée`,
-                type: 'payment_confirmed',
-                tontineId,
-                paymentId,
+                type: 'payment_confirmed', tontineId, paymentId,
             });
         }
 
         return res.json({
             success: true,
-            message: simulatedStatus === 'confirmed'
-                ? 'Paiement confirmé avec succès'
-                : 'Paiement échoué — veuillez réessayer',
-            data: {
-                paymentId,
-                status: simulatedStatus,
-                confirmedAt: simulatedStatus === 'confirmed' ? new Date().toISOString() : null,
-                receiptUrl,
-                memberStatsUpdated,
-                // ── Nouveaux champs pour le front ──────────────────────────────
-                collectionStatus,         // état de collecte après ce paiement
-                distributionReady,        // true = tous ont payé, créateur peut distribuer
-            },
+            message: simulatedStatus === 'confirmed' ? 'Paiement confirmé avec succès' : 'Paiement échoué — veuillez réessayer',
+            data: { paymentId, status: simulatedStatus, confirmedAt: simulatedStatus === 'confirmed' ? new Date().toISOString() : null, receiptUrl, memberStatsUpdated, collectionStatus, distributionReady },
         });
 
     } catch (err: any) {
         return res.status(500).json({ success: false, error: err.message });
     }
 };
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PATCH /api/v1/payments/:paymentId/manual-verify
 //
