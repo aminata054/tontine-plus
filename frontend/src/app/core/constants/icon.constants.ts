@@ -81,6 +81,9 @@ import {
     enterOutline,
     arrowForwardCircleOutline,
     star,
+    hourglassOutline,
+    wallet,
+    lockClosed,
 } from 'ionicons/icons';
 
 export function registerIcons() {
@@ -113,8 +116,8 @@ export function registerIcons() {
         repeatOutline, flagOutline, playCircleOutline, personAddOutline, lockClosedOutline,
         homeOutline, closeCircleOutline, informationCircleOutline, thumbsUpOutline,
         handLeftOutline, cameraOutline, diamond,
-        cardOutline, receiptOutline,
-        sendOutline, headsetOutline, logOutOutline,
+        cardOutline, receiptOutline, wallet, hourglassOutline, paperPlane,
+        sendOutline, headsetOutline, logOutOutline, lockClosed,
         callOutline, ellipseOutline, settingsOutline,
         rocketOutline, openOutline, card, thumbsDownOutline,
         infiniteOutline, rocket, statsChartOutline,

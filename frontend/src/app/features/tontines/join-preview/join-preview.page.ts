@@ -187,9 +187,7 @@ export class JoinPreviewPage implements OnInit {
     if (!type) return 'medium';
     const map: Record<TontineType, string> = {
       rotative: 'primary',
-      crescendo: 'secondary',
-      solidarity: 'success',
-      savings_goal: 'tertiary',
+      savings_goal: 'secondary',
     };
     return map[type] ?? 'medium';
   }

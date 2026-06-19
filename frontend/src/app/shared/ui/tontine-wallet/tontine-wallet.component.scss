@@ -1,0 +1,393 @@
+/* src/app/shared/ui/tontine-wallet/tontine-wallet.component.scss */
+
+// ── Variables ──────────────────────────────────────────────────────────────
+$radius-card: 20px;
+$radius-sm: 10px;
+$radius-badge: 8px;
+$transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+$green: #10B981;
+$violet: #A78BFA;
+
+// ── Shell ──────────────────────────────────────────────────────────────────
+.wallet-shell {
+  padding: 0 0 16px;
+}
+
+// ── CARTE PRINCIPALE (flat, var(--ion-color-primary)) ──────────────────────
+.money-card {
+  position: relative;
+  border-radius: $radius-card;
+  padding: 18px 18px 14px;
+  overflow: hidden;
+  background: var(--ion-color-primary, #1E3A5F);
+  transition: background $transition;
+  isolation: isolate;
+
+  &--ready {
+    background: var(--ion-color-success, #10B981);
+  }
+
+  &--distributed {
+    background: var(--ion-color-tertiary, #4C1D95);
+    opacity: 0.92;
+  }
+
+  &__texture {
+    position: absolute;
+    top: -45%;
+    right: -20%;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &__top,
+  &__balance,
+  &__progress,
+  &__stats,
+  &__bottom {
+    position: relative;
+    z-index: 1;
+  }
+
+  &__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+  }
+
+  &__badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+
+    ion-icon {
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.85);
+    }
+  }
+
+  &__lock {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    cursor: pointer;
+
+    ion-icon {
+      font-size: 13px;
+    }
+  }
+
+  &__balance {
+    margin-bottom: 16px;
+  }
+
+  &__balance-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.65);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 6px;
+  }
+
+  &__balance-value {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  &__amount {
+    font-size: 30px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.3px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__currency {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  &__progress {
+    margin-bottom: 12px;
+  }
+
+  &__progress-bar {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  &__progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: #fff;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &__stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 16px;
+  }
+
+  &__bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  &__owner {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__owner-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  &__owner-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  &__secured {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.14);
+    border: none;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+
+    ion-icon {
+      font-size: 12px;
+    }
+  }
+}
+
+// ── Badges (sous la carte) ───────────────────────────────────────────────
+%badge-base {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 12px 2px 0;
+  padding: 9px 12px;
+  border-radius: $radius-badge;
+  font-size: 12px;
+  font-weight: 600;
+
+  ion-icon {
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+}
+
+.wallet-my-badge {
+  @extend %badge-base;
+  background: #EFF6FF;
+  color: #1D4ED8;
+
+  ion-icon {
+    color: #3B82F6;
+  }
+}
+
+.wallet-ready-badge {
+  @extend %badge-base;
+  background: #ECFDF5;
+  color: #065F46;
+
+  ion-icon {
+    color: $green;
+  }
+
+  animation: pulse-green 2s infinite;
+}
+
+.wallet-distributed-badge {
+  @extend %badge-base;
+  background: #F5F3FF;
+  color: #5B21B6;
+
+  ion-icon {
+    color: $violet;
+  }
+}
+
+@keyframes pulse-green {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 #10B98130;
+  }
+
+  50% {
+    box-shadow: 0 0 0 5px #10B98108;
+  }
+}
+
+// ── Relevé dépliable ────────────────────────────────────────────────────
+.statement {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &--open {
+    max-height: 600px;
+    margin-top: 4px;
+  }
+}
+
+.statement-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 4px;
+
+  &__label {
+    font-size: 12px;
+    color: #64748B;
+  }
+
+  &__value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1E293B;
+
+    &--warn {
+      color: #EF4444;
+    }
+  }
+}
+
+.statement-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 4px 6px;
+  margin: 0;
+}
+
+.statement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 8px;
+}
+
+.statement-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  border-radius: $radius-sm;
+  transition: background $transition;
+
+  &:hover {
+    background: #F8FAFC;
+  }
+
+  &__avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #E2E8F0;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+
+    &--me {
+      background: #DBEAFE;
+      color: #1D4ED8;
+    }
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  &__name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1E293B;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__you {
+    font-size: 11px;
+    color: #3B82F6;
+    font-weight: 500;
+  }
+
+  &__time {
+    font-size: 11px;
+    color: #94A3B8;
+  }
+
+  &__amount {
+    font-size: 13px;
+    font-weight: 700;
+    color: $green;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.statement-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 4px 16px;
+  color: #94A3B8;
+  font-size: 12px;
+
+  ion-icon {
+    font-size: 16px;
+  }
+}

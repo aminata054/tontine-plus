@@ -105,7 +105,9 @@
       <div class="ov-hero__meta">
         <div class="ov-hero__meta-item">
           <ion-icon name="repeat-outline"></ion-icon>
-          <span>{{ tontine.type === 'rotative' ? 'Rotative classique' : tontine.type }}</span>
+          <span>{{ tontine.type === 'rotative' ? 'Rotative classique' :
+            tontine.type === 'savings_goal' ? 'Épargne objectif' :
+            tontine.type }}</span>
         </div>
         <span class="ov-hero__sep">·</span>
         <div class="ov-hero__meta-item">
@@ -115,6 +117,19 @@
       </div>
 
       <!-- Grille 2×2 : infos clés -->
+      <div class="ov-gain-banner">
+        <div class="ov-gain-banner__left">
+          <ion-icon name="wallet-outline"></ion-icon>
+          <div>
+            <span class="ov-gain-banner__label">Vous recevrez</span>
+            <span class="ov-gain-banner__amount">{{ formatAmount(tontine.potPerTurn) }} FCFA</span>
+          </div>
+        </div>
+        <div class="ov-gain-banner__right">
+          <span class="ov-gain-banner__pill">× {{ tontine.totalMembers }} membres</span>
+        </div>
+      </div>
+
       <div class="ov-info-grid">
         <div class="ov-info-grid__item">
           <span class="ov-info-grid__label">Ordre de rotation</span>
@@ -124,7 +139,7 @@
         </div>
         <div class="ov-info-grid__item">
           <span class="ov-info-grid__label">Visibilité</span>
-          <span class="ov-info-grid__value">{{ tontine.visibility === 'private' ? 'Privée : Sur invitation' :
+          <span class="ov-info-grid__value">{{ tontine.visibility === 'private' ? 'Privée' :
             tontine.visibility === 'semi_public' ? 'Semi-publique' : 'Publique' }}</span>
         </div>
         <div class="ov-info-grid__item">
@@ -134,10 +149,10 @@
           </span>
         </div>
         <div class="ov-info-grid__item">
-          <span class="ov-info-grid__label">Gain par tour</span>
-          <span class="ov-info-grid__value ov-info-grid__value--primary">
-            {{ formatAmount(tontine.potPerTurn) }} FCFA
-          </span>
+          <span class="ov-info-grid__label">Fréquence</span>
+          <span class="ov-info-grid__value">{{ tontine.frequency === 'monthly' ? 'Mensuelle' :
+            tontine.frequency === 'weekly' ? 'Hebdomadaire' :
+            tontine.frequency === 'biweekly' ? 'Bimensuelle' : 'Quotidienne' }}</span>
         </div>
       </div>
 

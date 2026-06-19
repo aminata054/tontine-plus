@@ -1,0 +1,112 @@
+<!-- src/app/shared/ui/tontine-wallet/tontine-wallet.component.html -->
+
+<!-- ── SKELETON ───────────────────────────────────────────────────── -->
+<div class="wallet-shell" *ngIf="loading">
+  <ion-skeleton-text animated style="width:100%;height:180px;border-radius:20px;"></ion-skeleton-text>
+</div>
+
+<!-- ── CARTE WALLET (style carte de paiement) ────────────────────── -->
+<div class="wallet-shell" *ngIf="!loading && wallet">
+
+  <div class="money-card" [class.money-card--ready]="wallet.status === 'ready'"
+    [class.money-card--distributed]="wallet.status === 'distributed'">
+
+    <!-- Texture filigrane -->
+    <div class="money-card__texture"></div>
+
+    <!-- Ligne du haut : badge escrow + cadenas -->
+    <div class="money-card__top">
+      <div class="money-card__badge">
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+        <span>Escrow collectif</span>
+      </div>
+      <button class="money-card__lock" (click)="toggleExpanded()" aria-label="Voir le détail">
+        <ion-icon name="lock-closed"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Montant principal -->
+    <div class="money-card__balance">
+      <span class="money-card__balance-label">Solde sécurisé</span>
+      <div class="money-card__balance-value">
+        <span class="money-card__amount">{{ formatAmount(wallet.balance) }}</span>
+        <span class="money-card__currency">FCFA</span>
+      </div>
+    </div>
+
+    <!-- Barre de progression -->
+    <div class="money-card__progress">
+      <div class="money-card__progress-bar">
+        <div class="money-card__progress-fill" [style.width.%]="animatedFillRate"></div>
+      </div>
+    </div>
+
+    <!-- Stats : cotisations reçues / membres-tour -->
+    <div class="money-card__stats">
+      <span>{{ wallet.paidCount }} cotisations reçues</span>
+      <span>{{ wallet.totalMembers }} membres · tour {{ wallet.currentTurn }}</span>
+    </div>
+
+    <!-- Bas de carte : objectif + badge sécurité -->
+    <div class="money-card__bottom">
+      <div class="money-card__owner">
+        <span class="money-card__owner-label">Objectif du pot</span>
+        <span class="money-card__owner-value">{{ formatAmount(wallet.targetAmount) }} FCFA</span>
+      </div>
+      <button class="money-card__secured" (click)="toggleExpanded()">
+        <ion-icon name="lock-closed"></ion-icon>
+        <span>Fonds sécurisés</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Badges d'état sous la carte -->
+  <div class="wallet-my-badge" *ngIf="hasIPaid() && wallet.status === 'collecting'">
+    <ion-icon name="checkmark-circle"></ion-icon>
+    <span>Votre cotisation est dans le pot</span>
+  </div>
+
+  <div class="wallet-ready-badge" *ngIf="wallet.status === 'ready'">
+    <ion-icon name="flash"></ion-icon>
+    <span>Le pot est complet — distribution possible !</span>
+  </div>
+
+  <div class="wallet-distributed-badge" *ngIf="wallet.status === 'distributed'">
+    <ion-icon name="gift-outline"></ion-icon>
+    <span>Pot distribué — prochain tour en cours</span>
+  </div>
+
+  <!-- ── RELEVÉ DÉPLIABLE (mouvements) ──────────────────────────── -->
+  <div class="statement" [class.statement--open]="expanded">
+
+    <div class="statement-row" *ngIf="wallet.status === 'collecting' && remainingAmount > 0">
+      <span class="statement-row__label">Reste à collecter</span>
+      <span class="statement-row__value statement-row__value--warn">{{ formatAmount(remainingAmount) }} FCFA</span>
+    </div>
+
+    <p class="statement-title">Contributions reçues</p>
+
+    <div class="statement-list" *ngIf="wallet.contributions.length > 0">
+      <div class="statement-item" *ngFor="let c of wallet.contributions">
+        <div class="statement-item__avatar" [class.statement-item__avatar--me]="c.userId === currentUserId">
+          {{ c.userName.charAt(0).toUpperCase() }}
+        </div>
+        <div class="statement-item__info">
+          <span class="statement-item__name">
+            {{ c.userName }}
+            <span class="statement-item__you" *ngIf="c.userId === currentUserId">(vous)</span>
+          </span>
+          <span class="statement-item__time">{{ formatTime(c.paidAt) }}</span>
+        </div>
+        <span class="statement-item__amount">+{{ formatAmount(c.amount) }} FCFA</span>
+      </div>
+    </div>
+
+    <div class="statement-empty" *ngIf="wallet.contributions.length === 0">
+      <ion-icon name="hourglass-outline"></ion-icon>
+      <span>Aucune contribution pour ce tour</span>
+    </div>
+
+  </div>
+
+</div>

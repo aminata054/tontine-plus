@@ -173,22 +173,22 @@ export class CreatePage implements OnInit {
         premium: false,
         locked: false,
       },
-      {
-        value: 'crescendo',
-        label: 'Crescendo',
-        description: 'Les montants augmentent progressivement',
-        example: '1er tour : 50k, 2e tour : 60k...',
-        premium: false,
-        locked: false,
-      },
-      {
-        value: 'solidarity',
-        label: 'Solidarité',
-        description: 'Pot commun pour projets collectifs',
-        example: '',
-        premium: true,
-        locked: !this.isPremium, // ← relit isPremium à chaque fois
-      },
+      // {
+      //   value: 'crescendo',
+      //   label: 'Crescendo',
+      //   description: 'Les montants augmentent progressivement',
+      //   example: '1er tour : 50k, 2e tour : 60k...',
+      //   premium: false,
+      //   locked: false,
+      // },
+      // {
+      //   value: 'solidarity',
+      //   label: 'Solidarité',
+      //   description: 'Pot commun pour projets collectifs',
+      //   example: '',
+      //   premium: true,
+      //   locked: !this.isPremium, // ← relit isPremium à chaque fois
+      // },
       {
         value: 'savings_goal',
         label: 'Épargne objectif',
@@ -203,8 +203,8 @@ export class CreatePage implements OnInit {
 
   visibilityOptions: { value: TontineVisibility; label: string; description: string }[] = [
     { value: 'private', label: 'Privée', description: ' : Sur invitation uniquement' },
-    { value: 'semi_public', label: 'Semi-publique', description: ' : Lien partageable' },
-    { value: 'public', label: 'Publique', description: ' : Annuaire' },
+  //   { value: 'semi_public', label: 'Semi-publique', description: ' : Lien partageable' },
+  //   { value: 'public', label: 'Publique', description: ' : Annuaire' },
   ];
 
   quickAmounts = [5_000, 10_000, 15_000, 25_000, 50_000];
@@ -245,23 +245,23 @@ export class CreatePage implements OnInit {
         premium: false,
         locked: false,
       },
-      {
-        value: 'consensual',
-        label: 'Consensuel',
-        description: "L'ordre sera décidé par vote",
-        badge: '100 % Transparent',
-        info: "Nécessite 75% d'approbation",
-        premium: true,
-        locked: !this.isPremium,
-      },
-      {
-        value: 'manual',
-        label: 'Prédéfini par moi',
-        description: "Je définis l'ordre manuellement",
-        badge: '100 % Transparent',
-        premium: true,
-        locked: !this.isPremium,
-      },
+      // {
+      //   value: 'consensual',
+      //   label: 'Consensuel',
+      //   description: "L'ordre sera décidé par vote",
+      //   badge: '100 % Transparent',
+      //   info: "Nécessite 75% d'approbation",
+      //   premium: true,
+      //   locked: !this.isPremium,
+      // },
+      // {
+      //   value: 'manual',
+      //   label: 'Prédéfini par moi',
+      //   description: "Je définis l'ordre manuellement",
+      //   badge: '100 % Transparent',
+      //   premium: true,
+      //   locked: !this.isPremium,
+      // },
     ];
   }
 
@@ -300,32 +300,32 @@ export class CreatePage implements OnInit {
         premium: false,
         locked: false,
       },
-      {
-        value: 'direct',
-        label: 'Virement direct tour par tour',
-        description: 'Chaque membre paie directement le bénéficiaire du tour',
-        features: [
-          "L'application ne touche jamais l'argent",
-          'Notifications et rappels automatiques',
-        ],
-        note: 'Nécessite la confiance entre membres',
-        recommended: false,
-        premium: false,
-        locked: false,
-      },
-      {
-        value: 'solidarity_guarantee',
-        label: 'Garantie solidaire + pénalités',
-        description: 'Chaque membre bloque une caution remboursable en fin de cycle',
-        features: [
-          'Pénalités automatiques en cas de retard',
-          'Caution récupérée en fin de cycle',
-        ],
-        note: 'Caution requise',
-        recommended: false,
-        premium: true,
-        locked: !this.isPremium,
-      },
+      // {
+      //   value: 'direct',
+      //   label: 'Virement direct tour par tour',
+      //   description: 'Chaque membre paie directement le bénéficiaire du tour',
+      //   features: [
+      //     "L'application ne touche jamais l'argent",
+      //     'Notifications et rappels automatiques',
+      //   ],
+      //   note: 'Nécessite la confiance entre membres',
+      //   recommended: false,
+      //   premium: false,
+      //   locked: false,
+      // },
+      // {
+      //   value: 'solidarity_guarantee',
+      //   label: 'Garantie solidaire + pénalités',
+      //   description: 'Chaque membre bloque une caution remboursable en fin de cycle',
+      //   features: [
+      //     'Pénalités automatiques en cas de retard',
+      //     'Caution récupérée en fin de cycle',
+      //   ],
+      //   note: 'Caution requise',
+      //   recommended: false,
+      //   premium: true,
+      //   locked: !this.isPremium,
+      // },
     ];
   }
 
@@ -420,7 +420,7 @@ export class CreatePage implements OnInit {
       case 6: {
         if (!this.selectedSecurity) return false;
         if (this.securityOptions.find(s => s.value === this.selectedSecurity)?.locked) return false;
-        if (this.selectedSecurity === 'solidarity_guarantee' && this.guaranteeAmount <= 0) return false;
+        // if (this.selectedSecurity === 'solidarity_guarantee' && this.guaranteeAmount <= 0) return false;
         return true;
       }
       case 7: return this.confirmedRules && this.confirmedPayment;
@@ -577,11 +577,11 @@ export class CreatePage implements OnInit {
       this.openPremiumModal(option.label, option.description);
       return;
     }
-    this.selectedSecurity = s;
-    if (s === 'solidarity_guarantee' && this.guaranteeAmount <= 0) {
-      this.guaranteeAmount = 5000; // valeur par défaut modifiable
-    }
-    if (s !== 'solidarity_guarantee') this.guaranteeAmount = 0;
+    // this.selectedSecurity = s;
+    // if (s === 'solidarity_guarantee' && this.guaranteeAmount <= 0) {
+    //   this.guaranteeAmount = 5000; // valeur par défaut modifiable
+    // }
+    // if (s !== 'solidarity_guarantee') this.guaranteeAmount = 0;
   }
 
   // ── Labels récapitulatif ────────────────────────────────────────────────────
@@ -670,10 +670,7 @@ export class CreatePage implements OnInit {
       modificationThreshold: this.modificationThreshold,
 
       // Sécurité
-      securityModel: this.selectedSecurity,
-      guaranteeAmount: this.selectedSecurity === 'solidarity_guarantee'
-        ? this.guaranteeAmount
-        : undefined,
+      securityModel: this.selectedSecurity
     };
 
     this.tontineService.createTontine(payload).subscribe({

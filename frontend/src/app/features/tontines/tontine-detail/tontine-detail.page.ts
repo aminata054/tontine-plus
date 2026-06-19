@@ -19,6 +19,7 @@ import { PaymentService } from 'src/app/core/services/payment.service';
 import { ReceiptModalComponent } from 'src/app/shared/modals/receipt-modal/receipt-modal.component';
 import { DistributionService } from 'src/app/core/services/distribution.service';
 import { Distribution } from 'src/app/core/models/distribution.model';
+import { TontineWalletComponent } from "src/app/shared/ui/tontine-wallet/tontine-wallet.component";
 
 type PageStatus = 'loading' | 'success' | 'error';
 type TabKey = 'flux' | 'tour' | 'historiques' | 'parametres';
@@ -33,7 +34,8 @@ type TabKey = 'flux' | 'tour' | 'historiques' | 'parametres';
     IonContent, IonIcon, IonSkeletonText,
     PageHeaderComponent,
     CustomButtonComponent,
-  ],
+    TontineWalletComponent
+],
 })
 export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
 
@@ -158,7 +160,7 @@ export class TontineDetailPage implements OnInit, OnDestroy, AfterViewChecked {
             this.tontine.myRole === 'creator' || this.tontine.myRole === 'admin';
 
           // UTILISER myTurnNumber depuis la tontine ───────────────────────────
-          
+
           const myTurnNumber = (this.tontine as any).myTurnNumber ?? null;
           this.isBeneficiary = myTurnNumber !== null
             && myTurnNumber === this.tontine.currentTurn;

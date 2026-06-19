@@ -52,6 +52,19 @@
       </div>
     </div>
   </div>
+  <!-- Bannière gain -->
+  <div class="preview-gain-banner">
+    <div class="preview-gain-banner__left">
+      <ion-icon name="wallet-outline"></ion-icon>
+      <div>
+        <span class="preview-gain-banner__label">Vous recevrez</span>
+        <span class="preview-gain-banner__amount">{{ preview.potPerTurn | number:'1.0-0' }} FCFA</span>
+      </div>
+    </div>
+    <div class="preview-gain-banner__right">
+      <span class="preview-gain-banner__pill">× {{ preview.totalMembers }} membres</span>
+    </div>
+  </div>
     <!-- ── GRILLE PRINCIPALE ────────────────────────────────────────────── -->
     <div class="info-card">
 
@@ -77,10 +90,10 @@
         <span class="info-value">{{ frequencyLabel(preview.frequency) }}</span>
       </div>
 
-      <div class="info-row">
+      <!-- <div class="info-row">
         <span class="info-label">Pot par tour</span>
         <span class="info-value info-value--primary">{{ preview.potPerTurn | number:'1.0-0' }} FCFA</span>
-      </div>
+      </div> -->
 
       <div class="info-row">
         <span class="info-label">Durée du cycle</span>

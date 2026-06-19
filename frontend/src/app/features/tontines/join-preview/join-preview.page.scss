@@ -9,11 +9,11 @@
     --text-light: #9AA5B4;
     --primary: var(--ion-color-primary);
     --border: #E2E8F0;
-    --bg: #F7F9FC; 
+    --bg: #F7F9FC;
 }
 
 .preview-content {
-    --background: var(--bg); 
+    --background: var(--bg);
     background: var(--bg);
 }
 
@@ -80,6 +80,7 @@
         margin: 0 4px;
     }
 }
+
 .info-card {
     margin: 0 16px 20px;
     background: var(--card-bg);
@@ -87,6 +88,59 @@
     overflow: hidden;
     box-shadow: var(--shadow);
     border: none;
+}
+
+// ─── Bannière gain ────────────────────────────────────────────────
+.preview-gain-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--ion-color-primary);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin: 0 16px 16px;
+
+    &__left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        ion-icon {
+            font-size: 28px;
+            color: rgba(255, 255, 255, 0.85);
+        }
+    }
+
+    &__label {
+        display: block;
+        font-size: 12px;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.75);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+
+    &__amount {
+        display: block;
+        font-size: 22px;
+        font-weight: 800;
+        color: #fff;
+    }
+
+    &__right {
+        display: flex;
+        align-items: flex-end;
+    }
+
+    &__pill {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 9999px;
+    }
 }
 
 .info-row {
@@ -234,4 +288,3 @@
         margin-top: 1px;
     }
 }
-

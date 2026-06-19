@@ -133,8 +133,8 @@ export class TontineService {
     typeLabel(type: TontineType): string {
         const map: Record<TontineType, string> = {
             rotative: 'Rotative classique',
-            crescendo: 'Crescendo',
-            solidarity: 'Solidarité',
+            // crescendo: 'Crescendo',
+            // solidarity: 'Solidarité',
             savings_goal: 'Épargne objectif',
         };
         return map[type] ?? type;
@@ -164,8 +164,8 @@ export class TontineService {
         const map: Record<RotationMethod, string> = {
             random: 'Aléatoire',
             seniority: 'Ancienneté',
-            consensual: 'Consensuel',
-            manual: 'Prédéfini par moi',
+            // consensual: 'Consensuel',
+            // manual: 'Prédéfini par moi',
         };
         return map[method] ?? method;
     }
@@ -173,8 +173,8 @@ export class TontineService {
     securityLabel(model: SecurityModel): string {
         const map: Record<SecurityModel, string> = {
             escrow: 'Escrow collectif',
-            direct: 'Virement direct',
-            solidarity_guarantee: 'Garantie solidaire',
+            // direct: 'Virement direct',
+            // solidarity_guarantee: 'Garantie solidaire',
         };
         return map[model] ?? model;
     }
@@ -182,8 +182,8 @@ export class TontineService {
     visibilityLabel(v: TontineVisibility): string {
         const map: Record<TontineVisibility, string> = {
             private: 'Privée - Sur invitation',
-            semi_public: 'Semi-publique',
-            public: 'Publique',
+            // semi_public: 'Semi-publique',
+            // public: 'Publique',
         };
         return map[v] ?? v;
     }

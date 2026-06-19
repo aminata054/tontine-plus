@@ -52,6 +52,9 @@
           </app-custom-button>
         </ng-container>
 
+        <app-tontine-wallet [tontineId]="tontineId!" [currentUserId]="uid">
+        </app-tontine-wallet>
+
         <div class="timeline">
           <div class="timeline__item" *ngFor="let turn of turns; let last = last"
             [class.timeline__item--current]="turn.isCurrent" [class.timeline__item--done]="turn.isDone"

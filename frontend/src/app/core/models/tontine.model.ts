@@ -2,12 +2,12 @@
 // ÉNUMÉRATIONS
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type TontineType = 'rotative' | 'crescendo' | 'solidarity' | 'savings_goal';
-export type TontineVisibility = 'private' | 'semi_public' | 'public';
+export type TontineType = 'rotative' | 'savings_goal';
+export type TontineVisibility = 'private' ;
 export type TontineStatus = 'pending' | 'active' | 'completed' | 'cancelled';
 export type Frequency = 'daily' | 'weekly' | 'biweekly' | 'monthly';
-export type RotationMethod = 'random' | 'seniority' | 'consensual' | 'manual';
-export type SecurityModel = 'escrow' | 'direct' | 'solidarity_guarantee';
+export type RotationMethod = 'random' | 'seniority' ;
+export type SecurityModel = 'escrow' ;
 export type PenaltyType = 'percentage' | 'fixed';
 export type EarlyExitMode = 'penalty' | 'vote' | 'locked';
 export type EarlyExitPenalty = 'guarantee' | 'paid_contributions';

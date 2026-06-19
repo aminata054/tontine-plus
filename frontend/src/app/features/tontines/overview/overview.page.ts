@@ -199,15 +199,15 @@ export class OverviewPage implements OnInit, OnDestroy {
     if (!this.tontineId || !this.tontine) return;
     const rotationMethod = this.tontine.rotationMethod;
 
-    if (rotationMethod === 'manual') {
-      this.showManualTurnPicker();
-      return;
-    }
+    // if (rotationMethod === 'manual') {
+    //   this.showManualTurnPicker();
+    //   return;
+    // }
 
-    if (rotationMethod === 'consensual') {
-      this.openFirstVote();
-      return;
-    }
+    // if (rotationMethod === 'consensual') {
+    //   this.openFirstVote();
+    //   return;
+    // }
 
     // random / seniority
     this.isLaunching = true;
@@ -301,11 +301,6 @@ export class OverviewPage implements OnInit, OnDestroy {
   async showLaunchConfirm(): Promise<void> {
     if (!this.canLaunch || !this.tontine) return;
 
-    // Mode manual → on ouvre directement le sélecteur, pas de modal de confirmation
-    if (this.tontine.rotationMethod === 'manual') {
-      await this.showManualTurnPicker();
-      return;
-    }
 
     // Tous les autres modes modal de confirmation classique
     const rotationMessages: Record<string, string> = {
@@ -326,7 +321,6 @@ export class OverviewPage implements OnInit, OnDestroy {
           { label: 'Gain/tour', value: `${this.formatAmount(this.tontine.potPerTurn)} FCFA` },
           { label: 'Rotation', value: this.tontineService.rotationLabel(this.tontine.rotationMethod) },
         ],
-        confirmText: this.tontine.rotationMethod === 'consensual' ? 'Ouvrir le vote' : 'Lancer',
         cancelText: 'Annuler',
         confirmColor: 'primary',
       },

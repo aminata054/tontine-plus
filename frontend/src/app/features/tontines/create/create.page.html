@@ -273,13 +273,13 @@
           (premiumClick)="openPremiumModal(s.label, s.description)">
 
           <!-- Champ caution — affiché uniquement pour solidarity_guarantee -->
-          <div *ngIf="s.value === 'solidarity_guarantee' && selectedSecurity === 'solidarity_guarantee'"
+          <!-- <div *ngIf="s.value === 'solidarity_guarantee' && selectedSecurity === 'solidarity_guarantee'"
             (click)="$event.stopPropagation()" class="cr-security-extra">
             <app-custom-input placeholder="Montant de la caution (FCFA)" type="number" size="small"
               [value]="guaranteeAmountStr" (valueChange)="guaranteeAmountStr = $event">
             </app-custom-input>
             <p class="cr-rules-hint">ⓘ Caution récupérée en fin de cycle</p>
-          </div>
+          </div> -->
         </app-selection-card>
       </div>
     </div>
@@ -388,10 +388,10 @@
         </div>
 
         <!-- Caution — uniquement pour solidarity_guarantee -->
-        <div class="cr-recap-row" *ngIf="selectedSecurity === 'solidarity_guarantee'">
+        <!-- <div class="cr-recap-row" *ngIf="selectedSecurity === 'solidarity_guarantee'">
           <span class="cr-recap-row__label">Caution par membre</span>
           <span class="cr-recap-row__value">{{ formatAmount(guaranteeAmount) }} FCFA</span>
-        </div>
+        </div> -->
 
         <div class="cr-recap-row">
           <span class="cr-recap-row__label">Modifications</span>
