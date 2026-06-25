@@ -90,20 +90,16 @@ export const triggerDistribution = async (req: Request, res: Response) => {
         forcePartial = false,
     } = req.body as TriggerDistributionPayload;
 
-    // ── Validation ────────────────────────────────────────────────────────────
     const errors: string[] = [];
-
     if (!tontineId) errors.push('tontineId requis');
     if (!distributionMethod || !VALID_DIST_METHODS.includes(distributionMethod))
         errors.push(`distributionMethod invalide — valeurs : ${VALID_DIST_METHODS.join(' | ')}`);
     if (!beneficiaryPhone || beneficiaryPhone.trim().length < 6)
         errors.push('beneficiaryPhone requis (minimum 6 caractères)');
-
     if (errors.length > 0)
         return res.status(400).json({ success: false, errors });
 
     try {
-        // ── Récupérer la tontine ───────────────────────────────────────────────
         const tontineRef = db.collection('tontines').doc(tontineId);
         const tontineDoc = await tontineRef.get();
 
@@ -112,7 +108,6 @@ export const triggerDistribution = async (req: Request, res: Response) => {
 
         const tontine = tontineDoc.data()!;
 
-        // ── Vérifier les droits ───────────────────────────────────────────────
         const callerDoc = await db
             .collection('tontines').doc(tontineId)
             .collection('members').doc(callerUid).get();
@@ -124,77 +119,46 @@ export const triggerDistribution = async (req: Request, res: Response) => {
             });
 
         if (tontine.status !== 'active')
-            return res.status(400).json({
-                success: false,
-                error: 'La tontine doit être active pour effectuer une distribution',
-            });
+            return res.status(400).json({ success: false, error: 'La tontine doit être active' });
 
         const currentTurn: number = tontine.currentTurn;
-
         if (currentTurn === 0)
-            return res.status(400).json({
-                success: false,
-                error: 'Aucun tour actif — lancez la tontine d\'abord',
-            });
+            return res.status(400).json({ success: false, error: "Aucun tour actif" });
 
-        // ── Vérifier qu'il n'y a pas déjà une distribution pour ce tour ───────
         const alreadyExists = await hasExistingDistribution(tontineId, currentTurn);
         if (alreadyExists)
-            return res.status(400).json({
-                success: false,
-                error: `Une distribution existe déjà pour le tour ${currentTurn}`,
-            });
+            return res.status(400).json({ success: false, error: `Une distribution existe déjà pour le tour ${currentTurn}` });
 
-        // ── Vérifier la collecte ──────────────────────────────────────────────
-        const { shouldDistribute, collectionStatus } = await checkAndTriggerDistribution(
-            tontineId, currentTurn
-        );
+        const { shouldDistribute, collectionStatus } = await checkAndTriggerDistribution(tontineId, currentTurn);
 
-        if (!shouldDistribute && !forcePartial) {
+        if (!shouldDistribute && !forcePartial)
             return res.status(400).json({
                 success: false,
                 error: `Collecte incomplète — ${collectionStatus.paidCount}/${collectionStatus.totalMembers} membres ont payé`,
-                data: {
-                    collectionStatus,
-                    hint: 'Utilisez forcePartial=true pour forcer une distribution partielle (admin)',
-                },
+                data: { collectionStatus, hint: 'Utilisez forcePartial=true pour forcer (admin)' },
             });
-        }
 
-        // ── Récupérer le bénéficiaire actuel ──────────────────────────────────
         const beneficiaryId: string = tontine.currentBeneficiaryUid;
         if (!beneficiaryId)
-            return res.status(400).json({
-                success: false,
-                error: 'Aucun bénéficiaire défini pour ce tour',
-            });
+            return res.status(400).json({ success: false, error: 'Aucun bénéficiaire défini' });
 
         const beneficiaryMemberDoc = await db
             .collection('tontines').doc(tontineId)
             .collection('members').doc(beneficiaryId).get();
 
-        const beneficiaryName: string =
-            beneficiaryMemberDoc.data()?.userName ?? 'Membre';
+        const beneficiaryName: string = beneficiaryMemberDoc.data()?.userName ?? 'Membre';
 
         const amountToSend = forcePartial && !shouldDistribute
-            ? collectionStatus.totalCollected   // distribuer ce qui a été collecté
-            : tontine.potPerTurn;               // distribuer le pot complet
+            ? collectionStatus.totalCollected
+            : tontine.potPerTurn;
 
-        // ── Créer et simuler la distribution ──────────────────────────────────
         const simConfig = DISTRIBUTION_SIM_CONFIG[distributionMethod];
         const { ref: distRef, data: distData } = await createDistributionDoc(
-            tontineId,
-            currentTurn,
-            beneficiaryId,
-            beneficiaryName,
-            amountToSend,
-            distributionMethod,
-            beneficiaryPhone.trim(),
-            forcePartial && !shouldDistribute,
-            collectionStatus.totalCollected,
+            tontineId, currentTurn, beneficiaryId, beneficiaryName,
+            amountToSend, distributionMethod, beneficiaryPhone.trim(),
+            forcePartial && !shouldDistribute, collectionStatus.totalCollected,
         );
 
-        // Compléter les metadata avec le nom de la tontine
         const finalDistData = {
             ...distData,
             metadata: {
@@ -210,29 +174,25 @@ export const triggerDistribution = async (req: Request, res: Response) => {
         };
 
         await db.runTransaction(async (transaction) => {
-            // 1. Écrire le document distribution
+            // ✅ ÉTAPE 1 — TOUTES LES LECTURES D'ABORD
+            const membersSnap = await transaction.get(
+                db.collection('tontines').doc(tontineId)
+                    .collection('members')
+                    .where('status', '==', 'active')
+            );
+
+            // ✅ ÉTAPE 2 — TOUTES LES ÉCRITURES ENSUITE
             transaction.set(distRef, { id: distRef.id, ...finalDistData });
 
-            // 2. Mettre à jour le statut de la tontine — distribution en cours
             transaction.update(tontineRef, {
                 currentDistributionId: distRef.id,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
 
-            // 3. Notifier tous les membres
-            const membersSnap = await db
-                .collection('tontines').doc(tontineId)
-                .collection('members')
-                .where('status', '==', 'active')
-                .get();
-
             for (const m of membersSnap.docs) {
                 const isBeneficiary = m.id === beneficiaryId;
-
                 const notif = buildNotificationDoc(m.id, {
-                    title: isBeneficiary
-                        ? '🎉 Votre pot est en route !'
-                        : `Tour ${currentTurn} — distribution lancée`,
+                    title: isBeneficiary ? '🎉 Votre pot est en route !' : `Tour ${currentTurn} — distribution lancée`,
                     body: isBeneficiary
                         ? `${new Intl.NumberFormat('fr-FR').format(amountToSend)} FCFA envoyés sur votre ${distributionMethod}`
                         : `${beneficiaryName} reçoit ${new Intl.NumberFormat('fr-FR').format(amountToSend)} FCFA`,
@@ -247,7 +207,6 @@ export const triggerDistribution = async (req: Request, res: Response) => {
             }
         });
 
-        // Push notifications hors transaction
         await sendNotificationToUser(beneficiaryId, {
             title: '🎉 Votre pot est en route !',
             body: `${new Intl.NumberFormat('fr-FR').format(amountToSend)} FCFA envoyés via ${distributionMethod}`,
@@ -268,9 +227,8 @@ export const triggerDistribution = async (req: Request, res: Response) => {
                 beneficiaryName,
                 amount: amountToSend,
                 status: finalDistData.status,
-                // Délai de simulation : le client appellera /confirm après ce délai
                 simulationDelayMs: simConfig.delayMs,
-                nextTurnStarted: false, // démarré dans /confirm
+                nextTurnStarted: false,
                 tontineCompleted: false,
                 collectionStatus,
             },
@@ -304,14 +262,11 @@ export const confirmDistribution = async (req: Request, res: Response) => {
             .collection('distributions').doc(distributionId);
 
         const distDoc = await distRef.get();
-
         if (!distDoc.exists)
             return res.status(404).json({ success: false, error: 'Distribution introuvable' });
 
         const dist = distDoc.data()!;
 
-        // ── Vérifier les droits ───────────────────────────────────────────────
-        // Peut confirmer : le bénéficiaire lui-même OU créateur/admin
         const callerMemberDoc = await db
             .collection('tontines').doc(tontineId)
             .collection('members').doc(callerUid).get();
@@ -323,7 +278,7 @@ export const confirmDistribution = async (req: Request, res: Response) => {
         if (!isBeneficiary && !isAdminOrCreator)
             return res.status(403).json({
                 success: false,
-                error: 'Seul le bénéficiaire, le créateur ou un admin peut confirmer la réception',
+                error: 'Seul le bénéficiaire, le créateur ou un admin peut confirmer',
             });
 
         if (!['sent', 'partial'].includes(dist.status))
@@ -336,7 +291,6 @@ export const confirmDistribution = async (req: Request, res: Response) => {
         const tontine = tontineDoc.data()!;
         const receiptUrl = generateDistributionReceiptUrl(distributionId);
 
-        // ── Transaction : confirmer + avancer au tour suivant ─────────────────
         let nextTurnResult: {
             nextTurn: number;
             nextBeneficiaryUid: string | null;
@@ -344,7 +298,15 @@ export const confirmDistribution = async (req: Request, res: Response) => {
         };
 
         await db.runTransaction(async (transaction) => {
-            // 1. Confirmer la distribution
+            // ✅ ÉTAPE 1 — TOUTES LES LECTURES D'ABORD
+            const activeMembersSnap = await transaction.get(
+                db.collection('tontines').doc(tontineId)
+                    .collection('members')
+                    .where('status', '==', 'active')
+            );
+            const activeMembersCount = activeMembersSnap.size;
+
+            // ✅ ÉTAPE 2 — TOUTES LES ÉCRITURES ENSUITE
             transaction.update(distRef, {
                 status: 'received',
                 confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -353,22 +315,9 @@ export const confirmDistribution = async (req: Request, res: Response) => {
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
 
-            // 2. Avancer au tour suivant
             nextTurnResult = await advanceToNextTurn(tontineId, transaction);
 
-            // 3. Récupérer le nombre de membres actifs pour le tour suivant
-            const activeMembersSnapshot = await transaction.get(
-                db.collection('tontines').doc(tontineId)
-                    .collection('members')
-                    .where('status', '==', 'active')
-            );
-            const activeMembersCount = activeMembersSnapshot.size;
-
-            emptyWalletAfterDistribution(
-                transaction,
-                tontineId
-            );
-
+            emptyWalletAfterDistribution(transaction, tontineId);
 
             if (!nextTurnResult.tontineCompleted) {
                 resetWalletForNextTurn(
@@ -379,7 +328,6 @@ export const confirmDistribution = async (req: Request, res: Response) => {
                 );
             }
 
-            // 4. Notifier tous les membres
             await notifyTurnDistributed(
                 tontineId,
                 tontine.name,
@@ -391,15 +339,9 @@ export const confirmDistribution = async (req: Request, res: Response) => {
                 transaction
             );
 
-            // 4. Si tontine terminée : notifier la fin
-            if (nextTurnResult!.tontineCompleted) {
-                const membersSnap = await db
-                    .collection('tontines').doc(tontineId)
-                    .collection('members')
-                    .where('status', '==', 'active')
-                    .get();
-
-                for (const m of membersSnap.docs) {
+            // ✅ Réutilise le snapshot déjà lu — pas de nouveau db...get()
+            if (nextTurnResult.tontineCompleted) {
+                for (const m of activeMembersSnap.docs) {
                     const endNotif = buildNotificationDoc(m.id, {
                         title: '🏁 Tontine terminée !',
                         body: `La tontine ${tontine.name} est arrivée à son terme. Félicitations à tous !`,
@@ -422,9 +364,7 @@ export const confirmDistribution = async (req: Request, res: Response) => {
                 status: 'received',
                 confirmedAt: new Date().toISOString(),
                 receiptUrl,
-                nextTurnNumber: nextTurnResult!.tontineCompleted
-                    ? null
-                    : nextTurnResult!.nextTurn,
+                nextTurnNumber: nextTurnResult!.tontineCompleted ? null : nextTurnResult!.nextTurn,
                 nextBeneficiaryUid: nextTurnResult!.nextBeneficiaryUid,
                 tontineCompleted: nextTurnResult!.tontineCompleted,
             },
@@ -434,7 +374,6 @@ export const confirmDistribution = async (req: Request, res: Response) => {
         return res.status(500).json({ success: false, error: err.message });
     }
 };
-
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/v1/distributions/:distributionId?tontineId=...
 //
